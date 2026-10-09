@@ -64,8 +64,14 @@
   "nextRelease": {
     "version": "1.0.1",
     "targets": 3,
-    "candidateRunId": "37961073674",
-    "status": "BUILDING",
-    "submittedToStore": false
+    "candidateRunId": "37966185274",
+    "status": "BLOCKED_BY_GITHUB_ACTIONS_BILLING",
+    "submittedToStore": false,
+    "tagCreated": false,
+    "macIntelCandidateRunId": "37962923865",
+    "macArm64CandidateRunId": "37961987384",
+    "windowsDiagnosticRunId": "37964187634",
+    "windowsFailureStage": "Choosing the recording language",
+    "pendingFixCommit": "960f69159e262dada53e0c440ec8359ee3145111"
   }
 }

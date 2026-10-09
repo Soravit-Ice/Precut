@@ -27,6 +27,14 @@
 
 ผล Mac Intel: [candidate 37962923865](https://github.com/Soravit-Ice/Precut/actions/runs/37962923865) ทดสอบบน macOS 15.7.9, เปิดแอป 2.944 วินาที, ถอดเสียง 22 คำ, waveform และ restart ผ่าน ตัวแอปประกาศขั้นต่ำ macOS 15.0.0 อย่าอ้างว่ารองรับ Windows จน CI ผ่านและเผยแพร่ release ใหม่
 
+### สถานะ 10 ตุลาคม 2026 และการทำต่อ
+
+Windows เปิดแอปและ import ได้ แต่ [diagnostic run 37964187634](https://github.com/Soravit-Ice/Precut/actions/runs/37964187634) ค้างที่ `Choosing the recording language` เพิ่มการจำกัด speech threads ตาม CPU และ native language/pipe smoke แล้ว; typecheck และ 90 tests ในเครื่องผ่าน แต่ยัง **ไม่ได้ยืนยัน fix นี้บน Windows**
+
+[รอบใหม่ 37966185274](https://github.com/Soravit-Ice/Precut/actions/runs/37966185274) ไม่เริ่ม runner เพราะ GitHub แจ้งปัญหา account payments/spending limit ให้เจ้าของตรวจ Settings → Billing & licensing → Budgets and alerts ของ **Actions** และสถานะ payment ดู [เอกสาร GitHub](https://docs.github.com/en/actions/how-tos/troubleshoot-workflows) ไม่ใช่บั๊ก R2 และไม่ใช่ผลทดสอบแอป
+
+หลังแก้ billing ให้ rerun รอบใหม่นี้ก่อน เมื่อ native batch language detection และ packaged analysis/restart ของ Windows ผ่านแล้ว ค่อยสร้าง tag `v1.0.1` ที่ final commit เพื่อให้ release workflow ทดสอบครบสามระบบและอัปโหลดใน session เดียว ปัจจุบันยังไม่มี tag `v1.0.1` และยังไม่ส่งไฟล์ 1.0.1 เข้า Store
+
 ก่อนส่งเวอร์ชันถัดไป ตรวจว่า Vercel Production ใช้ `TRIGGER_SECRET_KEY`
 ของ Trigger.dev **Production** และ redeploy หลังบันทึก key; development key
 ไม่ส่งงานไป worker production อย่าใส่ key นี้ใน desktop config หรือ GitHub
