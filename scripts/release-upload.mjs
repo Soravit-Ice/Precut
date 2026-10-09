@@ -84,6 +84,17 @@ export async function uploadRelease(input, fetcher = globalThis.fetch) {
       },
       body: JSON.stringify(body),
     });
+    if (!response.ok) {
+      const source =
+        response.headers.get("cf-mitigated") === "challenge"
+          ? "cloudflare_challenge"
+          : response.headers.get("x-vercel-mitigated") === "challenge"
+            ? "vercel_challenge"
+            : response.headers.get("server") === "cloudflare"
+              ? "cloudflare"
+              : "origin";
+      input.onProgress?.("store_response_" + response.status + "_" + source);
+    }
     let value;
     try {
       value = await response.json();
