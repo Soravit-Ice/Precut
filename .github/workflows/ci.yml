@@ -1,5 +1,7 @@
-name: Precut checks
-on: [push, pull_request, workflow_dispatch]
+name: Precut hosted checks (manual, uses GitHub quota)
+# Hosted runners consume the private repository owner's Actions allowance.
+# Keep them opt-in; local builds and tests do not need this workflow.
+on: [workflow_dispatch]
 permissions:
   contents: read
 jobs:

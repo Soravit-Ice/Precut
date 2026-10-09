@@ -2,6 +2,45 @@
 
 ฉบับสำหรับ Precut `1.0.1` (กำลังทดสอบ release ทั้ง 3 ระบบ) วันที่ 9 ตุลาคม 2026 — Made by t2etech
 
+## วิธี manual เพื่อไม่ใช้ GitHub-hosted CI
+
+เครื่องที่เจ้าของมีตอนนี้คือ Mac Apple Silicon: เริ่มจาก Mac ARM64 ก่อน Mac Intel/Windows ยังต้องมี environment สำหรับ build และทดสอบจริงก่อนเผยแพร่ครบสามระบบ
+
+ตั้งแต่ 10 ตุลาคม 2026 workflow ของ Precut ไม่รันเมื่อ push, pull request หรือสร้าง tag อีกต่อไป hosted checks/release เหลือ `workflow_dispatch` เท่านั้น **อย่ากด Run workflow หากไม่ต้องการใช้โควต้า hosted runners** การ build/test ในเครื่องไม่ใช้นาที GitHub Actions ไม่ได้เปลี่ยน budget, payment method หรือความเป็น private ของ repository
+
+### Build ในเครื่อง
+
+ใช้ Node 24.21.0 และ pnpm 11.5.2 พร้อม `product.config.json` production ของ PC แล้วรันในโฟลเดอร์ Precut:
+
+```sh
+pnpm install --frozen-lockfile
+# Windows x64 หรือ Mac Intel: สร้าง native tools ด้วยคำสั่งนี้
+node scripts/bootstrap-native.mjs
+# Mac Apple Silicon: ใช้ native/darwin-arm64 ที่เตรียมไว้ใน workspace นี้
+pnpm models:prepare
+pnpm release:build
+pnpm fixtures:prepare
+node scripts/release-smoke.mjs
+```
+
+บน Windows ต้องมี Git, CMake และ Visual Studio Build Tools ที่ติดตั้ง C++ workload; Mac Intel ต้องมี Xcode command line tools/CMake ดู `docs/BUILDING.md` และอย่าใช้ bootstrap Intel/Windows บน Mac ARM64 ตัว script จะปฏิเสธ platform ที่ไม่รองรับ
+
+ไฟล์สำหรับลูกค้าอยู่ใน `out/`: `precut-1.0.1-mac-arm64.dmg`, `precut-1.0.1-mac-x64.dmg` หรือ `precut-1.0.1-win-x64.exe` ตามเครื่องที่ build โดยมี `artifacts-<platform>-<arch>.json` เก็บ SHA-256/ขนาดไฟล์ของ build เดียวกัน ต้องทดสอบแต่ละระบบจริงก่อนอ้างว่ารองรับครบสามระบบ Windows fix ล่าสุดยังรอยืนยันบน Windows
+
+### ข้อจำกัดของระบบ Store ปัจจุบัน
+
+ตอนนี้ release session/upload API ต้องใช้ GitHub Actions OIDC และผูกกับ repository/workflow/tag/commit โดยเฉพาะ **ไม่มี Admin manual import/upload release** ที่เรียกจากเครื่องหรือ Cloudflare dashboard ได้ `pnpm release:upload` จึงไม่ใช่คำสั่งอัปโหลดจากเครื่องทั่วไป ห้ามใช้ credential ของ CI แทน admin login หรือเขียนฐานข้อมูลให้เป็น VERIFIED/PUBLISHED โดยข้ามการตรวจไฟล์
+
+การอัปโหลดไฟล์ไว้ใน private R2 เพียงอย่างเดียวยังไม่เปลี่ยน download/latest ของ Store ต้องเพิ่มเส้นทาง manual ใน Admin เพื่อบันทึกสินค้า เวอร์ชัน ระบบ สถาปัตยกรรม object key ขนาด SHA-256 และ release notes → ตรวจไฟล์จริง → READY → Publish เมื่อมี feature นี้ flow manual จะใช้ local build ได้โดยไม่พึ่ง hosted CI
+
+อีกทางที่ระบบเดิมรองรับคือ self-hosted GitHub runner บนเครื่องของเจ้าของ ซึ่งยังใช้ OIDC ได้โดยไม่ใช้ GitHub-hosted compute แต่ต้องมีเครื่องของแต่ละระบบและควบคุมพื้นที่ artifacts/storage ด้วย อย่าเปลี่ยน repository เป็น public เพียงเพื่อใช้ฟรีโดยไม่ตั้งใจเผยแพร่ source
+
+### การอัปเดตตัวแอป
+
+ไฟล์รุ่นใหม่ต้องใช้เลขเวอร์ชันใหม่ ห้ามเขียนทับ installer ของ version ที่เผยแพร่แล้ว หลัง Store ลงทะเบียนและ Publish release ใหม่ หน้า download จะใช้ไฟล์ใหม่ตาม platform/architecture แอป unsigned รุ่นนี้ใช้การดาวน์โหลดและติดตั้งทับด้วยมือผ่าน Store; การวางไฟล์ใน R2 ไม่ใช่ automatic installation ในแอป
+
+R2 Standard มี free tier แบบจำกัด (10 GB-month, 1 ล้าน Class A และ 10 ล้าน Class B ต่อเดือน, egress ฟรี) ดู https://developers.cloudflare.com/r2/pricing/ จึงไม่รับประกันฟรีไม่จำกัดเมื่อสะสม installer หลายรุ่น สำหรับ GitHub ใช้ budget ที่เปิด Stop usage when budget limit is reached และตรวจยอด Net/invoice; ส่วน R2 ต้องตรวจ storage/operations ให้ไม่เกิน free tier ไม่อ้างว่ามี hard spending cap ของ R2 โดยไม่ได้ตรวจ Gross metered usage ใน GitHub ไม่ใช่ยอดสุทธิหลังส่วนลด
+
 ## 1. สิ่งที่เตรียมแล้วและสิ่งที่ต้องทำก่อนเปิดขาย
 
 ตัวติดตั้งชุดปัจจุบันรองรับ **Mac Apple Silicon / ARM64 บน macOS 27 ขึ้นไป**:
@@ -156,7 +195,7 @@ tag `v1.0.0` ถูกสร้างและส่งแล้วที่ com
 tag นี้ ขณะนี้ให้ไปขั้นทดสอบด้านล่าง; เวอร์ชันถัดไปใช้เลขและ tag ใหม่
 ตามหัวข้ออัปเดต
 
-เปิด GitHub → Actions → **Release Precut to T2ETECH Store** แล้วดูขั้นตอน:
+เส้นทาง hosted CI เดิม (ใช้โควต้า/อาจมีค่าใช้จ่าย): เปิด GitHub → Actions → **Hosted release to T2ETECH Store (manual, uses GitHub quota)** เลือก tag ที่ต้องการแล้ว Run workflow จึงจะเริ่ม งานไม่รันอัตโนมัติจาก tag แล้ว:
 
 1. ติดตั้ง dependency แบบ frozen lockfile และตรวจ SDK archive
 2. คืน public config, ตรวจ package version ตรง tag, ดาวน์โหลด native bundle พร้อมตรวจ hash
@@ -212,7 +251,7 @@ git tag -a v1.0.2 -m "Precut 1.0.2"
 git push origin v1.0.2
 ```
 
-รอ CI → VERIFIED/READY → กด Publish release ใหม่เหมือนเดิม สินค้าที่ PUBLISHED แล้วไม่ต้องสร้างใหม่, ไม่ต้องเปลี่ยน OAuth Client ID, Product Code หรือ policy เพราะแค่แก้เวอร์ชันแอป หาก config ฝั่ง Store เปลี่ยนให้ export ใหม่และอัปเดต GitHub variable ก่อน tag
+สำหรับเส้นทาง hosted CI เดิม ต้องสั่ง Run workflow ด้วยมือก่อน แล้วรอ VERIFIED/READY → กด Publish release ใหม่เหมือนเดิม สินค้าที่ PUBLISHED แล้วไม่ต้องสร้างใหม่, ไม่ต้องเปลี่ยน OAuth Client ID, Product Code หรือ policy เพราะแค่แก้เวอร์ชันแอป หาก config ฝั่ง Store เปลี่ยนให้ export ใหม่และอัปเดต GitHub variable ก่อน tag
 
 ทดสอบ upgrade จากตัวติดตั้ง `1.0.1` **ที่มีโปรเจกต์และ activation จริง** ไป `1.0.2`: บันทึกงานและปิดแอป, ติดตั้งทับ Precut เดิมใน Applications, เปิดใหม่ ตรวจงาน/แคช/บัญชี/สิทธิ์และ export ข้อมูลแอปใช้ `appData/com.t2etech.precut` เดิม จึงอย่าลบโฟลเดอร์นี้ระหว่างอัปเดต บน Windows ตัว NSIS กำหนดไม่ลบ AppData เมื่อ uninstall; ต้องทดสอบบน Windows เมื่อมี installer แล้ว
 

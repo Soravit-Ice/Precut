@@ -1,7 +1,5 @@
-name: Release Precut to T2ETECH Store
+name: Hosted release to T2ETECH Store (manual, uses GitHub quota)
 on:
-  push:
-    tags: ["v*"]
   workflow_dispatch:
 permissions:
   contents: read
