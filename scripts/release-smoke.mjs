@@ -83,13 +83,24 @@ try {
   });
   const id = created.project.id;
   async function wait(job) {
+    let last;
     for (let i = 0; i < 1800; i++) {
       const current = (await call("jobs.list")).find((j) => j.id === job.id);
+      const status = JSON.stringify({
+        kind: current?.kind,
+        state: current?.state,
+        stage: current?.stage,
+        progress: current?.progress,
+      });
+      if (status !== last) {
+        console.log(`Packaged job: ${status}`);
+        last = status;
+      }
       if (current?.state === "completed") return;
       if (current?.state === "failed") throw new Error(current.error);
       await new Promise((r) => setTimeout(r, 100));
     }
-    throw new Error("Release smoke timed out.");
+    throw new Error(`Release smoke timed out: ${last}`);
   }
   await wait(
     await call("media.import", {
@@ -135,6 +146,28 @@ try {
     "Isolated user data. Bundled FFmpeg/Whisper/models/SQLite. No paid purchase, OAuth login, quota-consuming export, OS installation or prior-version migration performed.";
   await writeFile(reportPath, JSON.stringify(report, null, 2) + "\n");
   console.log(JSON.stringify(report, null, 2));
+} catch (error) {
+  await mkdir("docs/screenshots", { recursive: true });
+  await app
+    ?.firstWindow()
+    .then((page) => page.screenshot({ path: screenshotPath }))
+    .catch(() => {});
+  await writeFile(
+    reportPath,
+    JSON.stringify(
+      {
+        date: new Date().toISOString(),
+        platform: process.platform,
+        arch: process.arch,
+        version,
+        passed: false,
+        error: String(error),
+      },
+      null,
+      2,
+    ) + "\n",
+  );
+  throw error;
 } finally {
   await app?.close();
 }
