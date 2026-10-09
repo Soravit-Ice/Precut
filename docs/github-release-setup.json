@@ -64,9 +64,9 @@
   },
   "nextRelease": {
     "version": "1.0.1",
-    "targets": 1,
+    "targets": 2,
     "candidateRunId": "37966185274",
-    "status": "LOCAL_MAC_ARM64_READY_FOR_MANUAL_UPLOAD",
+    "status": "MAC_INSTALLERS_READY_FOR_MANUAL_UPLOAD",
     "submittedToStore": false,
     "tagCreated": false,
     "macIntelCandidateRunId": "37962923865",
@@ -77,6 +77,9 @@
     "ownerHardware": "Mac Apple Silicon only",
     "manualManifest": "out/manual-release.json",
     "localPackagedSmoke": "docs/release-results-1.0.1-darwin-arm64.json",
-    "manualUploadStatus": "NOT_UPLOADED"
+    "manualUploadStatus": "NOT_UPLOADED",
+    "manualAcceptance": "docs/manual-release-acceptance-1.0.1.json",
+    "macIntelReusedExistingArtifact": true,
+    "macIntelArtifactId": "11632548137"
   }
 }

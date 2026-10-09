@@ -1,10 +1,10 @@
 # นำ Precut ขึ้นขายบน T2ETECH Store
 
-ฉบับสำหรับ Precut `1.0.1` แบบ manual (Mac Apple Silicon) วันที่ 10 ตุลาคม 2026 — Made by t2etech
+ฉบับสำหรับ Precut `1.0.1` แบบ manual (Mac Apple Silicon และ Mac Intel) วันที่ 10 ตุลาคม 2026 — Made by t2etech
 
 ## วิธี manual เพื่อไม่ใช้ GitHub-hosted CI
 
-เครื่องที่เจ้าของมีตอนนี้คือ Mac Apple Silicon: เริ่มจาก Mac ARM64 ก่อน Mac Intel/Windows ยังต้องมี environment สำหรับ build และทดสอบจริงก่อนเผยแพร่ครบสามระบบ
+เครื่องที่เจ้าของมีตอนนี้คือ Mac Apple Silicon: build ARM64 ในเครื่องได้ ส่วน Mac Intel 1.0.1 ดึงไฟล์จากรอบที่ build และทดสอบผ่านแล้วมาใช้ โดยตรวจ SHA-256 ตรงกับ manifest เดิม ไม่มีการรัน hosted CI เพิ่ม Windows ยังไม่พร้อมเผยแพร่ สำหรับเวอร์ชันถัดไปต้อง build และทดสอบ Intel/Windows ใหม่ด้วย environment ของแต่ละระบบ ดูแหล่งที่มาของไฟล์ชุดนี้ที่ `docs/manual-release-acceptance-1.0.1.json`
 
 ตั้งแต่ 10 ตุลาคม 2026 workflow ของ Precut ไม่รันเมื่อ push, pull request หรือสร้าง tag อีกต่อไป hosted checks/release เหลือ `workflow_dispatch` เท่านั้น **อย่ากด Run workflow หากไม่ต้องการใช้โควต้า hosted runners** การ build/test ในเครื่องไม่ใช้นาที GitHub Actions ไม่ได้เปลี่ยน budget, payment method หรือความเป็น private ของ repository
 
@@ -28,7 +28,7 @@ pnpm release:manual
 
 ไฟล์สำหรับลูกค้าอยู่ใน `out/`: `precut-1.0.1-mac-arm64.dmg`, `precut-1.0.1-mac-x64.dmg` หรือ `precut-1.0.1-win-x64.exe` ตามเครื่องที่ build โดยมี `artifacts-<platform>-<arch>.json` เก็บ SHA-256/ขนาดไฟล์ของ build เดียวกัน ต้องทดสอบแต่ละระบบจริงก่อนอ้างว่ารองรับครบสามระบบ Windows fix ล่าสุดยังรอยืนยันบน Windows
 
-### ข้อจำกัดของระบบ Store ปัจจุบัน
+### ระบบ manual ของ Store
 
 เพิ่ม **Admin → Releases → นำเข้า release จาก R2** แล้ว โดยใช้ Admin session และการยืนยันตัวตนใหม่ ไม่ต้องใช้ GitHub OIDC เส้นทาง CI เดิมยังตรวจ repository/workflow/tag/commit ตามเดิม `pnpm release:upload` เป็นคำสั่งสำหรับ CI เท่านั้น สำหรับ manual ใช้ `pnpm release:manual` และฟอร์ม Admin
 
@@ -38,12 +38,18 @@ pnpm release:manual
 
 ### นำไฟล์ 1.0.1 ขึ้น Store แบบ manual
 
-1. ใช้ `out/precut-1.0.1-mac-arm64.dmg` และ `out/manual-release.json` ที่เตรียมไว้ เปิด Store Admin → Releases → นำเข้า release จาก R2 แล้วเลือก JSON
-2. เปิด Cloudflare → R2 → `t2etech-store-releases` (private) สร้างโฟลเดอร์ตามฟอร์ม หรือคัดลอกจาก `out/r2-upload-instructions.txt` แล้วอัปโหลด DMG โดยคงชื่อไฟล์เดิม
-3. ตั้ง Content-Type เป็น `application/x-apple-diskimage` ให้ตรง manifest
+1. เปิด Store Admin → Releases → นำเข้า release จาก R2 แล้วเลือก `out/manual-release.json` ที่เตรียมไว้ ตรวจว่าเป็น PC 1.0.1, STABLE และมี MACOS/ARM64 กับ MACOS/X64
+2. เปิด Cloudflare → R2 → `t2etech-store-releases` (private, Standard storage) สร้างโฟลเดอร์ของแต่ละไฟล์ตามฟอร์ม หรือคัดลอกจาก `out/r2-upload-instructions.txt` แล้วอัปโหลดทั้ง `precut-1.0.1-mac-arm64.dmg` และ `precut-1.0.1-mac-x64.dmg` โดยคงชื่อไฟล์เดิม แต่ละไฟล์ใช้โฟลเดอร์ SHA-256 ของตัวเอง
+3. ตรวจ Content-Type ของทั้งสอง object เป็น `application/x-apple-diskimage` ให้ตรง manifest ถ้า dashboard ตั้งเป็น `application/octet-stream` ให้แก้ HTTP metadata ของ object ก่อนนำเข้า ไม่อัปโหลด ZIP หรือ JSON เป็น installer
 4. กลับ Admin ติ๊กอัปโหลดครบ ระบุเหตุผลและยืนยันตัวตน กดนำเข้าและตรวจไฟล์
 5. รีเฟรชจนเป็น READY และ artifact VERIFIED แล้วกด Publish release ยืนยัน PUBLISH
-6. ทดสอบดาวน์โหลดและติดตั้งจากหน้าร้าน รุ่นนี้เป็น Mac Apple Silicon บน macOS 27 ขึ้นไป ตัวไฟล์ยัง unsigned จึงอาจมีคำเตือนของระบบ ส่วน checkout ต้องผ่าน readiness แยกจาก trial download
+6. ทดสอบดาวน์โหลดและติดตั้งจากหน้าร้าน เลือก Apple Silicon (macOS 27 ขึ้นไป) หรือ Intel (macOS 15 ขึ้นไป) ให้ตรงกับเครื่อง ตัวไฟล์ยัง unsigned จึงอาจมีคำเตือนของระบบ ส่วน checkout ต้องผ่าน readiness แยกจาก trial download
+
+ชุด 1.0.1 ในเครื่องรวม manifests แล้วด้วยคำสั่งนี้ ไม่ต้อง build Intel ใหม่หรือกด GitHub Actions:
+
+```sh
+pnpm release:manual --manifest out/artifacts-darwin-arm64.json --manifest out/artifacts-darwin-x64.json
+```
 
 สำหรับ version ถัดไป เปลี่ยน `package.json` เช่น 1.0.2 และเขียน `releases/1.0.2.md` → build → packaged smoke → `pnpm release:manual` → อัปโหลด R2 → import → READY → Publish ห้ามเขียนทับ version เดิม
 
@@ -55,15 +61,18 @@ pnpm release:manual
 
 R2 Standard มี free tier แบบจำกัด (10 GB-month, 1 ล้าน Class A และ 10 ล้าน Class B ต่อเดือน, egress ฟรี) ดู https://developers.cloudflare.com/r2/pricing/ จึงไม่รับประกันฟรีไม่จำกัดเมื่อสะสม installer หลายรุ่น สำหรับ GitHub ใช้ budget ที่เปิด Stop usage when budget limit is reached และตรวจยอด Net/invoice; ส่วน R2 ต้องตรวจ storage/operations ให้ไม่เกิน free tier ไม่อ้างว่ามี hard spending cap ของ R2 โดยไม่ได้ตรวจ Gross metered usage ใน GitHub ไม่ใช่ยอดสุทธิหลังส่วนลด
 
+การตรวจ checksum ยังใช้ Trigger.dev ของ deployment เดิม แผน Free มีเครดิต $5 ต่อเดือนและหยุดงานเมื่อหมดเครดิต ดู https://trigger.dev/pricing ไม่ได้ทำให้ backend ทุกบริการฟรีไม่จำกัด ถ้าใช้ Vercel Hobby ต้องทราบว่าแผนนี้จำกัดการใช้งานส่วนบุคคลที่ไม่ใช่เชิงพาณิชย์ ดู https://vercel.com/docs/plans/hobby ก่อนเปิดขายจริง คู่มือนี้ไม่ได้เปลี่ยนแผนหรือวิธีชำระเงินของบริการใด
+
 ## 1. สิ่งที่เตรียมแล้วและสิ่งที่ต้องทำก่อนเปิดขาย
 
-ตัวติดตั้งชุดปัจจุบันรองรับ **Mac Apple Silicon / ARM64 บน macOS 27 ขึ้นไป**:
+ชุดที่เผยแพร่เดิมคือ **1.0.0 สำหรับ Mac Apple Silicon / ARM64** ส่วนชุด manual 1.0.1 ที่เตรียมในเครื่องประกอบด้วย:
 
-- `out/precut-1.0.0-mac-arm64.dmg` — ไฟล์ให้ลูกค้าติดตั้งและอัปโหลดเข้า Store
-- `out/precut-1.0.0-mac-arm64.zip` — แอปแบบ ZIP สำหรับทดสอบ/สำรอง
-- `out/artifacts-darwin-arm64.json` — metadata, ขนาดไฟล์ และ SHA-256 ของ DMG
-- `out/native-darwin-arm64.zip` และ `.sha256` — native tools สำหรับ runner สร้างเวอร์ชันถัดไป
-- `docs/release-results-1.0.0-darwin-arm64.json` — ผลทดสอบแอปที่แพ็กจริง
+- `out/precut-1.0.1-mac-arm64.dmg` — Apple Silicon บน macOS 27 ขึ้นไป
+- `out/precut-1.0.1-mac-x64.dmg` — Intel บน macOS 15 ขึ้นไป
+- `out/manual-release.json` — manifest รวมสอง installer สำหรับ Store Admin
+- `out/r2-upload-instructions.txt` — object key, Content-Type, ขนาดและ SHA-256 สำหรับแต่ละไฟล์
+- `docs/release-results-1.0.1-darwin-arm64.json` และ `docs/release-results-1.0.1-darwin-x64.json` — ผลทดสอบแอปที่แพ็กจริง
+- `docs/manual-release-acceptance-1.0.1.json` — แหล่งที่มาและขอบเขตการทดสอบของชุด manual
 
 แอปใช้ public `product.config.json` สำหรับสินค้า `PC`, เวอร์ชันจาก `package.json`, icon/logo ที่ให้มา และข้อความ Made by t2etech แล้ว ชื่อแอปและที่เก็บข้อมูลคงเดิมเมื่ออัปเดต ไม่มี private key หรือ client secret ใน config นี้
 
@@ -76,7 +85,7 @@ R2 Standard มี free tier แบบจำกัด (10 GB-month, 1 ล้า�
 ผ่านเมื่อ 9 ตุลาคม 2026 และ Trigger.dev Production ตรวจไฟล์จริงสำเร็จ:
 `precut-1.0.0-mac-arm64.dmg` เป็น **VERIFIED**, release `PC 1.0.0` เป็น
 **PUBLISHED** และ trial-installer API คืนไฟล์ ARM64 `1.0.0` ได้แล้วเมื่อ 9 ตุลาคม
-ส่วน `1.0.1` กำลังทดสอบ Windows; Mac Apple Silicon และ Mac Intel ผ่าน packaged analysis/restart แล้ว แต่ยังไม่ส่ง tag ใหม่จน Windows ผ่านครบ
+ส่วน `1.0.1` เตรียมสำหรับเผยแพร่ Mac สองระบบแบบ manual โดยยังไม่รวม Windows และยังไม่ได้อัปโหลด/Publish รุ่นใหม่
 
 ผล Mac Intel: [candidate 37962923865](https://github.com/Soravit-Ice/Precut/actions/runs/37962923865) ทดสอบบน macOS 15.7.9, เปิดแอป 2.944 วินาที, ถอดเสียง 22 คำ, waveform และ restart ผ่าน ตัวแอปประกาศขั้นต่ำ macOS 15.0.0 อย่าอ้างว่ารองรับ Windows จน CI ผ่านและเผยแพร่ release ใหม่
 
@@ -86,7 +95,7 @@ Windows เปิดแอปและ import ได้ แต่ [diagnostic ru
 
 [รอบใหม่ 37966185274](https://github.com/Soravit-Ice/Precut/actions/runs/37966185274) ไม่เริ่ม runner เพราะ GitHub แจ้งปัญหา account payments/spending limit ให้เจ้าของตรวจ Settings → Billing & licensing → Budgets and alerts ของ **Actions** และสถานะ payment ดู [เอกสาร GitHub](https://docs.github.com/en/actions/how-tos/troubleshoot-workflows) ไม่ใช่บั๊ก R2 และไม่ใช่ผลทดสอบแอป
 
-เจ้าของเลือกไม่ใช้ hosted runners จึงไม่ต้องเพิ่ม spending limit หรือแก้ billing เพื่อปล่อยรุ่น Mac ปัจจุบัน build และ packaged smoke ของ Mac ARM64 1.0.1 ในเครื่องผ่านแล้ว (import, ถอดเสียง 22 คำ, waveform, restart) ไฟล์อยู่ใน `out/` Windows fix ยังรอยืนยันบน Windows ไม่มี tag `v1.0.1` และยังไม่อัปโหลด/Publish 1.0.1 ระหว่างเตรียมเส้นทาง manual
+เจ้าของเลือกไม่ใช้ hosted runners จึงไม่ต้องเพิ่ม spending limit หรือแก้ billing เพื่อปล่อยรุ่น Mac ปัจจุบัน build และ packaged smoke ของ Mac ARM64 1.0.1 ในเครื่องผ่านแล้ว (import, ถอดเสียง 22 คำ, waveform, restart) และดึง Mac Intel จาก artifact เดิมที่ทดสอบผ่านแล้วพร้อมตรวจ checksum ไฟล์ทั้งสองอยู่ใน `out/` Windows fix ยังรอยืนยันบน Windows ไม่มี tag `v1.0.1` และยังไม่อัปโหลด/Publish 1.0.1 ระบบ import manual, DB migration และ worker verification ขึ้น production แล้วเมื่อ 10 ตุลาคม 2026
 
 ก่อนส่งเวอร์ชันถัดไป ตรวจว่า Vercel Production ใช้ `TRIGGER_SECRET_KEY`
 ของ Trigger.dev **Production** และ redeploy หลังบันทึก key; development key
@@ -137,7 +146,7 @@ workflow มี caller `release.yml` เรียก reusable `store-release.yml
 
 รักษา workflow บน `main` และจำกัดผู้แก้ไข branch นี้ เพราะเป็นตัวที่ Store เชื่อถือ
 
-## 4. ตั้งค่า GitHub Actions
+## 4. ตั้งค่า GitHub Actions (ทางเลือกที่ใช้โควต้า hosted runners)
 
 ตั้งค่าใน [Soravit-Ice/Precut](https://github.com/Soravit-Ice/Precut) → Settings → Secrets and variables → Actions → **Variables** แล้ว:
 
@@ -194,7 +203,7 @@ workflow เปิดแอปที่แพ็กจริงทุก target 
 
 สร้าง environment **`release-upload`** แล้ว จำกัด tag ที่อนุญาตเป็น `v*` ส่วน reviewer/wait timer ไม่ได้เปิดเพราะ plan ปัจจุบันไม่รองรับ protection ดังกล่าว workflow ใช้ OIDC จึงไม่ต้องใส่ Store API token/Cloudflare secret/Supabase service role ใน repo นี้
 
-## 5. ส่ง source และ release เวอร์ชันแรก
+## 5. ประวัติ release 1.0.0 และเส้นทาง hosted CI เดิม
 
 Source ขึ้น `main` ใน GitHub แล้ว ไม่ต้อง `git init` หรือเพิ่ม remote ซ้ำ Git authentication ใช้บัญชีเจ้าของ repository ที่ตั้งค่าในเครื่องนี้
 
@@ -202,7 +211,7 @@ Source ขึ้น `main` ใน GitHub แล้ว ไม่ต้อง `git
 
 รอบทดสอบบน GitHub ผ่านแล้ว: [Installer candidates 37927034810](https://github.com/Soravit-Ice/Precut/actions/runs/37927034810) — 88 tests, build DMG/ZIP, เปิด packaged app วิเคราะห์เสียงและทดสอบ restart ผ่าน ดาวน์โหลดไฟล์จาก Artifacts ในหน้านี้ ผลและ SHA ของ CI อยู่ที่ `docs/github-installer-acceptance-1.0.0.json` (hash ของ CI ต่างจาก local build ให้ใช้ manifest ที่มากับไฟล์เสมอ)
 
-ก่อนส่ง release ครั้งแรก เปิด Actions → **Precut installer candidates** → Run workflow เลือก `main` workflow นี้แพ็กตัวติดตั้งและทดสอบแอปจริงตาม targets ที่ตั้งไว้ เก็บ DMG/manifest/acceptance report เป็น artifact และไม่มีสิทธิ์อัปโหลดหรือ Publish เข้า Store
+workflow **Precut installer candidates** แพ็กตัวติดตั้งและทดสอบแอปจริงตาม targets ที่ตั้งไว้ เก็บ DMG/manifest/acceptance report เป็น artifact และไม่มีสิทธิ์อัปโหลดหรือ Publish เข้า Store เป็นทางเลือกที่ใช้โควต้า hosted runners ไม่ต้องกด Run workflow สำหรับขั้นตอน manual ในคู่มือนี้
 
 tag `v1.0.0` ถูกสร้างและส่งแล้วที่ commit
 `535f417197670c80339444b0979b6920d62fdc4b` ห้ามสร้างทับ ย้าย หรือ force-push
@@ -223,7 +232,7 @@ tag นี้ ขณะนี้ให้ไปขั้นทดสอบด้
 
 workflow_dispatch ใช้ได้เมื่อเลือก **tag ของเวอร์ชันใหม่ เช่น `v1.0.1`**; เลือก `main` จะถูก `release:check` ปฏิเสธ หากอัปโหลดเสร็จแล้วให้ตรวจ release ที่มีอยู่ใน Store ก่อนกด rerun การ upload เป็นขั้นที่ผูก session ไม่ใช่ปุ่ม retry verification
 
-DMG local ที่เตรียมไว้ใช้ทดสอบได้ทันที แต่ flow เข้า Store ปัจจุบันรับ release ผ่าน GitHub OIDC ดังนั้นไม่ใช่นำไฟล์วาง public R2 แล้วจะเปิดขายเอง
+ปัจจุบัน DMG local นำเข้า Store ผ่านฟอร์ม manual ได้แล้วโดยไม่ใช้ GitHub OIDC แต่การวางไฟล์ใน R2 เพียงอย่างเดียวยังไม่สร้าง release หรือ Publish
 
 ### ถ้า upload ได้ HTTP 403 หรือ Cloudflare challenge
 
@@ -235,7 +244,7 @@ Bot Fight Mode ของ Free plan ทำข้อยกเว้นด้วย
 
 ## 6. Publish และทดสอบก่อนเปิดขาย
 
-1. Admin → Releases → ตรวจสินค้า `PC`, เวอร์ชันใหม่ `1.0.1`, channel **STABLE** และ installer ครบ **MACOS/ARM64**, **MACOS/X64**, **WINDOWS/X64**
+1. Admin → Releases → ตรวจสินค้า `PC`, เวอร์ชันใหม่ `1.0.1`, channel **STABLE** และ installer **MACOS/ARM64**, **MACOS/X64** ไม่รวม Windows ที่ยังไม่ผ่านการทดสอบ
 2. รอทุก artifact เป็น **VERIFIED** และ release เป็น **READY** ถ้าค้าง `VERIFYING` ตรวจ Trigger.dev และ outbox; ถ้า FAILED อ่านเหตุผลและแก้ต้นเหตุ แล้วใช้ retry verification ใน Admin
 3. กด Publish release, ใส่ reason และยืนยันตัวตนตาม modal พิมพ์ confirmation ที่หน้าจอระบุ (`PUBLISH` สำหรับคำสั่ง publish release)
 4. เปิด Product → Publishing ตรวจ cover, Stripe pricing, active licensing policy และ published distributable release
@@ -281,7 +290,7 @@ export PATH="$PWD/.tools/node-v24.21.0-darwin-arm64/bin:$PATH"
 pnpm release:build
 pnpm fixtures:prepare
 node scripts/release-smoke.mjs
-node scripts/native-archive.mjs
+pnpm release:manual
 ```
 
-`release:build` ปฏิเสธ development/test overrides และ tag ที่ไม่ตรง version; manifest เลือกชื่อ installer ตรงเวอร์ชันเท่านั้น ไม่ปะปน RC เก่า โหมด local ไม่มี OIDC สำหรับ upload ให้ใช้ workflow เมื่อผูก repository แล้ว
+`release:build` ปฏิเสธ development/test overrides และ tag ที่ไม่ตรง version; manifest เลือกชื่อ installer ตรงเวอร์ชันเท่านั้น ไม่ปะปน RC เก่า โหมด local ใช้ `pnpm release:manual` และ Store Admin ไม่ต้องมี OIDC สำหรับ upload

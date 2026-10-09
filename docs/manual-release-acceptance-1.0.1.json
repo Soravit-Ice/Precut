@@ -1,0 +1,40 @@
+{
+  "version": "1.0.1",
+  "productCode": "PC",
+  "channel": "STABLE",
+  "preparedAt": "2026-10-09T18:17:53.406472+00:00",
+  "artifacts": [
+    {
+      "target": "darwin-arm64",
+      "sourceCommit": "d20dc7eef4bfdf9eb3eefa94a06003c4ac585dc3",
+      "origin": "local-production-build",
+      "fileName": "precut-1.0.1-mac-arm64.dmg",
+      "fileSize": 361132546,
+      "sha256": "84ee2f2b8a14510216b11bdd792da31655010d82610dce6666dea1b9d7b52207",
+      "minimumMacOS": "27.0.0",
+      "testedMacOS": "27.0",
+      "packagedSmokeReport": "docs/release-results-1.0.1-darwin-arm64.json"
+    },
+    {
+      "target": "darwin-x64",
+      "sourceCommit": "fa0a15fc7173727c6bdf181e49aa04d664b44c35",
+      "origin": "existing-tested-github-artifact",
+      "fileName": "precut-1.0.1-mac-x64.dmg",
+      "fileSize": 403801407,
+      "sha256": "d0d018c82eee329fbf04e8be6040cf46e39f1eed0250af1541c05ff40db05eea",
+      "minimumMacOS": "15.0.0",
+      "testedMacOS": "15.7.9",
+      "packagedSmokeReport": "docs/release-results-1.0.1-darwin-x64.json",
+      "workflowRunId": "37962923865",
+      "artifactId": "11632548137",
+      "retrievedWithoutNewWorkflow": true
+    }
+  ],
+  "uploadedToR2": false,
+  "publishedToStore": false,
+  "newHostedWorkflowStarted": false,
+  "windowsStatus": "NOT_INCLUDED_PENDING_NATIVE_ANALYSIS_VERIFICATION",
+  "scope": "Packaged import, bundled native speech, waveform and restart persistence passed. OAuth, paid checkout, quota-consuming export, OS installation and prior-version migration are not asserted by these reports.",
+  "sourceDifference": "ARM64 includes adaptive CPU thread limits from the current source; the tested Intel build uses four speech threads from the prior source. Other app runtime files are identical between these source revisions.",
+  "updateInstallation": "Manual download and install; no publisher signer pins or notarization."
+}
