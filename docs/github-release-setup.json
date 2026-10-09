@@ -35,8 +35,17 @@
     "sha256": "78605daab575120b738353a19bd9da9ddd207c5cc0c6edcde88fd7bf98b0010c"
   },
   "customerRelease": {
-    "tagCreated": false,
-    "submittedToStore": false,
+    "version": "1.0.0",
+    "tag": "v1.0.0",
+    "tagCommit": "535f417197670c80339444b0979b6920d62fdc4b",
+    "tagCreated": true,
+    "submittedToStore": true,
+    "workflowRunId": "37942852278",
+    "sessionId": "ce6a59b3-e6d5-41d4-b01c-006efcfba51d",
+    "artifactStatus": "VERIFIED",
+    "releaseStatus": "READY",
+    "verificationRunId": "run_06gi2nd0q1uatol2br7eak5101",
+    "verifiedAt": "2026-10-09T15:52:54.225Z",
     "published": false
   }
 }
