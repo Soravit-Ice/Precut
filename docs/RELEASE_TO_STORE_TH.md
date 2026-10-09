@@ -23,7 +23,9 @@
 ผ่านเมื่อ 9 ตุลาคม 2026 และ Trigger.dev Production ตรวจไฟล์จริงสำเร็จ:
 `precut-1.0.0-mac-arm64.dmg` เป็น **VERIFIED**, release `PC 1.0.0` เป็น
 **PUBLISHED** และ trial-installer API คืนไฟล์ ARM64 `1.0.0` ได้แล้วเมื่อ 9 ตุลาคม
-ส่วน `1.0.1` กำลังทดสอบ Windows และ Mac Intel; อย่าอ้างว่ารองรับจน CI ผ่านและเผยแพร่ release ใหม่
+ส่วน `1.0.1` กำลังทดสอบ Windows; Mac Apple Silicon และ Mac Intel ผ่าน packaged analysis/restart แล้ว แต่ยังไม่ส่ง tag ใหม่จน Windows ผ่านครบ
+
+ผล Mac Intel: [candidate 37962923865](https://github.com/Soravit-Ice/Precut/actions/runs/37962923865) ทดสอบบน macOS 15.7.9, เปิดแอป 2.944 วินาที, ถอดเสียง 22 คำ, waveform และ restart ผ่าน ตัวแอปประกาศขั้นต่ำ macOS 15.0.0 อย่าอ้างว่ารองรับ Windows จน CI ผ่านและเผยแพร่ release ใหม่
 
 ก่อนส่งเวอร์ชันถัดไป ตรวจว่า Vercel Production ใช้ `TRIGGER_SECRET_KEY`
 ของ Trigger.dev **Production** และ redeploy หลังบันทึก key; development key
@@ -186,25 +188,25 @@ macOS อาจเตือนเรื่อง unsigned app ให้ผู้
 
 ## 7. เมื่อมีอัปเดต
 
-ถ้าเป็น bugfix ใช้ `1.0.1`; เพิ่มความสามารถที่เข้ากันได้ใช้ `1.1.0` ทุก build ที่เผยแพร่ต้องใช้เลขใหม่ ไม่แทนที่ไฟล์ที่ขายแล้วภายใต้ version เดิม
+ถ้าเป็น bugfix ใช้ `1.0.2`; เพิ่มความสามารถที่เข้ากันได้ใช้ `1.1.0` ทุก build ที่เผยแพร่ต้องใช้เลขใหม่ ไม่แทนที่ไฟล์ที่ขายแล้วภายใต้ version เดิม
 
 ```sh
 # ใช้ Node 24.21.0 / pnpm 11.5.2 ตาม docs/BUILDING.md
-pnpm version 1.0.1 --no-git-tag-version
-# เขียน releases/1.0.1.md อธิบายการเปลี่ยนแปลง
+pnpm version 1.0.2 --no-git-tag-version
+# เขียน releases/1.0.2.md อธิบายการเปลี่ยนแปลง
 pnpm release:check
 pnpm typecheck
 pnpm test
-git add package.json pnpm-lock.yaml releases/1.0.1.md apps packages scripts
-git commit -m "Release Precut 1.0.1"
+git add package.json pnpm-lock.yaml releases/1.0.2.md apps packages scripts
+git commit -m "Release Precut 1.0.2"
 git push origin main
-git tag -a v1.0.1 -m "Precut 1.0.1"
-git push origin v1.0.1
+git tag -a v1.0.2 -m "Precut 1.0.2"
+git push origin v1.0.2
 ```
 
 รอ CI → VERIFIED/READY → กด Publish release ใหม่เหมือนเดิม สินค้าที่ PUBLISHED แล้วไม่ต้องสร้างใหม่, ไม่ต้องเปลี่ยน OAuth Client ID, Product Code หรือ policy เพราะแค่แก้เวอร์ชันแอป หาก config ฝั่ง Store เปลี่ยนให้ export ใหม่และอัปเดต GitHub variable ก่อน tag
 
-ทดสอบ upgrade จากตัวติดตั้ง `1.0.0` **ที่มีโปรเจกต์และ activation จริง** ไป `1.0.1`: บันทึกงานและปิดแอป, ติดตั้งทับ Precut เดิมใน Applications, เปิดใหม่ ตรวจงาน/แคช/บัญชี/สิทธิ์และ export ข้อมูลแอปใช้ `appData/com.t2etech.precut` เดิม จึงอย่าลบโฟลเดอร์นี้ระหว่างอัปเดต บน Windows ตัว NSIS กำหนดไม่ลบ AppData เมื่อ uninstall; ต้องทดสอบบน Windows เมื่อมี installer แล้ว
+ทดสอบ upgrade จากตัวติดตั้ง `1.0.1` **ที่มีโปรเจกต์และ activation จริง** ไป `1.0.2`: บันทึกงานและปิดแอป, ติดตั้งทับ Precut เดิมใน Applications, เปิดใหม่ ตรวจงาน/แคช/บัญชี/สิทธิ์และ export ข้อมูลแอปใช้ `appData/com.t2etech.precut` เดิม จึงอย่าลบโฟลเดอร์นี้ระหว่างอัปเดต บน Windows ตัว NSIS กำหนดไม่ลบ AppData เมื่อ uninstall; ต้องทดสอบบน Windows เมื่อมี installer แล้ว
 
 แอป unsigned รุ่นนี้: Settings → About Precut → Check for updates จะแสดงทางไป Store → ดาวน์โหลดเวอร์ชันใหม่ → ปิดแอปและติดตั้งทับเอง ไม่อ้างว่ารุ่นปัจจุบันเป็นรุ่นล่าสุดจาก server หากเพิ่ม signer pins ในอนาคตจึงเปิดเส้นทาง SDK ตรวจลายเซ็นและติดตั้ง verified update
 

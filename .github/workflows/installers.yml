@@ -49,6 +49,11 @@ jobs:
         if: ${{ matrix.build_native }}
         run: node scripts/bootstrap-native.mjs
       - run: pnpm models:prepare
+      - name: Test native speech language detection before packaging
+        if: ${{ matrix.platform == 'win32' }}
+        run: |
+          pnpm fixtures:prepare
+          node scripts/native-speech-smoke.mjs
       - name: Build an installer candidate without submitting to Store
         # Candidate packaging is not a tagged Store submission. GitHub default
         # GITHUB_* variables cannot be overridden through a step env mapping.

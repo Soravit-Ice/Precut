@@ -87,7 +87,7 @@ try {
     for (let i = 0; i < 1800; i++) {
       const current = (await call("jobs.list")).find((j) => j.id === job.id);
       const status = JSON.stringify({
-        kind: current?.kind,
+        type: current?.type,
         state: current?.state,
         stage: current?.stage,
         progress: current?.progress,

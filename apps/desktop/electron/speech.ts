@@ -14,6 +14,7 @@ import {
   representativeLanguageProbes,
 } from "../../../packages/speech/src/language";
 import { join } from "node:path";
+import { availableParallelism } from "node:os";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import {
@@ -50,6 +51,11 @@ const modelFiles = {
   balanced: "ggml-large-v3-turbo-q5_0.bin",
   quality: "ggml-large-v3-q5_0.bin",
 };
+// Keep the UI responsive on dual-core hosts and avoid oversubscribing native
+// spin barriers. GPU-backed hosts still use up to four CPU support threads.
+const speechThreads = String(
+  Math.max(1, Math.min(4, availableParallelism() - 1)),
+);
 const WhisperSchema = z.object({
   result: z.object({ language: z.string() }),
   transcription: z.array(
@@ -409,7 +415,7 @@ export async function runSpeech(
           "--input-manifest",
           path,
           "-t",
-          "4",
+          speechThreads,
           ...(task.settings.useGPU ? [] : ["-ng"]),
         ],
         { signal: ctx.signal, onSpawn: ctx.spawn },
@@ -488,7 +494,7 @@ export async function runSpeech(
           "--input-manifest",
           path,
           "-t",
-          "4",
+          speechThreads,
           ...(task.settings.useGPU ? [] : ["-ng"]),
         ],
         { signal: ctx.signal, onSpawn: ctx.spawn },
@@ -755,7 +761,7 @@ export async function runSpeech(
         path,
         "-sns",
         "-t",
-        "4",
+        speechThreads,
         "-bs",
         "5",
         "-dtw",
