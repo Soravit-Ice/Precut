@@ -2,9 +2,31 @@ import { describe, it, expect, vi } from "vitest";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { uploadRelease } from "../../scripts/release-upload.mjs";
+import {
+  uploadRelease,
+  releaseUploadFailure,
+} from "../../scripts/release-upload.mjs";
 
 describe("release uploader", () => {
+  it("logs only bounded diagnostics and never error text containing credentials", () => {
+    expect(releaseUploadFailure(new Error("RELEASE_API_403"))).toBe(
+      "RELEASE_API_403",
+    );
+    expect(
+      releaseUploadFailure(new Error("RELEASE_API_403_RESPONSE_INVALID")),
+    ).toBe("RELEASE_API_403_RESPONSE_INVALID");
+    expect(releaseUploadFailure(new Error("ARTIFACT_CHECKSUM_MISMATCH"))).toBe(
+      "ARTIFACT_CHECKSUM_MISMATCH",
+    );
+    expect(
+      releaseUploadFailure(
+        new Error("fetch https://storage.example/file?token=private-secret"),
+      ),
+    ).toBe("RELEASE_UPLOAD_UNEXPECTED");
+    expect(releaseUploadFailure({ message: "Bearer private-secret" })).toBe(
+      "RELEASE_UPLOAD_UNEXPECTED",
+    );
+  });
   it.each([
     {
       deliveryType: "DESKTOP_INSTALLER",

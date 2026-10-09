@@ -4,6 +4,34 @@ import { resolve, dirname, basename, relative } from "node:path";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
+// Only our own bounded error codes may appear in CI logs. Fetch/SDK errors can
+// contain bearer tokens or presigned URLs and must never be printed verbatim.
+export function releaseUploadFailure(error) {
+  const message = error instanceof Error ? error.message : "";
+  const codes = new Set([
+    "RELEASE_API_ORIGIN_INVALID",
+    "RELEASE_IDENTITY_INVALID",
+    "GITHUB_OIDC_RUNTIME_REQUIRED",
+    "GITHUB_OIDC_UNAVAILABLE",
+    "GITHUB_OIDC_INVALID",
+    "ARTIFACT_MANIFEST_INVALID",
+    "ARTIFACT_PATH_INVALID",
+    "ARTIFACT_SIZE_INVALID",
+    "ARTIFACT_CHECKSUM_MISMATCH",
+    "RELEASE_SESSION_INVALID",
+    "R2_UPLOAD_ORIGIN_INVALID",
+    "ARTIFACT_ID_INVALID",
+    "MULTIPART_MANIFEST_INVALID",
+    "ARTIFACT_READ_INCOMPLETE",
+    "MULTIPART_ETAG_MISSING",
+    "UPLOAD_MODE_INVALID",
+  ]);
+  return codes.has(message) ||
+    /^(RELEASE_API|R2_UPLOAD)_\d{3}(?:_RESPONSE_INVALID)?$/.test(message)
+    ? message
+    : "RELEASE_UPLOAD_UNEXPECTED";
+}
+
 export async function uploadRelease(input, fetcher = globalThis.fetch) {
   const origin = new URL(input.origin);
   if (
@@ -45,6 +73,7 @@ export async function uploadRelease(input, fetcher = globalThis.fetch) {
     return value.value;
   };
   const api = async (path, body = {}) => {
+    input.onProgress?.("store_request");
     const response = await fetcher(new URL(path, origin), {
       method: "POST",
       redirect: "error",
@@ -55,7 +84,12 @@ export async function uploadRelease(input, fetcher = globalThis.fetch) {
       },
       body: JSON.stringify(body),
     });
-    const value = await response.json();
+    let value;
+    try {
+      value = await response.json();
+    } catch {
+      throw new Error("RELEASE_API_" + response.status + "_RESPONSE_INVALID");
+    }
     if (!response.ok || !value.data)
       throw new Error("RELEASE_API_" + response.status);
     return value.data;
@@ -66,6 +100,7 @@ export async function uploadRelease(input, fetcher = globalThis.fetch) {
   if (!Array.isArray(manifest) || !manifest.length || manifest.length > 20)
     throw new Error("ARTIFACT_MANIFEST_INVALID");
   const files = [];
+  input.onProgress?.("checking_manifest");
   for (const item of manifest) {
     if (
       !item ||
@@ -89,6 +124,7 @@ export async function uploadRelease(input, fetcher = globalThis.fetch) {
       throw new Error("ARTIFACT_CHECKSUM_MISMATCH");
     files.push({ path, metadata: { ...item, sha256, fileSize: details.size } });
   }
+  input.onProgress?.("manifest_checked");
   const session = await api("/internal/v1/releases/start", {
     productCode: input.productCode,
     version: input.version,
@@ -199,9 +235,11 @@ if (
       releaseNotes: process.env.T2E_RELEASE_NOTES ?? "",
     });
     console.log(JSON.stringify(result)); // IDs/status only; never OIDC tokens or presigned URLs.
-  } catch {
+  } catch (error) {
     console.error(
-      "Release upload failed. Check identity, manifest, session and storage in Admin. Credentials and signed URLs are intentionally not logged.",
+      "Release upload failed: " +
+        releaseUploadFailure(error) +
+        ". Credentials and signed URLs are not logged.",
     );
     process.exitCode = 1;
   }

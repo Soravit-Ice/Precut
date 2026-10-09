@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { uploadRelease } from "./release-upload.mjs";
+import { uploadRelease, releaseUploadFailure } from "./release-upload.mjs";
 try {
   const { version, notes } = JSON.parse(
     await readFile("out/release-metadata.json", "utf8"),
@@ -16,12 +16,15 @@ try {
         commitSha: process.env.GITHUB_SHA,
         manifestPath: "out/artifacts.json",
         releaseNotes: notes,
+        onProgress: (stage) => console.log("Store upload stage: " + stage),
       }),
     ),
   );
-} catch {
+} catch (error) {
   console.error(
-    "Store upload failed. Check repository/workflow binding, artifact metadata and Store services. Credentials are not logged.",
+    "Store upload failed: " +
+      releaseUploadFailure(error) +
+      ". Credentials are not logged.",
   );
   process.exitCode = 1;
 }

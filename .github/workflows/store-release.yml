@@ -87,7 +87,14 @@ jobs:
       - run: node scripts/merge-release-manifests.mjs
         env:
           PRECUT_RELEASE_TARGETS: ${{ inputs.targets }}
+      # Upload tooling follows the same trusted main workflow. The installers,
+      # metadata and GITHUB_SHA still belong to the original immutable tag.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: .store-upload-tools
+          persist-credentials: false
       - name: Upload files and request server checksum verification
-        run: node scripts/upload-store-release.mjs
+        run: node .store-upload-tools/scripts/upload-store-release.mjs
       - name: Next step
         run: echo "Submitted for verification. Wait for READY in Store Admin, then publish the release and product there. No automatic publication was performed."
