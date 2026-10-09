@@ -1,6 +1,6 @@
 # นำ Precut ขึ้นขายบน T2ETECH Store
 
-ฉบับสำหรับ Precut `1.0.1` (กำลังทดสอบ release ทั้ง 3 ระบบ) วันที่ 9 ตุลาคม 2026 — Made by t2etech
+ฉบับสำหรับ Precut `1.0.1` แบบ manual (Mac Apple Silicon) วันที่ 10 ตุลาคม 2026 — Made by t2etech
 
 ## วิธี manual เพื่อไม่ใช้ GitHub-hosted CI
 
@@ -21,6 +21,7 @@ pnpm models:prepare
 pnpm release:build
 pnpm fixtures:prepare
 node scripts/release-smoke.mjs
+pnpm release:manual
 ```
 
 บน Windows ต้องมี Git, CMake และ Visual Studio Build Tools ที่ติดตั้ง C++ workload; Mac Intel ต้องมี Xcode command line tools/CMake ดู `docs/BUILDING.md` และอย่าใช้ bootstrap Intel/Windows บน Mac ARM64 ตัว script จะปฏิเสธ platform ที่ไม่รองรับ
@@ -29,11 +30,24 @@ node scripts/release-smoke.mjs
 
 ### ข้อจำกัดของระบบ Store ปัจจุบัน
 
-ตอนนี้ release session/upload API ต้องใช้ GitHub Actions OIDC และผูกกับ repository/workflow/tag/commit โดยเฉพาะ **ไม่มี Admin manual import/upload release** ที่เรียกจากเครื่องหรือ Cloudflare dashboard ได้ `pnpm release:upload` จึงไม่ใช่คำสั่งอัปโหลดจากเครื่องทั่วไป ห้ามใช้ credential ของ CI แทน admin login หรือเขียนฐานข้อมูลให้เป็น VERIFIED/PUBLISHED โดยข้ามการตรวจไฟล์
+เพิ่ม **Admin → Releases → นำเข้า release จาก R2** แล้ว โดยใช้ Admin session และการยืนยันตัวตนใหม่ ไม่ต้องใช้ GitHub OIDC เส้นทาง CI เดิมยังตรวจ repository/workflow/tag/commit ตามเดิม `pnpm release:upload` เป็นคำสั่งสำหรับ CI เท่านั้น สำหรับ manual ใช้ `pnpm release:manual` และฟอร์ม Admin
 
-การอัปโหลดไฟล์ไว้ใน private R2 เพียงอย่างเดียวยังไม่เปลี่ยน download/latest ของ Store ต้องเพิ่มเส้นทาง manual ใน Admin เพื่อบันทึกสินค้า เวอร์ชัน ระบบ สถาปัตยกรรม object key ขนาด SHA-256 และ release notes → ตรวจไฟล์จริง → READY → Publish เมื่อมี feature นี้ flow manual จะใช้ local build ได้โดยไม่พึ่ง hosted CI
+การอัปโหลดไฟล์ไว้ใน private R2 เพียงอย่างเดียวยังไม่เปลี่ยน download/latest ของ Store ต้องนำเข้า manifest ใน Admin → ตรวจไฟล์จริง → READY → Publish ฟอร์มคำนวณ object key และแสดงโฟลเดอร์ที่ต้องอัปโหลดให้ ไม่รับ URL หรือ object ของสินค้าอื่น
 
 อีกทางที่ระบบเดิมรองรับคือ self-hosted GitHub runner บนเครื่องของเจ้าของ ซึ่งยังใช้ OIDC ได้โดยไม่ใช้ GitHub-hosted compute แต่ต้องมีเครื่องของแต่ละระบบและควบคุมพื้นที่ artifacts/storage ด้วย อย่าเปลี่ยน repository เป็น public เพียงเพื่อใช้ฟรีโดยไม่ตั้งใจเผยแพร่ source
+
+### นำไฟล์ 1.0.1 ขึ้น Store แบบ manual
+
+1. ใช้ `out/precut-1.0.1-mac-arm64.dmg` และ `out/manual-release.json` ที่เตรียมไว้ เปิด Store Admin → Releases → นำเข้า release จาก R2 แล้วเลือก JSON
+2. เปิด Cloudflare → R2 → `t2etech-store-releases` (private) สร้างโฟลเดอร์ตามฟอร์ม หรือคัดลอกจาก `out/r2-upload-instructions.txt` แล้วอัปโหลด DMG โดยคงชื่อไฟล์เดิม
+3. ตั้ง Content-Type เป็น `application/x-apple-diskimage` ให้ตรง manifest
+4. กลับ Admin ติ๊กอัปโหลดครบ ระบุเหตุผลและยืนยันตัวตน กดนำเข้าและตรวจไฟล์
+5. รีเฟรชจนเป็น READY และ artifact VERIFIED แล้วกด Publish release ยืนยัน PUBLISH
+6. ทดสอบดาวน์โหลดและติดตั้งจากหน้าร้าน รุ่นนี้เป็น Mac Apple Silicon บน macOS 27 ขึ้นไป ตัวไฟล์ยัง unsigned จึงอาจมีคำเตือนของระบบ ส่วน checkout ต้องผ่าน readiness แยกจาก trial download
+
+สำหรับ version ถัดไป เปลี่ยน `package.json` เช่น 1.0.2 และเขียน `releases/1.0.2.md` → build → packaged smoke → `pnpm release:manual` → อัปโหลด R2 → import → READY → Publish ห้ามเขียนทับ version เดิม
+
+หากจะเพิ่ม Mac Intel/Windows ใน release เดียว ต้องมี build และผล smoke ของแต่ละระบบในเครื่อง แล้วรวม manifests ด้วย `pnpm release:manual --manifest out/artifacts-darwin-arm64.json --manifest out/artifacts-darwin-x64.json --manifest out/artifacts-win32-x64.json` ไม่เอาไฟล์ ARM64 ไปเปลี่ยนชื่อเป็น x64
 
 ### การอัปเดตตัวแอป
 
@@ -72,7 +86,7 @@ Windows เปิดแอปและ import ได้ แต่ [diagnostic ru
 
 [รอบใหม่ 37966185274](https://github.com/Soravit-Ice/Precut/actions/runs/37966185274) ไม่เริ่ม runner เพราะ GitHub แจ้งปัญหา account payments/spending limit ให้เจ้าของตรวจ Settings → Billing & licensing → Budgets and alerts ของ **Actions** และสถานะ payment ดู [เอกสาร GitHub](https://docs.github.com/en/actions/how-tos/troubleshoot-workflows) ไม่ใช่บั๊ก R2 และไม่ใช่ผลทดสอบแอป
 
-หลังแก้ billing ให้ rerun รอบใหม่นี้ก่อน เมื่อ native batch language detection และ packaged analysis/restart ของ Windows ผ่านแล้ว ค่อยสร้าง tag `v1.0.1` ที่ final commit เพื่อให้ release workflow ทดสอบครบสามระบบและอัปโหลดใน session เดียว ปัจจุบันยังไม่มี tag `v1.0.1` และยังไม่ส่งไฟล์ 1.0.1 เข้า Store
+เจ้าของเลือกไม่ใช้ hosted runners จึงไม่ต้องเพิ่ม spending limit หรือแก้ billing เพื่อปล่อยรุ่น Mac ปัจจุบัน build และ packaged smoke ของ Mac ARM64 1.0.1 ในเครื่องผ่านแล้ว (import, ถอดเสียง 22 คำ, waveform, restart) ไฟล์อยู่ใน `out/` Windows fix ยังรอยืนยันบน Windows ไม่มี tag `v1.0.1` และยังไม่อัปโหลด/Publish 1.0.1 ระหว่างเตรียมเส้นทาง manual
 
 ก่อนส่งเวอร์ชันถัดไป ตรวจว่า Vercel Production ใช้ `TRIGGER_SECRET_KEY`
 ของ Trigger.dev **Production** และ redeploy หลังบันทึก key; development key

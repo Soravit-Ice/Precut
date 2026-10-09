@@ -35,6 +35,7 @@
     "release:build": "node scripts/build-release.mjs",
     "release:manifest": "node scripts/release-manifest.mjs",
     "release:upload": "node scripts/release-upload.mjs",
+    "release:manual": "node scripts/manual-release.mjs",
     "notices:prepare": "node scripts/collect-notices.mjs",
     "start:unpackaged": "pnpm build && electron ."
   },
