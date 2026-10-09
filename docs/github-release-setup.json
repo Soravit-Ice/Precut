@@ -45,7 +45,7 @@
     "artifactStatus": "VERIFIED",
     "releaseStatus": "READY",
     "verificationRunId": "run_06gi2nd0q1uatol2br7eak5101",
-    "verifiedAt": "2026-10-09T15:52:54.225Z",
+    "verificationRunCompletedAt": "2026-10-09T15:52:54.225Z",
     "published": false
   }
 }

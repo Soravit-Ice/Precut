@@ -31,6 +31,14 @@ Windows หรือ Mac Intel ที่ผ่านการทดสอบ ใ
 variables ของ Precut เมื่อไฟล์อยู่ใน R2 และค้าง VERIFYING ให้แก้ worker/outbox
 แทนการอัปโหลดซ้ำหรือย้าย tag
 
+การที่ release เป็น READY ยืนยันความถูกต้องของไฟล์ ไม่ใช่ผลทดสอบการรับเงินจริง
+หลัง redeploy Vercel วันที่ 9 ตุลาคม `/healthz` ตอบ 200 แต่ `/readyz` ยังตอบ
+503 และ runtime logs ระบุ `configuration` ใน source Store
+`approvedLegalCopy` ยังเป็น `null`: การตั้ง `LEGAL_APPROVAL_ID` อย่างเดียวไม่ติดตั้ง
+ชุดนโยบายที่อนุมัติ ต้องตรวจและติดตั้ง bundle ตาม
+`t2etech-store/docs/legal/README.md` พร้อมตรวจ configuration ให้ `/readyz` ผ่าน
+ก่อนเปิดรับเงินจริง ไม่ปิด readiness guard เพื่อให้หน้าแสดงพร้อมขาย
+
 native FFmpeg ที่ใช้เป็น GPL-enabled build: ก่อนแจกไฟล์สาธารณะต้องเตรียม corresponding source/build materials ตาม `THIRD_PARTY_NOTICES.md` และ `docs/BUILDING.md` รักษา notices ที่อยู่ในตัวติดตั้งด้วย การไม่มี Team ID ไม่ได้ยกเลิกเงื่อนไขนี้
 
 ## 2. ตั้งค่า Store ครั้งแรก
