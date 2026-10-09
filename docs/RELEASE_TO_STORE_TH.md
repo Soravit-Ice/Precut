@@ -157,6 +157,14 @@ workflow_dispatch ใช้ได้เมื่อเลือก **tag `v1.0.0
 
 DMG local ที่เตรียมไว้ใช้ทดสอบได้ทันที แต่ flow เข้า Store ปัจจุบันรับ release ผ่าน GitHub OIDC ดังนั้นไม่ใช่นำไฟล์วาง public R2 แล้วจะเปิดขายเอง
 
+### ถ้า upload ได้ HTTP 403 หรือ Cloudflare challenge
+
+ตรวจ Cloudflare → `t2etech.com` → Security → Analytics → Events ให้เวลา, host `store.t2etech.com` และ path `/internal/v1/releases/start` ตรงกับ job ถ้า Service เป็น **Bot fight mode** / Action เป็น **Managed Challenge** คำขอยังไม่ถึง backend และการแก้ repository binding หรือ build แอปใหม่ไม่ช่วย
+
+Bot Fight Mode ของ Free plan ทำข้อยกเว้นด้วย WAF Skip rule ไม่ได้ ตาม [เอกสาร Cloudflare](https://developers.cloudflare.com/bots/troubleshooting/false-positives/) การปิดฟีเจอร์นี้มีผลทั้ง zone และต้องให้เจ้าของอนุมัติ; อีกทางคือใช้ Super Bot Fight Mode ที่รองรับข้อยกเว้นสำหรับ API โดยตรวจ plan/cost ก่อน อย่าปิดการตรวจ OIDC, ขยายสิทธิ์ repository หรือใส่ token ใน URL เพื่อแก้ challenge
+
+เมื่อแก้การป้องกันที่หน้าด่านแล้ว และยังไม่มี release session/ไฟล์ที่อัปโหลดสำเร็จ ให้ใช้ **Re-run failed jobs** ใน run เดิมเพื่อส่ง installer จาก artifact เดิม ไม่ต้องย้าย tag หรือเปลี่ยนเวอร์ชัน การ retry upload ใช้ tooling จาก trusted `main` ส่วน metadata, installer และ commit ยังคงเป็นของ tag เดิม
+
 ## 6. Publish และทดสอบก่อนเปิดขาย
 
 1. Admin → Releases → ตรวจสินค้า `PC`, เวอร์ชัน `1.0.0`, channel **STABLE**, platform **MACOS**, architecture **ARM64**

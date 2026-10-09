@@ -14,6 +14,8 @@ export function releaseUploadFailure(error) {
     "GITHUB_OIDC_RUNTIME_REQUIRED",
     "GITHUB_OIDC_UNAVAILABLE",
     "GITHUB_OIDC_INVALID",
+    "RELEASE_API_CLOUDFLARE_CHALLENGE",
+    "RELEASE_API_VERCEL_CHALLENGE",
     "ARTIFACT_MANIFEST_INVALID",
     "ARTIFACT_PATH_INVALID",
     "ARTIFACT_SIZE_INVALID",
@@ -94,6 +96,10 @@ export async function uploadRelease(input, fetcher = globalThis.fetch) {
               ? "cloudflare"
               : "origin";
       input.onProgress?.("store_response_" + response.status + "_" + source);
+      if (source === "cloudflare_challenge")
+        throw new Error("RELEASE_API_CLOUDFLARE_CHALLENGE");
+      if (source === "vercel_challenge")
+        throw new Error("RELEASE_API_VERCEL_CHALLENGE");
     }
     let value;
     try {

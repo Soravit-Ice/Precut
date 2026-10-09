@@ -21,10 +21,13 @@ try {
     ),
   );
 } catch (error) {
+  const code = releaseUploadFailure(error);
   console.error(
-    "Store upload failed: " +
-      releaseUploadFailure(error) +
-      ". Credentials are not logged.",
+    "Store upload failed: " + code + ". Credentials are not logged.",
   );
+  if (code === "RELEASE_API_CLOUDFLARE_CHALLENGE")
+    console.error(
+      "Cloudflare challenged the Store API before backend authorization. Check Security Events and the release guide; browser challenges cannot be completed by CI.",
+    );
   process.exitCode = 1;
 }

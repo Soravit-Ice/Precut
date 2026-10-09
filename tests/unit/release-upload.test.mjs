@@ -166,4 +166,51 @@ describe("release uploader", () => {
       await rm(directory, { recursive: true, force: true });
     }
   });
+  it("identifies Cloudflare challenges without logging the response body or uploading files", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "t2e-release-challenge-"));
+    const progress = vi.fn();
+    const fetcher = vi.fn(async (url) =>
+      String(url).includes("actions.githubusercontent.com")
+        ? Response.json({ value: "fixture-oidc-token" })
+        : new Response("<html>private response body</html>", {
+            status: 403,
+            headers: { "cf-mitigated": "challenge", server: "cloudflare" },
+          }),
+    );
+    try {
+      await writeFile(join(directory, "test.dmg"), "fixture");
+      await writeFile(
+        join(directory, "artifacts.json"),
+        JSON.stringify([
+          { fileName: "test.dmg", deliveryType: "DESKTOP_INSTALLER" },
+        ]),
+      );
+      const error = await uploadRelease(
+        {
+          origin: "https://store.example.test",
+          productCode: "PC",
+          version: "1.0.0",
+          tag: "refs/tags/v1.0.0",
+          commitSha: "a".repeat(40),
+          manifestPath: join(directory, "artifacts.json"),
+          onProgress: progress,
+          environment: {
+            ACTIONS_ID_TOKEN_REQUEST_URL:
+              "https://pipelines.actions.githubusercontent.com/token",
+            ACTIONS_ID_TOKEN_REQUEST_TOKEN: "request-token",
+          },
+        },
+        fetcher,
+      ).catch((failure) => failure);
+      expect(releaseUploadFailure(error)).toBe(
+        "RELEASE_API_CLOUDFLARE_CHALLENGE",
+      );
+      expect(progress).toHaveBeenCalledWith(
+        "store_response_403_cloudflare_challenge",
+      );
+      expect(fetcher).toHaveBeenCalledTimes(2);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
 });
