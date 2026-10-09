@@ -1,10 +1,10 @@
 {
-  "date": "2026-10-09T10:26:57.534Z",
+  "date": "2026-10-09T12:01:52.146Z",
   "platform": "darwin",
   "arch": "arm64",
   "packaged": true,
   "version": "1.0.0",
-  "coldLaunchMs": 1240,
+  "coldLaunchMs": 4458,
   "developmentAdapterRejected": true,
   "productionConfigLoaded": true,
   "unsignedStoreUpdatePolicy": "passed",

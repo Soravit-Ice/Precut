@@ -1,0 +1,33 @@
+{
+  "runId": 37927034810,
+  "runUrl": "https://github.com/Soravit-Ice/Precut/actions/runs/37927034810",
+  "commit": "eb95ac0",
+  "runner": "xcode-27",
+  "conclusion": "success",
+  "tests": 88,
+  "testFiles": 12,
+  "minimumMacOS": "27.0.0",
+  "installer": {
+    "fileName": "precut-1.0.0-mac-arm64.dmg",
+    "fileSize": 361134127,
+    "sha256": "16ccba32d1c521c5299c34f24856f8353db4219b6cf274d5699520a8fe941dd0"
+  },
+  "acceptance": {
+    "date": "2026-10-09T11:59:54.780Z",
+    "platform": "darwin",
+    "arch": "arm64",
+    "packaged": true,
+    "version": "1.0.0",
+    "coldLaunchMs": 1016,
+    "developmentAdapterRejected": true,
+    "productionConfigLoaded": true,
+    "unsignedStoreUpdatePolicy": "passed",
+    "import": "passed",
+    "speechWords": 22,
+    "waveform": "passed",
+    "restartPersistence": "passed",
+    "scope": "Isolated user data. Bundled FFmpeg/Whisper/models/SQLite. No paid purchase, OAuth login, quota-consuming export, OS installation or prior-version migration performed."
+  },
+  "submittedToStore": false,
+  "published": false
+}

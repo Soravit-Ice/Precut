@@ -1,0 +1,42 @@
+{
+  "repository": "Soravit-Ice/Precut",
+  "private": true,
+  "defaultBranch": "main",
+  "ownerId": "80631648",
+  "repositoryId": "1411644739",
+  "store": {
+    "productCode": "PC",
+    "bindingStatus": "ACTIVE",
+    "workflowRef": "Soravit-Ice/Precut/.github/workflows/store-release.yml@refs/heads/main",
+    "allowedTagPrefix": "refs/tags/v",
+    "ciMayPublish": false
+  },
+  "actions": {
+    "configuredVariables": [
+      "PRECUT_PRODUCT_CONFIG_JSON",
+      "PRECUT_NATIVE_MAC_ARM64_URL",
+      "PRECUT_NATIVE_MAC_ARM64_SHA256",
+      "PRECUT_RELEASE_TARGETS"
+    ],
+    "environment": "release-upload",
+    "deploymentTagPattern": "v*",
+    "targets": [
+      {
+        "runner": "xcode-27",
+        "platform": "darwin",
+        "arch": "arm64"
+      }
+    ],
+    "minimumMacOS": "27.0.0"
+  },
+  "nativeInput": {
+    "releaseTag": "native-darwin-arm64-78605daab575",
+    "assetId": 624818295,
+    "sha256": "78605daab575120b738353a19bd9da9ddd207c5cc0c6edcde88fd7bf98b0010c"
+  },
+  "customerRelease": {
+    "tagCreated": false,
+    "submittedToStore": false,
+    "published": false
+  }
+}

@@ -4,7 +4,7 @@
 
 ## 1. สิ่งที่เตรียมแล้วและสิ่งที่ต้องทำก่อนเปิดขาย
 
-ตัวติดตั้งที่สร้างจากเครื่องนี้คือ **Mac Apple Silicon / ARM64**:
+ตัวติดตั้งชุดปัจจุบันรองรับ **Mac Apple Silicon / ARM64 บน macOS 27 ขึ้นไป**:
 
 - `out/precut-1.0.0-mac-arm64.dmg` — ไฟล์ให้ลูกค้าติดตั้งและอัปโหลดเข้า Store
 - `out/precut-1.0.0-mac-arm64.zip` — แอปแบบ ZIP สำหรับทดสอบ/สำรอง
@@ -18,7 +18,7 @@
 
 ตัวติดตั้งนี้ไม่ลง Developer ID/Windows publisher และไม่ notarize สามารถส่งเข้า backend ที่ปรับแล้วได้; ลูกค้าอาจพบคำเตือนของระบบปฏิบัติการ การอัปเดตแบบ unsigned ใช้ดาวน์โหลดและติดตั้งเองจาก Store ส่วนการติดตั้งอัตโนมัติที่ตรวจผู้ลงลายเซ็นยังต้องมี signer pins
 
-**ยังไม่ได้อัปโหลดหรือกด Publish สินค้าให้ลูกค้า** และยังไม่มีตัวติดตั้ง Windows หรือ Mac Intel ที่ผ่านการทดสอบ ให้เปิดขายเฉพาะระบบที่มีไฟล์และทดสอบแล้ว
+**Source ขึ้น GitHub และตั้งค่า Actions แล้ว; ยังไม่ได้ส่ง customer installer เข้า Store หรือกด Publish สินค้าให้ลูกค้า** และยังไม่มีตัวติดตั้ง Windows หรือ Mac Intel ที่ผ่านการทดสอบ ให้เปิดขายเฉพาะระบบที่มีไฟล์และทดสอบแล้ว
 
 native FFmpeg ที่ใช้เป็น GPL-enabled build: ก่อนแจกไฟล์สาธารณะต้องเตรียม corresponding source/build materials ตาม `THIRD_PARTY_NOTICES.md` และ `docs/BUILDING.md` รักษา notices ที่อยู่ในตัวติดตั้งด้วย การไม่มี Team ID ไม่ได้ยกเลิกเงื่อนไขนี้
 
@@ -36,9 +36,9 @@ native FFmpeg ที่ใช้เป็น GPL-enabled build: ก่อนแ�
 
 ## 3. ผูก GitHub repository ใน Store
 
-ตรวจ metadata จาก GitHub connector แล้ว: repository เป็น private, default branch `main`, ยังไม่มี source commit ในขณะเตรียมคู่มือนี้
+เชื่อม repository สำเร็จแล้วใน Store Admin: repository เป็น private, default branch `main`, source อยู่บน GitHub และ CI ตรวจโค้ดผ่านแล้ว
 
-เปิด Precut → Repository หรือ Admin → Repositories แล้วบันทึกค่าดังนี้:
+ค่าที่บันทึกใน Precut → เชื่อมต่อ GitHub:
 
 | Field              | Value                                                                    |
 | ------------------ | ------------------------------------------------------------------------ |
@@ -57,24 +57,47 @@ workflow มี caller `release.yml` เรียก reusable `store-release.yml
 
 ## 4. ตั้งค่า GitHub Actions
 
-ใน [Soravit-Ice/Precut](https://github.com/Soravit-Ice/Precut) → Settings → Secrets and variables → Actions → **Variables** เพิ่ม:
+ตั้งค่าใน [Soravit-Ice/Precut](https://github.com/Soravit-Ice/Precut) → Settings → Secrets and variables → Actions → **Variables** แล้ว:
 
 | Variable                         | สิ่งที่ใส่                                                           |
 | -------------------------------- | -------------------------------------------------------------------- |
 | `PRECUT_PRODUCT_CONFIG_JSON`     | JSON ทั้งไฟล์ที่ export จาก Store สำหรับ PC เป็น public config       |
-| `PRECUT_NATIVE_MAC_ARM64_URL`    | HTTPS URL ดาวน์โหลด `native-darwin-arm64.zip` โดยไม่ต้อง login       |
+| `PRECUT_NATIVE_MAC_ARM64_URL`    | GitHub API URL ของ native ZIP ใน private prerelease                  |
 | `PRECUT_NATIVE_MAC_ARM64_SHA256` | ค่า hash จาก `out/native-darwin-arm64.zip.sha256` เฉพาะตัวเลข 64 ตัว |
 
-native ZIP ต้องมี `bin/`, `lib/`, `manifest.json` อยู่ที่ root ไม่ต้องใส่โฟลเดอร์ native ครอบอีกชั้น อัปโหลด ZIP ไว้ในพื้นที่ public download ที่ควบคุมได้ เช่น R2 และใช้ URL ที่ downloader เข้าถึงได้ตรง ๆ อย่าใช้ private GitHub asset URL ที่ต้องมี token เพราะ downloader นี้ไม่ได้ส่ง token
+native ZIP ต้องมี `bin/`, `lib/`, `manifest.json` อยู่ที่ root ไม่ต้องใส่โฟลเดอร์ native ครอบอีกชั้น ชุดนี้อัปโหลดไว้ใน private prerelease `native-darwin-arm64-78605daab575` แล้ว:
+
+- API URL: `https://api.github.com/repos/Soravit-Ice/Precut/releases/assets/624818295`
+- SHA-256: `78605daab575120b738353a19bd9da9ddd207c5cc0c6edcde88fd7bf98b0010c`
+
+workflow ส่ง GitHub token ที่มี `contents: read` เฉพาะ GitHub API ของ repository นี้ แล้วดาวน์โหลด signed asset URL โดยไม่ส่ง token ต่อ ตรวจ hash ก่อนแตกไฟล์ ไม่ต้องเปิด native archive เป็น public หรือเพิ่ม PAT secret
 
 ค่านี้เป็น build tools สำหรับ CI **ไม่ใช่ไฟล์ DMG ให้ลูกค้าซื้อ** และต้องจัด source/notices สำหรับ native distribution ด้วย
 
-ไม่ต้องใส่ `PRECUT_RELEASE_TARGETS` ถ้าปล่อยเฉพาะ Apple Silicon ซึ่งเป็นค่าเริ่มต้น หากมี approved native bundles ของ Intel/Windows และพร้อมทดสอบแล้ว จึงใส่:
+ตั้ง `PRECUT_RELEASE_TARGETS` สำหรับ Apple Silicon ไว้แล้ว โดยใช้ runner `xcode-27` เพราะ FFmpeg ใน native archive นี้มี deployment target macOS 27 (whisper-cli 26.2) ใช้ macOS 15 runner จะรันไม่ได้ แอปกำหนด `minimumSystemVersion: 27.0.0` ให้ตรงกับไฟล์จริง ดู [runner image](https://github.com/actions/runner-images/blob/main/images/macos/xcode-27-arm64-Readme.md)
+
+หากต้องการรองรับ macOS รุ่นเก่า ต้อง rebuild FFmpeg, dependencies และ speech tools ด้วย deployment target ที่ต้องการ แล้วทดสอบบน OS นั้นก่อนลด minimumSystemVersion; การเปลี่ยนชื่อ runner หรือแก้เลข minimum เพียงอย่างเดียวไม่ทำให้ native tools รองรับ
+
+ค่าปัจจุบัน:
 
 ```json
 [
   {
-    "runner": "macos-15",
+    "runner": "xcode-27",
+    "platform": "darwin",
+    "arch": "arm64",
+    "bundle_url": "PRECUT_NATIVE_MAC_ARM64_URL",
+    "bundle_sha": "PRECUT_NATIVE_MAC_ARM64_SHA256"
+  }
+]
+```
+
+หากมี approved native bundles ของ Intel/Windows และพร้อมทดสอบแล้ว จึงขยาย targets เช่น:
+
+```json
+[
+  {
+    "runner": "xcode-27",
     "platform": "darwin",
     "arch": "arm64",
     "bundle_url": "PRECUT_NATIVE_MAC_ARM64_URL",
@@ -99,24 +122,17 @@ native ZIP ต้องมี `bin/`, `lib/`, `manifest.json` อยู่ที
 
 เพิ่ม URL/hash variables ของ target ที่เพิ่มตามชื่อใน JSON ห้ามนำ ARM64 ZIP ไปใช้กับ x64 runner
 
-Settings → Environments → สร้าง **`release-upload`** จำกัด tag ที่อนุญาตเป็น `v*` และตั้ง reviewer ก่อน upload หาก GitHub plan รองรับ protection นี้ workflow ใช้ OIDC จึงไม่ต้องใส่ Store API token/Cloudflare secret/Supabase service role ใน repo นี้
+สร้าง environment **`release-upload`** แล้ว จำกัด tag ที่อนุญาตเป็น `v*` ส่วน reviewer/wait timer ไม่ได้เปิดเพราะ plan ปัจจุบันไม่รองรับ protection ดังกล่าว workflow ใช้ OIDC จึงไม่ต้องใส่ Store API token/Cloudflare secret/Supabase service role ใน repo นี้
 
 ## 5. ส่ง source และ release เวอร์ชันแรก
 
-โฟลเดอร์ Precut ในเครื่องนี้ยังไม่มี `.git` และ remote ว่างในขณะตรวจ ดังนั้นทำ initial push หลังตั้ง Git authentication ไว้แล้ว:
+Source ขึ้น `main` ใน GitHub แล้ว ไม่ต้อง `git init` หรือเพิ่ม remote ซ้ำ Git authentication ใช้บัญชีเจ้าของ repository ที่ตั้งค่าในเครื่องนี้
 
-```sh
-cd /Users/soravit_ice/Desktop/Brand/Precut
-git init -b main
-git remote add origin https://github.com/Soravit-Ice/Precut.git
-git add .
-git status --short
-git diff --cached --stat
-git commit -m "Prepare Precut 1.0.0 desktop release"
-git push -u origin main
-```
+`.gitignore` กัน `.env*`, `*.key`, `product.config.json`, native outputs, `out/`, `.tools/`, cache และ node_modules แล้ว อย่า force-add secrets หรือ native binaries ลง source repo `product.config.json` ส่งผ่าน public variable ในขั้นก่อนหน้า
 
-ตรวจรายการก่อน commit: `.gitignore` กัน `.env*`, `*.key`, `product.config.json`, native outputs, `out/`, `.tools/`, cache และ node_modules แล้ว อย่า force-add secrets หรือ native binaries ลง source repo `product.config.json` ส่งผ่าน public variable ในขั้นก่อนหน้า
+รอบทดสอบบน GitHub ผ่านแล้ว: [Installer candidates 37927034810](https://github.com/Soravit-Ice/Precut/actions/runs/37927034810) — 88 tests, build DMG/ZIP, เปิด packaged app วิเคราะห์เสียงและทดสอบ restart ผ่าน ดาวน์โหลดไฟล์จาก Artifacts ในหน้านี้ ผลและ SHA ของ CI อยู่ที่ `docs/github-installer-acceptance-1.0.0.json` (hash ของ CI ต่างจาก local build ให้ใช้ manifest ที่มากับไฟล์เสมอ)
+
+ก่อนส่ง release ครั้งแรก เปิด Actions → **Precut installer candidates** → Run workflow เลือก `main` workflow นี้แพ็กตัวติดตั้งและทดสอบแอปจริงตาม targets ที่ตั้งไว้ เก็บ DMG/manifest/acceptance report เป็น artifact และไม่มีสิทธิ์อัปโหลดหรือ Publish เข้า Store
 
 เมื่อ Store repository binding, variables และ services พร้อมแล้ว:
 

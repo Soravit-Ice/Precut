@@ -48,3 +48,7 @@ Bundled Fast and VAD models have fixed upstream SHA256 pins. Fonts live in `apps
 Unsigned candidates can be built without credentials. Signed releases require the actual PC `product.config.json`, Apple signing/notarization credentials, Windows signing credentials, and matching signer pins in the store-generated configuration. Supply those in the release environment; never commit private signing material. Run clean-install, update, deactivation, offline-certificate, real quota/device-limit and editor-import acceptance on the exact signed artifacts before publication.
 
 See `THIRD_PARTY_NOTICES.md`, `licenses/` and `native-provenance.json` for native/package notices and the local FFmpeg build configuration. Public GPL-enabled native distribution also requires the exact corresponding source/build materials; the local artifacts supplied here are internal test candidates.
+
+## Current macOS release target
+
+The current ARM64 native archive contains FFmpeg built with a macOS 27.0 deployment target and whisper-cli with 26.2. Precut therefore declares macOS 27.0.0 as its minimum and uses the `xcode-27` ARM64 GitHub runner. An older-OS release requires rebuilding all native dependencies for that OS and testing there before lowering the declared minimum. Installer candidates can be built from main with the manual `installers.yml` workflow; this does not submit or publish a Store release.
