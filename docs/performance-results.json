@@ -1,0 +1,82 @@
+{
+  "date": "2026-10-08T05:55:10.220Z",
+  "platform": "darwin",
+  "arch": "arm64",
+  "workload": "120-minute real synthetic media file + 14,400 synthetic timed Thai/English words + 300 edits. This is a rendering/storage benchmark, not an ASR accuracy benchmark.",
+  "coldLaunchMs": 665,
+  "projectOpenMs": 252,
+  "visibleTranscriptWords": 72,
+  "totalTranscriptWords": 14400,
+  "frameIntervalP95Ms": 10,
+  "rafFps": 120,
+  "seekResponseP95Ms": 9.1,
+  "memory": [
+    {
+      "type": "Browser",
+      "memory": {
+        "workingSetSize": 215968,
+        "peakWorkingSetSize": 434128
+      }
+    },
+    {
+      "type": "GPU",
+      "memory": {
+        "workingSetSize": 86640,
+        "peakWorkingSetSize": 100032
+      }
+    },
+    {
+      "type": "Utility",
+      "name": "Network Service",
+      "memory": {
+        "workingSetSize": 41984,
+        "peakWorkingSetSize": 48256
+      }
+    },
+    {
+      "type": "Utility",
+      "name": "Precut project database",
+      "memory": {
+        "workingSetSize": 79696,
+        "peakWorkingSetSize": 113232
+      }
+    },
+    {
+      "type": "Tab",
+      "memory": {
+        "workingSetSize": 188752,
+        "peakWorkingSetSize": 223136
+      }
+    },
+    {
+      "type": "Utility",
+      "name": "Audio Service",
+      "memory": {
+        "workingSetSize": 40464,
+        "peakWorkingSetSize": 46208
+      }
+    }
+  ],
+  "repeatedOpenMemory": [
+    {
+      "cycle": 1,
+      "totalWorkingSetKiB": 741200
+    },
+    {
+      "cycle": 2,
+      "totalWorkingSetKiB": 780928
+    },
+    {
+      "cycle": 3,
+      "totalWorkingSetKiB": 823712
+    },
+    {
+      "cycle": 4,
+      "totalWorkingSetKiB": 834560
+    },
+    {
+      "cycle": 5,
+      "totalWorkingSetKiB": 848352
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-09T10:31:27.359Z",
+  "version": "1.0.0",
+  "productCode": "PC",
+  "trialEnabled": true,
+  "ownSourceMapsExcluded": true,
+  "environmentFilesExcluded": true,
+  "artifacts": [
+    {
+      "file": "precut-1.0.0-mac-arm64.dmg",
+      "sha256": "083fc7f1f079ba3cf4ec15e2df651ce269c6a7fde868afe540d96e737f28df92"
+    },
+    {
+      "file": "precut-1.0.0-mac-arm64.zip",
+      "sha256": "a1a994298a127f501880bf2f729e2df770e41c7832f87d67aab0c22c6a47d4d3"
+    },
+    {
+      "file": "native-darwin-arm64.zip",
+      "sha256": "78605daab575120b738353a19bd9da9ddd207c5cc0c6edcde88fd7bf98b0010c"
+    }
+  ]
+}

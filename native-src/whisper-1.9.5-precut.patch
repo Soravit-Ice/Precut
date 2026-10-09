@@ -1,0 +1,211 @@
+--- a/examples/cli/cli.cpp
++++ b/examples/cli/cli.cpp
+@@ -3,10 +3,12 @@
+ 
+ #include "whisper.h"
+ #include "grammar-parser.h"
++#include "json.hpp"
+ 
+ #include <cmath>
+ #include <algorithm>
+ #include <fstream>
++#include <iostream>
+ #include <cstdio>
+ #include <string>
+ #include <thread>
+@@ -97,6 +99,7 @@
+     std::string openvino_encode_device = "CPU";
+ 
+     std::string dtw = "";
++    std::string input_manifest;
+ 
+     std::vector<std::string> fname_inp = {};
+     std::vector<std::string> fname_out = {};
+@@ -155,6 +158,7 @@
+             fprintf(stdout, "whisper.cpp version: %s\n", whisper_version());
+             exit(0);
+         }
++        if (arg == "--precut-protocol") { fprintf(stdout,"1\n"); exit(0); }
+         #define ARGV_NEXT (((i + 1) < argc) ? argv[++i] : requires_value_error(arg))
+         else if (arg == "-t"    || arg == "--threads")              { params.n_threads       = std::stoi(ARGV_NEXT); }
+         else if (arg == "-p"    || arg == "--processors")           { params.n_processors    = std::stoi(ARGV_NEXT); }
+@@ -199,6 +203,7 @@
+         else if (                  arg == "--prompt")               { params.prompt          = ARGV_NEXT; }
+         else if (                  arg == "--carry-initial-prompt") { params.carry_initial_prompt = true; }
+         else if (arg == "-m"    || arg == "--model")                { params.model           = ARGV_NEXT; }
++        else if (arg == "--input-manifest")                        { params.input_manifest = ARGV_NEXT; }
+         else if (arg == "-f"    || arg == "--file")                 { params.fname_inp.emplace_back(ARGV_NEXT); }
+         else if (arg == "-oved" || arg == "--ov-e-device")          { params.openvino_encode_device = ARGV_NEXT; }
+         else if (arg == "-dtw"  || arg == "--dtw")                  { params.dtw             = ARGV_NEXT; }
+@@ -1011,6 +1016,34 @@
+         return 1;
+     }
+ 
++    std::vector<nlohmann::json> precut_chunks;
++    const auto precut_append = [&](const nlohmann::json & items) {
++        for (const auto & item : items) {
++            const auto input = item.at("input").get<std::string>();
++            const auto output = item.at("output").get<std::string>();
++            const auto start = item.at("startMs").get<int64_t>();
++            const auto duration = item.at("durationMs").get<int64_t>();
++            if (!is_file_exist(input.c_str()) || output.empty() || output == "-" || start < 0 || duration <= 0 || duration > 30000) throw std::runtime_error("Invalid chunk");
++            params.fname_inp.push_back(input);
++            params.fname_out.push_back(output);
++            precut_chunks.push_back(item);
++        }
++    };
++    if (!params.input_manifest.empty()) {
++        try {
++            std::ifstream stream(params.input_manifest);
++            const auto job = nlohmann::json::parse(stream);
++            if (job.at("schema") != 1) throw std::runtime_error("Unsupported manifest schema");
++            precut_append(job.at("chunks"));
++            params.output_jsn = params.output_jsn_full = true;
++            params.print_progress = false;
++        } catch (const std::exception & e) {
++            fprintf(stderr, "precut manifest error: %s\n", e.what());
++            return 2;
++        }
++    }
++    std::string precut_cached_input;
++    std::vector<float> precut_cached_pcm;
+     // number of input files that could not be processed or whose output could not be written
+     int n_failed = 0;
+ 
+@@ -1121,8 +1154,30 @@
+         }
+     }
+ 
+-    for (int f = 0; f < (int) params.fname_inp.size(); ++f) {
++    for (int f = 0; f <= (int) params.fname_inp.size(); ++f) {
++        if (f == (int) params.fname_inp.size()) {
++            if (params.input_manifest.empty()) break;
++            fprintf(stdout, "{\"event\":\"ready\"}\n");
++            fflush(stdout);
++            std::string line;
++            if (!std::getline(std::cin,line)) break;
++            try {
++                const auto command = nlohmann::json::parse(line);
++                if (command.value("end",false)) break;
++                precut_append(command.at("chunks"));
++                if (f == (int) params.fname_inp.size()) break;
++            } catch (const std::exception & e) {
++                fprintf(stderr,"precut command error: %s\n",e.what());
++                whisper_free(ctx);
++                return 2;
++            }
++        }
+         const auto & fname_inp = params.fname_inp[f];
++        if (!precut_chunks.empty()) {
++            params.language = precut_chunks[f].at("language").get<std::string>();
++            params.prompt = precut_chunks[f].value("prompt", std::string{});
++            params.detect_language = precut_chunks[f].value("detectOnly", false);
++        }
+         struct fout_factory {
+             std::string fname_out;
+             const size_t basename_length;
+@@ -1178,7 +1233,18 @@
+         std::vector<float> pcmf32;               // mono-channel F32 PCM
+         std::vector<std::vector<float>> pcmf32s; // stereo-channel F32 PCM
+ 
+-        if (!::read_audio_data(fname_inp, pcmf32, pcmf32s, params.diarize)) {
++        if (!precut_chunks.empty()) {
++            if (precut_cached_input != fname_inp) {
++                std::vector<std::vector<float>> unused;
++                if (!::read_audio_data(fname_inp, precut_cached_pcm, unused, false)) return 2;
++                precut_cached_input = fname_inp;
++            }
++            const int64_t start = precut_chunks[f].at("startMs").get<int64_t>() * WHISPER_SAMPLE_RATE / 1000;
++            const int64_t count = precut_chunks[f].at("durationMs").get<int64_t>() * WHISPER_SAMPLE_RATE / 1000;
++            const int64_t finish = std::min<int64_t>(precut_cached_pcm.size(), start + count);
++            if (start >= finish) return 2;
++            pcmf32.assign(precut_cached_pcm.begin() + start, precut_cached_pcm.begin() + finish);
++        } else if (!::read_audio_data(fname_inp, pcmf32, pcmf32s, params.diarize)) {
+             fprintf(stderr, "error: failed to read audio file '%s'\n", fname_inp.c_str());
+             n_failed++;
+             continue;
+@@ -1227,6 +1293,7 @@
+             wparams.strategy = (params.beam_size > 1 || use_grammar) ? WHISPER_SAMPLING_BEAM_SEARCH : WHISPER_SAMPLING_GREEDY;
+ 
+             wparams.print_realtime   = false;
++            if (!precut_chunks.empty()) wparams.no_context = true;
+             wparams.print_progress   = params.print_progress;
+             wparams.print_timestamps = !params.no_timestamps;
+             wparams.print_special    = params.print_special;
+@@ -1295,7 +1362,7 @@
+ 
+             // this callback is called on each new segment
+             if (!wparams.print_realtime) {
+-                wparams.new_segment_callback           = fout_factory.print_segment_callback;
++                wparams.new_segment_callback           = precut_chunks.empty() ? fout_factory.print_segment_callback : nullptr;
+                 wparams.new_segment_callback_user_data = &user_data;
+             }
+ 
+@@ -1363,6 +1430,13 @@
+ 
+         if (fout_factory.failed) {
+             n_failed++;
++        } else if (!precut_chunks.empty()) {
++            fout_factory.fout.flush();
++            if (!fout_factory.fout.good()) return 11;
++            fout_factory.fout.close();
++            const auto event = nlohmann::json{{"event","chunk"},{"index",f},{"total",precut_chunks.size()},{"output",params.fname_out[f]}};
++            fprintf(stdout, "%s\n", event.dump().c_str());
++            fflush(stdout);
+         }
+     }
+ 
+--- a/examples/vad-speech-segments/speech.cpp
++++ b/examples/vad-speech-segments/speech.cpp
+@@ -2,6 +2,7 @@
+ #include "common-whisper.h"
+ 
+ #include "whisper.h"
++#include "json.hpp"
+ 
+ #include <cstdio>
+ #include <cfloat>
+@@ -20,6 +21,7 @@
+     bool        use_gpu = false;
+     std::string fname_inp = {};
+     bool        no_prints       = false;
++    bool        output_json     = false;
+ };
+ 
+ static void vad_print_usage(int /*argc*/, char ** argv, const cli_params & params) {
+@@ -59,7 +61,9 @@
+             vad_print_usage(argc, argv, params);
+             exit(0);
+         }
++        if (arg == "--precut-protocol") { printf("1\n"); exit(0); }
+         #define ARGV_NEXT (((i + 1) < argc) ? argv[++i] : requires_value_error(arg))
++        else if (arg == "--output-json")                                 { params.output_json = true; }
+         else if (arg == "-f"    || arg == "--file")                        { params.fname_inp = ARGV_NEXT; }
+         else if (arg == "-t"    || arg == "--threads")                     { params.n_threads                   = std::stoi(ARGV_NEXT); }
+         else if (arg == "-ug"   || arg == "--use-gpu")                     { params.use_gpu                     = true; }
+@@ -134,6 +138,17 @@
+     params.samples_overlap = cli_params.vad_samples_overlap;
+     struct whisper_vad_segments * segments = whisper_vad_segments_from_probs(vctx, params);
+ 
++    if (cli_params.output_json) {
++        nlohmann::json output{{"schema",1},{"sampleRate",WHISPER_SAMPLE_RATE},{"frameSamples",512}};
++        output["probabilities"] = nlohmann::json::array();
++        const auto * probs = whisper_vad_probs(vctx);
++        for (int i=0; i<whisper_vad_n_probs(vctx); ++i) output["probabilities"].push_back(probs[i]);
++        output["speech"] = nlohmann::json::array();
++        for (int i=0; i<whisper_vad_segments_n_segments(segments); ++i) {
++            output["speech"].push_back({{"startUs",int64_t(whisper_vad_segments_get_segment_t0(segments,i)*10000)},{"endUs",int64_t(whisper_vad_segments_get_segment_t1(segments,i)*10000)}});
++        }
++        printf("%s\n",output.dump().c_str());
++    } else {
+     printf("\n");
+     printf("Detected %d speech segments:\n", whisper_vad_segments_n_segments(segments));
+     for (int i = 0; i < whisper_vad_segments_n_segments(segments); ++i) {
+@@ -142,6 +157,7 @@
+                whisper_vad_segments_get_segment_t1(segments, i));
+     }
+     printf("\n");
++    }
+ 
+     whisper_vad_free_segments(segments);
+     whisper_vad_free(vctx);

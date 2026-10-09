@@ -1,0 +1,89 @@
+name: Precut verified installer submission
+on:
+  workflow_call:
+    inputs:
+      targets:
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(inputs.targets) }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+          architecture: ${{ matrix.arch }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Restore public product configuration
+        shell: bash
+        env:
+          PRECUT_PRODUCT_CONFIG_JSON: ${{ vars.PRECUT_PRODUCT_CONFIG_JSON }}
+        run: |
+          node --input-type=module -e 'import { writeFileSync } from "node:fs"; const config = JSON.parse(process.env.PRECUT_PRODUCT_CONFIG_JSON); writeFileSync("product.config.json", JSON.stringify(config, null, 2));'
+      - run: pnpm release:check
+      - run: node scripts/fetch-native-bundle.mjs
+        env:
+          PRECUT_NATIVE_BUNDLE_URL: ${{ vars[matrix.bundle_url] }}
+          PRECUT_NATIVE_BUNDLE_SHA256: ${{ vars[matrix.bundle_sha] }}
+          PRECUT_NATIVE_BUNDLE_TOKEN: ${{ github.token }}
+      - run: pnpm models:prepare
+      - run: pnpm release:build
+      - run: pnpm fixtures:prepare
+      - name: Test the actual packaged application
+        run: node scripts/release-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: precut-store-${{ matrix.platform }}-${{ matrix.arch }}
+          if-no-files-found: error
+          path: |
+            out/precut-*.dmg
+            out/precut-*.exe
+            out/precut-*.zip
+            out/artifacts-*.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: precut-acceptance-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            docs/release-results-*.json
+            docs/screenshots/release-*.png
+  upload:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    environment: release-upload
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: precut-store-*
+          merge-multiple: true
+          path: out
+      - run: node scripts/merge-release-manifests.mjs
+        env:
+          PRECUT_RELEASE_TARGETS: ${{ inputs.targets }}
+      - name: Upload files and request server checksum verification
+        run: node scripts/upload-store-release.mjs
+      - name: Next step
+        run: echo "Submitted for verification. Wait for READY in Store Admin, then publish the release and product there. No automatic publication was performed."

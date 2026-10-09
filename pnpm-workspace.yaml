@@ -1,0 +1,12 @@
+packages:
+  - packages/*
+allowBuilds:
+  electron: true
+  esbuild: true
+  better-sqlite3: true
+  skia-canvas: true
+  onnxruntime-node: true
+  electron-winstaller: false
+minimumReleaseAgeExclude:
+  - '@electron/rebuild@4.2.1'
+  - electron@44.6.0

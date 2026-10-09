@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-08T05:37:28.771Z",
+  "platform": "darwin",
+  "arch": "arm64",
+  "model": "large-v3-q5_0",
+  "reference": "Clean JFK recording Silero speech intervals; six generated gain/background/offset variants",
+  "limitations": "Synthetic fan, tonal music and breath-like noise; clean VAD is a timing proxy, not human annotated ground truth or certification of all speech conditions.",
+  "results": [
+    {
+      "name": "Quiet voice",
+      "durationMs": 4300,
+      "words": 22,
+      "safeCuts": 1,
+      "reviewCuts": 3,
+      "cutsOverCleanSpeech": 0,
+      "cutsOverTranscript": 0,
+      "remainingUs": 13065000
+    },
+    {
+      "name": "Fan noise",
+      "durationMs": 3791,
+      "words": 22,
+      "safeCuts": 2,
+      "reviewCuts": 2,
+      "cutsOverCleanSpeech": 0,
+      "cutsOverTranscript": 0,
+      "remainingUs": 12510000
+    },
+    {
+      "name": "Music bed",
+      "durationMs": 3751,
+      "words": 22,
+      "safeCuts": 2,
+      "reviewCuts": 2,
+      "cutsOverCleanSpeech": 0,
+      "cutsOverTranscript": 0,
+      "remainingUs": 12700000
+    },
+    {
+      "name": "Breath-like noise",
+      "durationMs": 3605,
+      "words": 22,
+      "safeCuts": 1,
+      "reviewCuts": 3,
+      "cutsOverCleanSpeech": 0,
+      "cutsOverTranscript": 0,
+      "remainingUs": 13905000
+    },
+    {
+      "name": "External offset",
+      "durationMs": 4908,
+      "words": 22,
+      "safeCuts": 1,
+      "reviewCuts": 3,
+      "cutsOverCleanSpeech": 0,
+      "cutsOverTranscript": 0,
+      "remainingUs": 13797500
+    },
+    {
+      "name": "All silent",
+      "durationMs": 1232,
+      "words": 0,
+      "safeCuts": 1,
+      "reviewCuts": 0,
+      "cutsOverCleanSpeech": 0,
+      "cutsOverTranscript": 0,
+      "remainingUs": 425000
+    }
+  ]
+}

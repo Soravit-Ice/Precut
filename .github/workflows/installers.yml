@@ -1,0 +1,61 @@
+name: Precut installer candidates
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  installers:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            architecture: arm64
+            bundle_url: PRECUT_NATIVE_MAC_ARM64_URL
+            bundle_sha: PRECUT_NATIVE_MAC_ARM64_SHA256
+            target: --mac --arm64
+          - os: macos-15-intel
+            architecture: x64
+            bundle_url: PRECUT_NATIVE_MAC_X64_URL
+            bundle_sha: PRECUT_NATIVE_MAC_X64_SHA256
+            target: --mac --x64
+          - os: windows-2025
+            architecture: x64
+            bundle_url: PRECUT_NATIVE_WINDOWS_X64_URL
+            bundle_sha: PRECUT_NATIVE_WINDOWS_X64_SHA256
+            target: --win --x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+          architecture: ${{ matrix.architecture }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/fetch-native-bundle.mjs
+        env:
+          PRECUT_NATIVE_BUNDLE_URL: ${{ vars[matrix.bundle_url] }}
+          PRECUT_NATIVE_BUNDLE_SHA256: ${{ vars[matrix.bundle_sha] }}
+          PRECUT_NATIVE_BUNDLE_TOKEN: ${{ github.token }}
+      - run: pnpm models:prepare
+      - run: pnpm native:verify
+      - run: pnpm notices:prepare
+      - run: pnpm icons:prepare
+      - run: pnpm typecheck && pnpm test && pnpm build
+      - run: pnpm fixtures:prepare
+      - run: pnpm exec playwright test
+      - run: pnpm exec electron-builder ${{ matrix.target }}
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: precut-candidate-${{ runner.os }}-${{ matrix.architecture }}
+          path: |
+            out/*.dmg
+            out/*.zip
+            out/*.exe
+            out/*.blockmap

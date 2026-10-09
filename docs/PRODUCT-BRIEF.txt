@@ -1,0 +1,4028 @@
+# ROLE
+
+Act as an elite cross-functional product team consisting of:
+
+- Principal Desktop Software Architect
+- Senior Electron Engineer
+- Senior React / TypeScript Engineer
+- Senior Media Processing Engineer
+- Senior FFmpeg Engineer
+- Speech / Audio ML Engineer
+- Senior Product Designer
+- Senior UX Designer
+- Motion / Typography Designer
+- Performance Engineer
+- QA / Reliability Engineer
+- Creator Software Product Strategist
+
+Your mission is to DESIGN AND BUILD from scratch a world-class macOS + Windows desktop application for creators.
+
+Do not patch or reproduce the architecture of the previous video editor.
+
+Treat this as a GREENFIELD PRODUCT.
+
+The goal is NOT to build another traditional video editor.
+
+The goal is to build:
+
+# THE FASTEST CREATOR PRE-EDITOR
+
+A focused desktop application that transforms raw talking-head footage into a clean, polished, captioned first cut.
+
+Core idea:
+
+RAW FOOTAGE  
+→ CLEAN SPEECH  
+→ REMOVE BAD PARTS  
+→ SMART CAPTIONS  
+→ REVIEW  
+→ EXPORT / SEND TO EDITOR
+
+The product should combine the best workflow ideas from Recut-style rough-cutting with a significantly more powerful transcript and subtitle workflow.
+
+Do NOT blindly clone Recut.
+
+At minimum, match the important rough-cut capabilities users expect from tools like Recut, then exceed them in measurable areas:
+
+- smarter speech cleanup
+- filler detection
+- retake detection
+- false-start detection
+- repetition detection
+- transcript editing
+- word-accurate captions
+- animated caption presets
+- better review UX
+- faster perceived performance
+- safer automatic edits
+- professional export workflow
+
+Do not claim “100% better” through marketing language.
+
+Make the product objectively better on defined workflows and measurable metrics.
+
+---
+
+# PRODUCT POSITIONING
+
+Do NOT position this as:
+
+“AI Video Editor”
+
+Do NOT attempt to compete with:
+
+- Premiere Pro
+- Final Cut Pro
+- DaVinci Resolve
+- CapCut
+
+Instead position it as:
+
+# “Skip the boring first edit.”
+
+Alternative:
+
+# “Raw footage → Clean, captioned first cut.”
+
+Primary job:
+
+A creator records 30–90 minutes of talking-head footage.
+
+The application automatically detects:
+
+- long silence
+- awkward pauses
+- filler words
+- false starts
+- retakes
+- repeated sentences
+- obvious mistakes
+- abandoned phrases
+
+Then generates:
+
+- clean rough cut
+- professional subtitles
+- word-level animated captions
+- editable transcript
+- NLE export
+
+The user should get useful output without learning a complex editing application.
+
+---
+
+# TARGET USERS
+
+Primary:
+
+- YouTubers
+- tutorial creators
+- educators
+- course creators
+- founders
+- indie hackers
+- marketers
+- consultants
+- talking-head creators
+- podcasters
+- interview editors
+
+Secondary:
+
+- short-form creators
+- agencies
+- internal training teams
+- social media teams
+
+---
+
+# PRODUCT PRINCIPLE
+
+The app should feel like:
+
+“Professional software that disappears while I work.”
+
+Not:
+
+“A dashboard full of AI features.”
+
+The interface must feel calm.
+
+Fast.
+
+Obvious.
+
+Trustworthy.
+
+Refined.
+
+---
+
+# CORE PRODUCT DIFFERENTIATOR
+
+Build three tightly integrated engines.
+
+## ENGINE 1 — CLEAN ENGINE
+
+Understand what should probably be removed.
+
+Detect:
+
+- Silence
+- Long Pause
+- Filler
+- False Start
+- Retake
+- Repetition
+- Obvious Mistake
+- Abandoned Phrase
+- Low-confidence speech
+
+Example:
+
+RAW:
+
+“So today we're going to—
+
+sorry.
+
+Today we're going to build a complete authentication system.
+
+Um...
+
+The first thing…”
+
+SYSTEM:
+
+FALSE START  
+“So today we're going to—”
+
+MISTAKE  
+“sorry.”
+
+KEEP  
+“Today we're going to build a complete authentication system.”
+
+FILLER  
+“Um...”
+
+KEEP  
+“The first thing…”
+
+---
+
+## ENGINE 2 — CAPTION ENGINE
+
+Turn transcript into professional captions.
+
+Support:
+
+- Clean
+- Highlight
+- Pop
+- Karaoke
+- Punch
+- Minimal
+
+Captions should be:
+
+- automatically segmented
+- word-aligned
+- readable
+- visually balanced
+- well timed
+- professionally animated
+- customizable without becoming a full motion-design editor
+
+---
+
+## ENGINE 3 — REVIEW ENGINE
+
+AI should never silently destroy the user's footage.
+
+Every automatic edit must be:
+
+- non-destructive
+- reversible
+- confidence-scored
+- reviewable
+- explainable
+
+The user must always remain in control.
+
+---
+
+# TECHNOLOGY STACK
+
+Use:
+
+## Desktop
+
+Electron
+
+Use current stable Electron.
+
+Architecture:
+
+- Electron Main Process
+- Secure Preload
+- React Renderer
+- Background media workers
+- Native / sidecar processing where appropriate
+
+Do NOT perform heavy media processing in the renderer.
+
+---
+
+## Frontend
+
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- shadcn/ui
+- Radix primitives where required
+- Zustand for focused client state
+- TanStack Query only where asynchronous cached state actually benefits
+- React Hook Form + Zod for settings/forms when appropriate
+
+Do not install libraries merely because they are popular.
+
+Prefer:
+
+simple  
+reliable  
+maintained  
+measurable
+
+solutions.
+
+---
+
+# ELECTRON SECURITY
+
+Mandatory:
+
+nodeIntegration: false
+
+contextIsolation: true
+
+sandbox renderer where practical.
+
+Expose only explicit APIs through preload.
+
+Use strongly typed IPC contracts.
+
+Never expose unrestricted:
+
+- fs
+- shell
+- child_process
+- Node APIs
+
+to the renderer.
+
+Validate every IPC payload.
+
+---
+
+# PROCESS ARCHITECTURE
+
+Design approximately:
+
+Electron Main
+│
+├── Window Lifecycle
+├── Project Manager
+├── Job Manager
+├── IPC Router
+├── License Layer
+└── Crash Recovery
+        │
+        ├──────── Media Worker
+        │            └── FFmpeg / FFprobe
+        │
+        ├──────── Speech Worker
+        │            └── Whisper
+        │
+        ├──────── Analysis Worker
+        │            └── Cleanup Intelligence
+        │
+        └──────── Export Worker
+                     └── FFmpeg / XML / FCPXML
+
+Renderer must remain responsive even when:
+
+- transcribing
+- generating proxy
+- exporting 4K
+- analyzing 90-minute footage
+
+If a worker crashes:
+
+THE APPLICATION MUST NOT CRASH.
+
+Restart or surface a recoverable error.
+
+---
+
+# MEDIA ENGINE
+
+Use FFmpeg + FFprobe.
+
+Bundle verified binaries for supported platforms.
+
+Do NOT require the user to install:
+
+- FFmpeg
+- Python
+- Node
+- Homebrew
+- Visual Studio
+- external runtime
+
+The installed application must work immediately.
+
+Support common creator formats:
+
+- MP4
+- MOV
+- MKV
+- M4A
+- WAV
+- MP3
+
+Prioritize:
+
+- H.264
+- H.265 / HEVC
+- ProRes
+- AAC
+- PCM
+
+Handle:
+
+- CFR
+- VFR
+- iPhone footage
+- screen recordings
+- external microphones
+- camera + external audio
+- unusual sample rates
+- mono/stereo audio
+
+Never assume perfect media.
+
+---
+
+# DO NOT COPY SOURCE VIDEO
+
+When opening:
+
+/Videos/interview.mov
+
+Do NOT copy a 30GB video into the project.
+
+Store:
+
+- source path
+- fingerprint
+- metadata
+- proxy reference
+- audio analysis cache
+
+Project folder should contain only derived assets.
+
+Example:
+
+project/
+  project.sqlite
+  waveform/
+  proxy/
+  audio/
+  transcript/
+  analysis/
+  captions/
+  export-cache/
+
+---
+
+# DATABASE
+
+Use SQLite for local project state.
+
+Design proper migrations.
+
+Do NOT store the entire application project as one giant JSON object.
+
+Suggested entities:
+
+Project
+
+MediaAsset
+
+AudioTrack
+
+TranscriptSegment
+
+TranscriptWord
+
+CaptionSegment
+
+CutSuggestion
+
+TimelineRegion
+
+ExportJob
+
+UserPreset
+
+AnalysisCache
+
+---
+
+# PROJECT AUTOSAVE
+
+Every meaningful state change should be persisted.
+
+User should not need to think about Save.
+
+Display:
+
+Saved
+
+Saving…
+
+Recovery available
+
+If the application crashes or the computer loses power:
+
+reopening the project should recover as much state as possible.
+
+---
+
+# SPEECH ENGINE
+
+Use a LOCAL-FIRST transcription architecture.
+
+Recommended baseline:
+
+Whisper-family model using a performant local implementation.
+
+Provide model strategy:
+
+FAST
+
+Optimized model suitable for fast preview / draft transcript.
+
+QUALITY
+
+Higher accuracy model such as large-v3-class transcription where hardware allows.
+
+Allow automatic hardware selection.
+
+Apple Silicon:
+
+use hardware acceleration where supported.
+
+Windows NVIDIA:
+
+use appropriate GPU acceleration where supported.
+
+Fallback:
+
+CPU.
+
+Never make GPU mandatory.
+
+---
+
+# SPEECH PIPELINE
+
+Media
+↓
+Extract audio
+↓
+Normalize analysis audio
+↓
+VAD
+↓
+Speech segments
+↓
+Transcription
+↓
+Word timing
+↓
+Alignment refinement
+↓
+Caption segmentation
+↓
+Cleanup intelligence
+
+Extract analysis audio efficiently:
+
+16 kHz mono or another verified speech-optimized representation.
+
+Do NOT decode 4K video just to analyze speech.
+
+---
+
+# FORCED ALIGNMENT / WORD TIMING
+
+High-quality captions require accurate word timing.
+
+Design the speech layer so transcription and alignment are separate concepts.
+
+TRANSCRIPTION:
+
+What was spoken?
+
+ALIGNMENT:
+
+Exactly when was each word spoken?
+
+Store:
+
+word
+
+startTime
+
+endTime
+
+confidence
+
+Example:
+
+{
+  text: "build",
+  start: 12.421,
+  end: 12.804,
+  confidence: 0.97
+}
+
+For languages where additional alignment provides meaningful accuracy improvements, support an alignment stage.
+
+If full forced alignment is unavailable for a language:
+
+fall back gracefully to high-quality word timing + VAD boundary refinement.
+
+Never block the entire workflow because one optional alignment backend is unavailable.
+
+---
+
+# THAI SUPPORT
+
+Thai must be treated as a first-class language.
+
+Do NOT assume spaces equal words.
+
+Implement proper handling for:
+
+- Thai segmentation
+- transcription
+- caption line breaking
+- timing mapping
+- punctuation restoration where appropriate
+- mixed Thai/English speech
+
+Example:
+
+วันนี้เราจะมาสร้างเว็บไซต์กัน
+
+must not be treated as one giant token merely because Thai does not use spaces like English.
+
+Design Thai-specific QA fixtures.
+
+---
+
+# VAD
+
+Use a reliable voice activity detection layer.
+
+Purpose:
+
+- detect real speech boundaries
+- avoid noise being mistaken for speech
+- improve silence detection
+- accelerate transcription
+- improve cut boundaries
+
+Silence detection must NOT be only:
+
+volume < threshold
+
+Combine:
+
+VAD  
++ audio energy  
++ speech timestamps  
++ surrounding context
+
+---
+
+# SMART SILENCE
+
+Do not simply delete all silence.
+
+Implement PAUSE COMPRESSION.
+
+Modes:
+
+Natural
+
+Balanced
+
+Fast
+
+Custom
+
+Example:
+
+3.4 second silence
+
+Natural:
+
+retain ~600–900ms depending on context
+
+Balanced:
+
+retain ~350–500ms
+
+Fast:
+
+retain ~150–300ms
+
+Exact values should be tuned through testing.
+
+Different pauses serve different purposes.
+
+Detect:
+
+- sentence boundary
+- breathing pause
+- thinking pause
+- intentional dramatic pause
+
+Avoid robotic edits.
+
+---
+
+# CUT BOUNDARY ENGINE
+
+Never blindly cut at transcript timestamps.
+
+For every suggested cut:
+
+Transcript timestamp
+↓
+VAD
+↓
+Audio envelope
+↓
+Nearest safe boundary
+↓
+Padding
+↓
+Optional micro fade
+
+Prevent:
+
+- chopped consonants
+- cut breaths
+- clicks
+- pops
+- unnatural jump cuts
+- missing word endings
+
+Make cut behavior configurable through quality presets rather than exposing dozens of technical controls.
+
+---
+
+# FILLER DETECTION
+
+Support:
+
+English examples:
+
+um  
+uh  
+erm  
+you know  
+like  
+basically  
+actually
+
+Thai examples:
+
+เอ่อ  
+อ่า  
+อืม  
+แบบว่า  
+คือ  
+ประมาณว่า
+
+IMPORTANT:
+
+Do not use simple global string deletion.
+
+Example:
+
+“I like React.”
+
+“like” is meaningful and must remain.
+
+Use linguistic context.
+
+Return:
+
+classification
+
+confidence
+
+reason
+
+suggested removal interval
+
+---
+
+# FALSE START DETECTION
+
+Detect:
+
+partial sentence
+↓
+pause / correction
+↓
+sentence restarted
+
+Example:
+
+“The application automatically—
+
+The application automatically removes silence.”
+
+Suggest removing only the abandoned first phrase.
+
+---
+
+# RETAKE DETECTION
+
+This is a KEY DIFFERENTIATOR.
+
+Detect when someone repeats the same idea because the first take was bad.
+
+Signals may include:
+
+- lexical similarity
+- semantic similarity
+- sentence restart patterns
+- correction language
+- short temporal distance
+- incomplete first phrase
+- stronger completion in second attempt
+
+Example:
+
+Take A:
+
+“This tool helps you edit...”
+
+Take B:
+
+“This tool helps you edit your footage much faster.”
+
+Suggest:
+
+Remove A
+
+Keep B
+
+But provide confidence.
+
+Do not delete automatically if confidence is low.
+
+---
+
+# REPETITION DETECTION
+
+Detect repeated phrases or repeated meaning.
+
+Example:
+
+“We built this specifically for designers.”
+
+“This application was designed specifically for designers.”
+
+Mark:
+
+POSSIBLE RETAKE
+
+Allow:
+
+Keep A
+
+Keep B
+
+Remove A
+
+Remove B
+
+Do not automatically remove semantic repetitions at low confidence.
+
+---
+
+# CONFIDENCE SYSTEM
+
+Every AI suggestion must be classified:
+
+HIGH
+
+MEDIUM
+
+LOW
+
+Example:
+
+High confidence:
+
+clear silence  
+obvious “um”  
+obvious false start
+
+Medium:
+
+likely retake
+
+Low:
+
+semantic repetition
+
+UI action:
+
+Clean safe edits
+
+should apply HIGH confidence edits only.
+
+Never make “Accept All AI Decisions” the default.
+
+---
+
+# TRANSCRIPT-BASED EDITING
+
+Transcript is a primary editing interface.
+
+The user can:
+
+- click text → seek video
+- select words
+- remove selection
+- restore removed text
+- find phrase
+- search transcript
+- jump between suggestions
+- filter edit types
+- inspect confidence
+
+Removed text should appear:
+
+muted  
+strike-through  
+but still recoverable
+
+Never permanently delete transcript content.
+
+---
+
+# SMART TIMELINE
+
+Build a lightweight analysis timeline.
+
+NOT a full NLE timeline.
+
+Include:
+
+- playhead
+- waveform
+- cut regions
+- keep regions
+- AI annotations
+- selection
+- zoom
+- trim boundaries
+- simple track support
+
+Categories:
+
+KEEP
+
+SILENCE
+
+PAUSE
+
+FILLER
+
+FALSE START
+
+RETAKE
+
+REPETITION
+
+MANUAL CUT
+
+Caption markers where useful.
+
+---
+
+# TIMELINE PERFORMANCE
+
+DO NOT render thousands of timeline regions as React DOM elements.
+
+Use:
+
+Canvas / WebGL where appropriate.
+
+React controls the application state.
+
+Renderer draws timeline visualization efficiently.
+
+Implement:
+
+visible-range rendering
+
+waveform level-of-detail
+
+cached geometry
+
+requestAnimationFrame only when necessary
+
+no unnecessary React rerender loops
+
+Timeline interactions must remain smooth on:
+
+60–120 minute projects.
+
+---
+
+# WAVEFORM ENGINE
+
+Precompute waveform peaks.
+
+Store multiple levels of detail.
+
+Example:
+
+waveform/
+  level0
+  level1
+  level2
+  level3
+
+When zoomed out:
+
+use coarse samples.
+
+When zoomed in:
+
+use detailed samples.
+
+Do not push millions of raw audio samples into React.
+
+---
+
+# VIDEO PREVIEW
+
+The preview must prioritize responsiveness.
+
+Use original media directly when practical.
+
+When source decoding is expensive:
+
+generate lightweight background proxy.
+
+Example proxy:
+
+720p  
+H.264  
+appropriate bitrate  
+audio synced to source
+
+Never block project opening while the entire proxy finishes.
+
+Allow project to become usable progressively.
+
+Display:
+
+Preparing smoother preview…
+
+while proxy generation occurs.
+
+---
+
+# PROXY SYSTEM
+
+Proxy must preserve exact timeline mapping.
+
+Original:
+
+4K / HEVC / VFR
+
+Proxy:
+
+720p / editing-friendly
+
+Timeline always uses source-relative timestamps.
+
+Final exports always reference original high-quality media unless explicitly exporting proxy quality.
+
+---
+
+# CAPTION ENGINE
+
+This is one of the major competitive advantages.
+
+Do not build merely:
+
+SRT generator.
+
+Build:
+
+# SMART CAPTION STUDIO
+
+Transcript
+↓
+Word timestamps
+↓
+Phrase segmentation
+↓
+Line balancing
+↓
+Emphasis analysis
+↓
+Style preset
+↓
+Animation timing
+↓
+Preview / Export
+
+---
+
+# CAPTION SEGMENTATION
+
+Do not blindly use transcription chunks.
+
+Create natural caption phrases.
+
+Consider:
+
+- punctuation
+- pause length
+- sentence structure
+- word count
+- reading speed
+- line width
+- semantic phrase boundaries
+
+Targets:
+
+generally 1–2 lines
+
+avoid orphan words
+
+avoid awkward grammatical splits
+
+avoid captions changing too rapidly
+
+---
+
+# CAPTION PRESETS
+
+V1 must include:
+
+## 1. CLEAN
+
+Professional standard subtitle.
+
+Simple fade.
+
+Excellent readability.
+
+Suitable:
+
+education  
+business  
+podcast  
+tutorial
+
+---
+
+## 2. HIGHLIGHT
+
+Current spoken word changes color.
+
+Example:
+
+This app is REALLY fast
+
+where active word changes according to timestamp.
+
+Use brand accent elegantly.
+
+---
+
+## 3. POP
+
+Current word gets subtle scale animation.
+
+Example:
+
+0.88
+→ 1.08
+→ 1.00
+
+Animation must feel professional.
+
+Not childish.
+
+---
+
+## 4. KARAOKE
+
+Progressive spoken-word fill.
+
+Text remains stable while active words progressively change appearance.
+
+---
+
+## 5. PUNCH
+
+Show short emphasized phrases.
+
+Useful for:
+
+short-form  
+hooks  
+strong statements
+
+Do not automatically turn every sentence into obnoxious giant text.
+
+---
+
+## 6. MINIMAL
+
+Quiet premium subtitle.
+
+Inspired by documentary / professional course content.
+
+---
+
+# CAPTION STYLE CONTROLS
+
+Use shadcn/ui for all applicable controls.
+
+Provide:
+
+Font
+
+Weight
+
+Size
+
+Text Color
+
+Active Word Color
+
+Outline
+
+Shadow
+
+Background
+
+Corner Radius
+
+Max Width
+
+Line Height
+
+Letter Spacing
+
+Position
+
+Bottom Margin
+
+Animation Intensity
+
+Words per Caption
+
+Caption Duration preference
+
+Do not expose advanced complexity by default.
+
+Have:
+
+Basic
+
+Advanced
+
+sections.
+
+---
+
+# CAPTION PRESET ENGINE
+
+Presets must be DATA, not hardcoded UI.
+
+Example schema:
+
+{
+  id: "highlight-clean",
+  name: "Highlight",
+  typography: {...},
+  layout: {...},
+  inactiveStyle: {...},
+  activeStyle: {...},
+  animation: {...}
+}
+
+This makes it possible to add more presets later without rewriting the entire renderer.
+
+---
+
+# CAPTION SCENE MODEL
+
+Create renderer-independent data.
+
+Example:
+
+{
+  id: "caption_14",
+  start: 12.1,
+  end: 14.8,
+  words: [
+    {
+      text: "THIS",
+      start: 12.1,
+      end: 12.4,
+      confidence: 0.98,
+      emphasis: 0.2
+    },
+    {
+      text: "IS",
+      start: 12.4,
+      end: 12.6
+    },
+    {
+      text: "FAST",
+      start: 12.6,
+      end: 13.1,
+      emphasis: 0.92
+    }
+  ],
+  presetId: "highlight-clean"
+}
+
+Preview and final export must consume the same conceptual caption scene.
+
+Avoid preview/export visual drift.
+
+---
+
+# CAPTION PREVIEW RENDERING
+
+Do not create one DOM element for every spoken word.
+
+Use efficient rendering.
+
+Prefer:
+
+Canvas
+
+WebGL
+
+or another measured GPU-friendly approach.
+
+React should manage:
+
+settings  
+controls  
+selection
+
+not animate hundreds of caption DOM nodes continuously.
+
+---
+
+# CAPTION EXPORT RENDERER
+
+Separate:
+
+PREVIEW rendering
+
+from
+
+FINAL rendering
+
+while sharing the same caption scene and animation specification.
+
+Use robust subtitle rendering where possible.
+
+For simple styles:
+
+ASS/libass-class pipeline is acceptable.
+
+For animation unsupported by standard subtitle formats:
+
+use deterministic rendering integrated into the export pipeline.
+
+Never rely on screen recording the preview.
+
+Final captions must render at original video resolution.
+
+---
+
+# SMART EMPHASIS
+
+Optional enhancement:
+
+identify important words or phrases.
+
+Use signals such as:
+
+- transcript meaning
+- prosody
+- audio energy
+- pitch
+- duration
+- sentence structure
+
+Example:
+
+“This is INSANELY fast.”
+
+“INSANELY”
+
+may receive higher emphasis score.
+
+Use emphasis to subtly affect:
+
+color
+
+weight
+
+pop animation
+
+Do NOT turn the entire app into an LLM dependency.
+
+---
+
+# AI PHILOSOPHY
+
+Target approximately:
+
+80% deterministic system
+
+20% AI assistance
+
+Use AI for:
+
+understanding
+
+classification
+
+semantic similarity
+
+phrase importance
+
+Do not use AI for:
+
+basic timing math
+
+animation interpolation
+
+color
+
+layout geometry
+
+file management
+
+rendering
+
+timeline drawing
+
+---
+
+# LOCAL FIRST
+
+Core functions must work offline:
+
+- project creation
+- media import
+- silence detection
+- transcription
+- rough cutting
+- captions
+- timeline review
+- MP4 export
+- NLE export
+
+Do NOT require:
+
+account login
+
+cloud processing
+
+subscription
+
+API key
+
+for core use.
+
+Optional advanced cloud intelligence may be modular later.
+
+---
+
+# MAIN APP LAYOUT
+
+Build a highly polished desktop app.
+
+Primary visual direction:
+
+Modern  
+Minimal  
+Professional  
+Premium  
+Calm  
+Precise  
+Creator-focused
+
+Primary theme:
+
+LIGHT
+
+Use WHITE as the main workspace background.
+
+---
+
+# BRAND COLOR SYSTEM
+
+Deep Navy
+
+#07111F
+
+Primary Blue
+
+#075EF7
+
+Electric Blue
+
+#168BFF
+
+Bright Cyan
+
+#36C5FF
+
+Mint / Aqua
+
+#22D3B6
+
+White
+
+#FFFFFF
+
+---
+
+# COLOR RULES
+
+Main background:
+
+white / subtle neutral surfaces
+
+Primary text:
+
+Deep Navy
+
+Primary action:
+
+Primary Blue
+
+Hover / selected accent:
+
+Electric Blue
+
+Special timeline / active captions:
+
+Bright Cyan
+
+Success / high-confidence:
+
+Mint
+
+Do NOT fill the application with blue gradients.
+
+Do NOT use glowing neon everywhere.
+
+Do NOT make every card blue.
+
+Use accents sparingly.
+
+Professional restraint is mandatory.
+
+---
+
+# AVOID “AI SLOP”
+
+Absolutely avoid:
+
+- gradient text
+- random purple
+- excessive cyan glow
+- glassmorphism everywhere
+- giant rounded cards
+- unnecessary pill containers
+- sparkles on every AI element
+- generic robot icons
+- excessive dashboard metric cards
+- huge landing-page headings inside the app
+- fake futuristic visualizations
+- random animations
+- excessive gradients
+- 24px border radius everywhere
+- cards inside cards inside cards
+
+AI should be represented primarily through:
+
+good workflow
+
+confidence labels
+
+suggestions
+
+helpful states
+
+not visual gimmicks.
+
+---
+
+# VISUAL DESIGN
+
+Aim for the quality level of premium desktop software.
+
+References for design discipline:
+
+Linear
+
+Raycast
+
+Arc
+
+Apple productivity software
+
+Figma desktop software
+
+modern professional creator tools
+
+Do not copy them.
+
+Use them only as a quality benchmark.
+
+---
+
+# TYPOGRAPHY
+
+Use a neutral professional sans-serif system.
+
+Prefer a stack that performs well cross-platform.
+
+Typography hierarchy should be extremely intentional.
+
+Avoid oversized SaaS-style typography.
+
+Desktop software needs information density.
+
+Text hierarchy example:
+
+App navigation
+
+11–13px
+
+Metadata
+
+11–12px
+
+Body
+
+13–14px
+
+Controls
+
+13–14px
+
+Section title
+
+14–16px
+
+Major project heading
+
+18–22px
+
+Use proper line height.
+
+---
+
+# SPACING
+
+Use consistent spacing system.
+
+4  
+8  
+12  
+16  
+20  
+24  
+32
+
+Avoid arbitrary spacing.
+
+Desktop UI can be compact but must never feel cramped.
+
+---
+
+# CORNERS
+
+Use restrained radii.
+
+Controls:
+
+6–8px
+
+Panels:
+
+8–12px
+
+Dialogs:
+
+10–14px
+
+Do not make everything bubbly.
+
+---
+
+# SHADCN/UI RULE
+
+Use shadcn/ui for every applicable interface primitive.
+
+Examples:
+
+Button
+
+Input
+
+Textarea
+
+Select
+
+Dropdown Menu
+
+Context Menu
+
+Dialog
+
+Alert Dialog
+
+Tooltip
+
+Popover
+
+Tabs
+
+Toggle
+
+Toggle Group
+
+Switch
+
+Slider
+
+Checkbox
+
+Radio Group
+
+Progress
+
+Scroll Area
+
+Command
+
+Sheet
+
+Separator
+
+Form
+
+Label
+
+Table
+
+Skeleton
+
+Badge
+
+Calendar only where required
+
+Do not manually reinvent form components without a strong technical reason.
+
+Customize shadcn using the product design tokens.
+
+Do not leave it looking like default shadcn examples.
+
+---
+
+# APP SHELL
+
+Left Navigation:
+
+Projects
+
+Media
+
+Transcript
+
+Captions
+
+Export
+
+Settings
+
+Keep navigation compact.
+
+Use icons + labels.
+
+Allow collapsed state if useful.
+
+---
+
+# TOP BAR
+
+Include:
+
+project name
+
+media info
+
+autosave status
+
+processing status when relevant
+
+undo
+
+redo
+
+export
+
+minimal menu
+
+Avoid clutter.
+
+---
+
+# MAIN WORKSPACE
+
+Recommended layout:
+
+┌──────────────────────────────────────────────────────┐
+│ Top Bar                                              │
+├────────┬───────────────────────────────┬─────────────┤
+│        │                               │             │
+│ Side   │        Video Preview          │ Inspector   │
+│ Nav    │                               │             │
+│        ├───────────────────────────────┤             │
+│        │        Smart Timeline         │             │
+│        ├───────────────────────────────┤             │
+│        │ Transcript / AI Review        │             │
+└────────┴───────────────────────────────┴─────────────┘
+
+The layout must adapt gracefully to smaller laptop displays.
+
+---
+
+# VIDEO PREVIEW
+
+Keep preview clean.
+
+Controls:
+
+Play/Pause
+
+Current Time
+
+Duration
+
+Playback speed
+
+Volume
+
+Captions toggle
+
+Preview quality
+
+Fullscreen
+
+Optional:
+
+Before / After
+
+Do not reproduce a Premiere-style transport panel.
+
+---
+
+# AI CLEANUP INSPECTOR
+
+Right panel example:
+
+CLEANUP
+
+Silence       32
+
+Retakes        6
+
+Fillers       17
+
+Mistakes       4
+
+Repetitions    3
+
+──────────────
+
+Potential saved time
+
+18m 34s
+
+[ Review Suggestions ]
+
+[ Clean Safe Edits ]
+
+Allow filtering.
+
+Avoid overly colorful category indicators.
+
+---
+
+# REVIEW WORKFLOW
+
+The most important AI workflow:
+
+Review Next
+
+Accept
+
+Keep
+
+Restore
+
+User should review suggestions extremely quickly.
+
+Keyboard shortcuts:
+
+A = Accept
+
+K = Keep
+
+R = Restore
+
+Space = Play/Pause
+
+J/K/L-style playback shortcuts may be considered if intuitive.
+
+Arrow navigation between suggestions.
+
+Make keyboard editing excellent.
+
+---
+
+# MAIN TIMELINE VISUAL LANGUAGE
+
+Keep:
+
+Blue / neutral
+
+Silence:
+
+Muted grey
+
+Retake:
+
+Subtle red
+
+Filler:
+
+Warm amber
+
+AI pending:
+
+Cyan marker
+
+Selected:
+
+Primary Blue
+
+Do not create a rainbow timeline.
+
+---
+
+# TRANSCRIPT PANEL
+
+Example:
+
+00:12
+
+So the goal is to make video creation faster.
+
+00:18
+
+~~I mean— let me start again.~~
+
+RETAKE
+
+00:24
+
+It's really about giving creators better tools.
+
+00:32
+
+You know, **um**, people don't want to spend hours editing.
+
+FILLER
+
+Interaction:
+
+hover → play segment
+
+click → seek
+
+select → context menu
+
+right click → keep/remove/split
+
+---
+
+# CAPTION WORKSPACE
+
+Make this one of the most beautiful areas of the application.
+
+Right inspector:
+
+Captions
+
+Preset carousel/grid:
+
+Clean
+
+Highlight
+
+Pop
+
+Karaoke
+
+Punch
+
+Minimal
+
+Below:
+
+Text
+
+Appearance
+
+Layout
+
+Animation
+
+Advanced
+
+The user should see changes immediately in the preview.
+
+---
+
+# CAPTION PRESET CARDS
+
+Do not use generic cards with “Aa” only.
+
+Create a small visual demonstration of the actual style.
+
+For example:
+
+Highlight preset thumbnail should visibly show one highlighted word.
+
+Pop should communicate hierarchy.
+
+Karaoke should show progress.
+
+Keep thumbnails lightweight.
+
+---
+
+# IMPORT SCREEN
+
+Extremely clean.
+
+Large but tasteful drop target.
+
+Title:
+
+Start with your raw footage
+
+Supporting text:
+
+Drop video or audio here
+
+Supported:
+
+MP4 · MOV · MKV · WAV · MP3
+
+Primary:
+
+Choose File
+
+Secondary:
+
+Open Recent Project
+
+Do not create giant marketing graphics.
+
+---
+
+# ANALYSIS SCREEN
+
+Do NOT show one meaningless spinner.
+
+Show real pipeline progress.
+
+Example:
+
+Preparing media ✓
+
+Extracting audio ✓
+
+Detecting speech ✓
+
+Transcribing 62%
+
+Finding retakes…
+
+Generating captions…
+
+Allow useful partial results when possible.
+
+User should be able to enter the workspace before every optional analysis step is finished.
+
+---
+
+# PROGRESSIVE RESULTS
+
+Target architecture:
+
+first waveform
+
+then transcript chunks
+
+then silence suggestions
+
+then advanced AI suggestions
+
+then captions
+
+Do not require everything to finish before interaction begins.
+
+Perceived performance is as important as benchmark performance.
+
+---
+
+# DASHBOARD
+
+Keep dashboard minimal.
+
+Recent Projects
+
+New Project
+
+Search
+
+Sort
+
+Project card/list should show:
+
+thumbnail
+
+project name
+
+duration
+
+last opened
+
+progress/status
+
+Do not build an analytics dashboard.
+
+---
+
+# EXPORT
+
+Offer two primary destinations.
+
+## VIDEO
+
+MP4
+
+Resolution:
+
+Original
+
+4K
+
+1080p
+
+720p
+
+Quality:
+
+High
+
+Balanced
+
+Smaller File
+
+Captions:
+
+Burned In
+
+None
+
+Optional subtitle sidecar
+
+---
+
+## SEND TO EDITOR
+
+Premiere Pro
+
+Final Cut Pro
+
+DaVinci Resolve
+
+Export appropriate:
+
+XML
+
+FCPXML
+
+EDL
+
+or verified format.
+
+Preserve:
+
+media references
+
+timebase
+
+cut boundaries
+
+audio tracks
+
+sync
+
+where supported.
+
+---
+
+# EXPORT ENGINE RELIABILITY
+
+Build regression fixtures for:
+
+24 fps
+
+25 fps
+
+29.97 fps
+
+30 fps
+
+50 fps
+
+59.94 fps
+
+60 fps
+
+VFR footage
+
+external audio
+
+multitrack
+
+ProRes
+
+iPhone HEVC
+
+screen recording
+
+Test exported project files by validating structure and importing into target editors where automation/manual QA permits.
+
+---
+
+# PERFORMANCE REQUIREMENTS
+
+Performance is a PRODUCT FEATURE.
+
+Targets on a modern Apple Silicon / equivalent Windows machine:
+
+App usable shortly after launch.
+
+Target cold launch:
+
+approximately 2–3 seconds or better where practical.
+
+Idle renderer memory:
+
+keep reasonably constrained for Electron.
+
+Do not accept runaway memory growth.
+
+Timeline:
+
+60 FPS interaction when possible.
+
+Scrubbing:
+
+feel immediate.
+
+Click-to-play latency:
+
+minimal.
+
+UI actions:
+
+target <100ms perceived response.
+
+Long processing:
+
+never freeze renderer.
+
+---
+
+# MEMORY MANAGEMENT
+
+Do not load entire videos into memory.
+
+Do not load entire decoded audio streams into JS arrays.
+
+Do not retain unused thumbnails.
+
+Do not keep every transcript DOM node mounted.
+
+Use:
+
+streaming
+
+virtualization
+
+bounded caches
+
+typed binary files
+
+worker isolation
+
+explicit cleanup
+
+---
+
+# TRANSCRIPT PERFORMANCE
+
+For long transcripts:
+
+use virtualization.
+
+Only render visible transcript rows + buffer.
+
+Search should use indexed/optimized structures where needed.
+
+Do not rerender entire transcript on every playhead update.
+
+---
+
+# PLAYHEAD ARCHITECTURE
+
+Do not push playhead position through giant global React state at 60 FPS.
+
+Use an efficient playback clock.
+
+Timeline/preview renderer may subscribe directly to lightweight timing data.
+
+React should update only UI that actually needs it.
+
+---
+
+# BACKGROUND JOB SYSTEM
+
+All heavy tasks are jobs.
+
+Job types:
+
+PROBE_MEDIA
+
+EXTRACT_AUDIO
+
+GENERATE_WAVEFORM
+
+GENERATE_PROXY
+
+VAD
+
+TRANSCRIBE
+
+ALIGN
+
+DETECT_SILENCE
+
+DETECT_FILLERS
+
+DETECT_RETAKES
+
+GENERATE_CAPTIONS
+
+EXPORT_VIDEO
+
+EXPORT_TIMELINE
+
+State:
+
+queued
+
+running
+
+paused
+
+completed
+
+failed
+
+cancelled
+
+Persist relevant job state.
+
+---
+
+# CANCELLATION
+
+Every long operation must be cancellable.
+
+Clicking Cancel must actually terminate/interrupt work safely.
+
+Do not merely hide the progress UI while FFmpeg continues consuming CPU.
+
+---
+
+# HARDWARE DETECTION
+
+Detect capabilities.
+
+Apple Silicon
+
+Intel Mac where supported
+
+Windows CPU
+
+NVIDIA GPU where supported
+
+Other available acceleration
+
+Automatically choose safe defaults.
+
+Provide:
+
+Performance
+
+Balanced
+
+Compatibility
+
+processing modes if necessary.
+
+Do not expose technical GPU configuration unless under Advanced.
+
+---
+
+# ERROR HANDLING
+
+Error UI must be human readable.
+
+Bad:
+
+FFmpeg exit code 1
+
+Better:
+
+We couldn't decode this video.
+
+Try Compatibility Mode.
+
+[Retry]
+
+[Show Details]
+
+Technical details may be available in expandable diagnostics.
+
+---
+
+# LOGGING
+
+Create structured local logs.
+
+Include:
+
+timestamp
+
+job
+
+media id
+
+stage
+
+duration
+
+error
+
+Do NOT log:
+
+full private transcript content by default
+
+credentials
+
+license secrets
+
+sensitive paths unless required for diagnostics and appropriately handled
+
+Provide:
+
+Export Diagnostics
+
+for support.
+
+---
+
+# CRASH REPORTING
+
+Crash reporting must be opt-in or privacy-conscious.
+
+Core media/transcription is local.
+
+Clearly communicate privacy behavior.
+
+---
+
+# EMPTY / LOADING / ERROR STATES
+
+Design all states.
+
+Do not implement only happy path.
+
+Examples:
+
+No media
+
+Missing source file
+
+Unsupported codec
+
+Transcript unavailable
+
+Speech model missing
+
+Alignment unavailable
+
+Proxy generating
+
+Export failed
+
+Disk full
+
+Source file moved
+
+GPU worker crashed
+
+App should offer recovery actions.
+
+---
+
+# SOURCE FILE MOVED
+
+If project media is missing:
+
+show:
+
+Media not found
+
+Interview.mov
+
+[Locate File]
+
+After user selects replacement:
+
+verify fingerprint/duration before relinking.
+
+---
+
+# UNDO / REDO
+
+Implement a real command architecture for editing actions.
+
+Undo:
+
+remove suggestion
+
+restore
+
+trim cut
+
+manual split
+
+caption change
+
+caption style change
+
+Do not implement scattered ad-hoc undo state.
+
+---
+
+# SHORTCUTS
+
+Provide professional keyboard shortcuts.
+
+Space
+
+Play/Pause
+
+Cmd/Ctrl + Z
+
+Undo
+
+Cmd/Ctrl + Shift + Z
+
+Redo
+
+Cmd/Ctrl + O
+
+Open
+
+Cmd/Ctrl + E
+
+Export
+
++ / -
+
+Timeline zoom
+
+Arrow keys
+
+Navigate
+
+Support Mac and Windows conventions.
+
+---
+
+# ACCESSIBILITY
+
+Proper:
+
+focus states
+
+keyboard navigation
+
+ARIA
+
+contrast
+
+reduced motion
+
+screen-reader-friendly control labels
+
+Do not rely only on color to communicate edit categories.
+
+---
+
+# LIGHT + DARK MODE
+
+Primary design:
+
+LIGHT MODE.
+
+This is important.
+
+The application should not automatically become another dark creative app.
+
+Make light mode exceptional.
+
+Main:
+
+White
+
+Neutral subtle grey
+
+Deep Navy typography
+
+Blue interaction color
+
+Dark mode should also be supported eventually using the same semantic tokens.
+
+Do not hardcode theme colors throughout components.
+
+---
+
+# DESIGN TOKENS
+
+Build semantic tokens:
+
+background
+
+foreground
+
+surface
+
+surfaceElevated
+
+border
+
+borderStrong
+
+muted
+
+mutedForeground
+
+primary
+
+primaryHover
+
+accent
+
+success
+
+warning
+
+danger
+
+timelineKeep
+
+timelineRemove
+
+timelineAI
+
+captionActive
+
+Use CSS variables compatible with shadcn theming.
+
+---
+
+# MOTION
+
+Use motion sparingly.
+
+Good motion:
+
+dialog entrance
+
+panel transition
+
+selection state
+
+caption preset preview
+
+processing progress
+
+Bad motion:
+
+everything floating
+
+hovering cards
+
+constant glowing
+
+animated gradients
+
+parallax
+
+Use approximately:
+
+120–220ms
+
+for interface transitions.
+
+Use spring animation only when it adds tactile quality.
+
+---
+
+# PRODUCT ONBOARDING
+
+First launch:
+
+Welcome
+
+One sentence explaining value.
+
+Then:
+
+Drop your first video
+
+Do NOT create a 7-step onboarding wizard.
+
+Teach through use.
+
+---
+
+# DEFAULT WORKFLOW
+
+The user should be able to:
+
+1. Launch application
+2. Drop video
+3. Click Clean Footage
+4. Receive high-confidence cleanup
+5. Review uncertain suggestions
+6. Select caption style
+7. Export
+
+with almost no configuration.
+
+---
+
+# AUTO EDIT
+
+Provide one clear primary action:
+
+# Auto Edit
+
+Dialog:
+
+Pacing
+
+Natural
+
+Balanced
+
+Fast
+
+Clean:
+
+✓ Silence
+
+✓ Fillers
+
+✓ Retakes
+
+✓ False Starts
+
+Advanced:
+
+✓ Repetitions
+
+Captions:
+
+Clean
+
+Highlight
+
+Pop
+
+etc.
+
+Primary:
+
+Auto Edit
+
+Save selected settings as preset if requested.
+
+---
+
+# USER PRESETS
+
+Support reusable creator presets.
+
+Example:
+
+YouTube Tutorial
+
+Natural pacing
+
+Highlight captions
+
+Remove obvious fillers
+
+Keep short pauses
+
+Shorts
+
+Fast pacing
+
+Pop captions
+
+Aggressive pause compression
+
+Allow user-created presets later.
+
+---
+
+# BEFORE / AFTER
+
+Implement excellent Before / After comparison.
+
+A/B playback should use the same source.
+
+User can quickly hear:
+
+Original
+
+Edited
+
+This builds trust.
+
+---
+
+# QUALITY OVER QUANTITY
+
+Do not ship 30 mediocre caption presets.
+
+Ship 6 excellent presets.
+
+Do not implement 40 AI tools.
+
+Make the core cleanup excellent.
+
+Do not create full video effects.
+
+Stay disciplined.
+
+---
+
+# WHAT NOT TO BUILD
+
+DO NOT BUILD:
+
+full compositing
+
+multi-layer graphic editor
+
+keyframe editor
+
+mask editor
+
+color-grading suite
+
+transition marketplace
+
+stock footage browser
+
+complex B-roll engine
+
+3D text
+
+After Effects clone
+
+Premiere clone
+
+CapCut clone
+
+The application wins through focus.
+
+---
+
+# COMMERCIAL MODEL
+
+Product should be suitable for:
+
+One-Time Purchase / Perpetual Major Version License.
+
+Core functionality must not depend on recurring cloud infrastructure.
+
+Possible model:
+
+Personal
+
+Studio
+
+But architecture should not artificially disable performance.
+
+Trial may use limited exports/projects.
+
+Do not watermark users' source media during editing.
+
+Licensing should never make the app unstable.
+
+---
+
+# PRIVACY POSITIONING
+
+Potential differentiator:
+
+# Your footage stays on your computer.
+
+Core:
+
+local video processing
+
+local transcript
+
+local captions
+
+No footage upload required.
+
+Make this fact visible but not overmarketed inside the workspace.
+
+---
+
+# QA STRATEGY
+
+Create automated tests for:
+
+Project persistence
+
+Timeline calculations
+
+Cut mapping
+
+Undo/redo
+
+Caption segmentation
+
+Caption timing
+
+Export calculations
+
+XML generation
+
+Settings migration
+
+IPC validation
+
+Add E2E tests for critical workflows:
+
+launch
+
+create project
+
+import fixture
+
+analyze
+
+edit suggestion
+
+caption preset
+
+export
+
+reopen project
+
+---
+
+# MEDIA TEST FIXTURES
+
+Maintain test fixture library containing:
+
+short MP4
+
+long MP4
+
+MOV
+
+HEVC
+
+ProRes
+
+VFR
+
+screen recording
+
+audio-only
+
+external mic
+
+silence-heavy recording
+
+noisy background recording
+
+Thai speech
+
+English speech
+
+mixed Thai/English
+
+Do not rely solely on generated unit mocks for media processing.
+
+---
+
+# PERFORMANCE TESTING
+
+Create repeatable benchmarks.
+
+Measure:
+
+startup time
+
+project open time
+
+waveform generation
+
+transcription speed
+
+timeline FPS
+
+scrub latency
+
+proxy creation
+
+memory usage
+
+export time
+
+peak memory
+
+Record before/after performance changes.
+
+Do not say:
+
+“optimized”
+
+without measuring.
+
+---
+
+# MEMORY LEAK TEST
+
+Open project.
+
+Play.
+
+Seek repeatedly.
+
+Open/close inspector.
+
+Change captions.
+
+Export.
+
+Open another project.
+
+Repeat.
+
+Verify memory returns to stable range.
+
+Memory growth over repeated workflows is a bug.
+
+---
+
+# RELIABILITY TARGET
+
+User should trust this application on client work.
+
+Therefore:
+
+No silent data loss.
+
+No destructive default edits.
+
+No frozen renderer during export.
+
+No unexplained crash from bad media.
+
+No lost project after restart.
+
+No incorrect timebase during NLE export.
+
+No caption drift during long footage.
+
+---
+
+# DEFINITION OF “BETTER THAN RECUT”
+
+Do not define this through vague claims.
+
+The finished product should win in these specific dimensions:
+
+## 1. Rough Cut Intelligence
+
+Baseline:
+
+silence/pause cleanup.
+
+Our target:
+
+silence
+
+pause compression
+
+fillers
+
+false starts
+
+retakes
+
+repetition
+
+mistakes
+
+confidence system
+
+---
+
+## 2. Transcript Workflow
+
+Target:
+
+fully searchable transcript
+
+word-level timing
+
+click-to-seek
+
+text-based removal
+
+restore
+
+AI labels
+
+fast review
+
+---
+
+## 3. Caption Workflow
+
+Target:
+
+professional built-in caption engine.
+
+Clean
+
+Highlight
+
+Pop
+
+Karaoke
+
+Punch
+
+Minimal
+
+No secondary caption product required.
+
+---
+
+## 4. Safety
+
+AI suggestions are:
+
+confidence-ranked
+
+non-destructive
+
+reversible
+
+reviewable
+
+---
+
+## 5. Performance
+
+Heavy processing outside renderer.
+
+Timeline optimized for long files.
+
+Proxy fallback.
+
+Progressive analysis.
+
+No waiting for all AI tasks before starting work.
+
+---
+
+## 6. UX
+
+Fewer controls than a full editor.
+
+Clear primary workflow.
+
+Excellent keyboard workflow.
+
+Great light theme.
+
+Premium UI.
+
+---
+
+## 7. Export
+
+Professional NLE interoperability plus direct MP4.
+
+Premiere
+
+Final Cut
+
+Resolve
+
+SRT
+
+MP4
+
+---
+
+# SUCCESS METRICS
+
+Design architecture around measurable outcomes.
+
+Target:
+
+User imports raw talking-head video and understands what to do within 10 seconds.
+
+First useful timeline appears as quickly as technically possible.
+
+High-confidence silence cleanup requires ≤2 meaningful actions.
+
+Caption style selection requires ≤2 actions.
+
+User can review AI suggestions primarily from keyboard.
+
+Renderer does not freeze during heavy background jobs.
+
+60-minute project remains comfortable to navigate.
+
+Crash recovery preserves project state.
+
+---
+
+# DESIGN REVIEW CHECKLIST
+
+Before considering a screen done, ask:
+
+Does this look like paid professional software?
+
+Is every control necessary?
+
+Can anything be removed?
+
+Is visual hierarchy obvious?
+
+Is whitespace intentional?
+
+Does it look like default shadcn?
+
+If yes, customize it further.
+
+Does it look AI-generated?
+
+If yes, redesign it.
+
+Are there excessive cards?
+
+If yes, flatten hierarchy.
+
+Are there unnecessary gradients?
+
+Remove them.
+
+Does blue dominate too much?
+
+Use more white and navy.
+
+Is important information visible without scanning?
+
+If no, restructure it.
+
+---
+
+# ENGINEERING QUALITY RULES
+
+Strict TypeScript.
+
+Avoid `any`.
+
+Clear domain types.
+
+Small focused modules.
+
+Do not create 2,000-line components.
+
+Do not create giant global stores.
+
+Keep UI state separate from project/media state.
+
+Use services/interfaces around native processing.
+
+No business logic in React components.
+
+No FFmpeg command construction inside JSX.
+
+No IPC string constants scattered across files.
+
+No duplicated schemas.
+
+No magic numbers.
+
+No silent catch blocks.
+
+No TODO-based fake completion.
+
+---
+
+# SUGGESTED PROJECT STRUCTURE
+
+apps/
+  desktop/
+    electron/
+      main/
+      preload/
+      ipc/
+      jobs/
+    src/
+      app/
+      components/
+      features/
+        projects/
+        player/
+        timeline/
+        transcript/
+        cleanup/
+        captions/
+        export/
+        settings/
+      stores/
+      hooks/
+      lib/
+      styles/
+
+packages/
+  core/
+    project/
+    timeline/
+    transcript/
+    captions/
+    cleanup/
+    export/
+
+  media-engine/
+  speech-engine/
+  shared/
+
+native/
+  ffmpeg/
+  whisper/
+  alignment/
+
+tests/
+  unit/
+  integration/
+  e2e/
+  media-fixtures/
+  performance/
+
+Adjust structure if there is a stronger architecture.
+
+Do not cargo-cult this tree if unnecessary.
+
+---
+
+# IMPLEMENTATION PHASES
+
+## PHASE 0 — RESEARCH + ARCHITECTURE
+
+Before coding:
+
+inspect repository.
+
+If old architecture exists:
+
+identify reusable parts.
+
+Do not preserve poor architecture merely because it already exists.
+
+Document:
+
+new architecture
+
+process boundaries
+
+project model
+
+job model
+
+media pipeline
+
+performance risks
+
+Then begin implementation.
+
+Do not spend the entire task writing planning documents.
+
+---
+
+# PHASE 1 — PREMIUM APP SHELL
+
+Implement:
+
+Electron shell
+
+light theme
+
+sidebar
+
+topbar
+
+project dashboard
+
+import state
+
+workspace layout
+
+right inspector
+
+shadcn system
+
+design tokens
+
+The result must already look like premium software.
+
+---
+
+# PHASE 2 — REAL MEDIA VERTICAL SLICE
+
+Implement actual:
+
+file import
+
+FFprobe metadata
+
+video playback
+
+waveform generation
+
+timeline
+
+project persistence
+
+autosave
+
+No fake media behavior.
+
+---
+
+# PHASE 3 — SPEECH
+
+Implement:
+
+audio extraction
+
+VAD
+
+transcription
+
+word timing
+
+transcript UI
+
+progressive results
+
+model manager
+
+---
+
+# PHASE 4 — CLEAN ENGINE
+
+Implement:
+
+silence
+
+pause compression
+
+filler
+
+false start
+
+initial retake detection
+
+confidence model
+
+review flow
+
+---
+
+# PHASE 5 — CAPTIONS
+
+Implement:
+
+segmentation
+
+word timing
+
+Clean
+
+Highlight
+
+Pop
+
+Karaoke
+
+Punch
+
+Minimal
+
+style controls
+
+live preview
+
+---
+
+# PHASE 6 — EXPORT
+
+Implement:
+
+MP4
+
+SRT
+
+Premiere-compatible timeline export
+
+Final Cut-compatible timeline export
+
+Resolve-compatible timeline export
+
+Verify time mapping.
+
+---
+
+# PHASE 7 — PERFORMANCE
+
+Profile:
+
+renderer
+
+timeline
+
+waveform
+
+speech
+
+proxy
+
+export
+
+memory
+
+Fix actual bottlenecks.
+
+Do not guess.
+
+---
+
+# PHASE 8 — QA / POLISH
+
+Test real footage.
+
+Fix:
+
+layout
+
+motion
+
+keyboard
+
+errors
+
+edge cases
+
+exports
+
+crashes
+
+memory leaks
+
+Restart from fresh install and verify complete workflow.
+
+---
+
+# FIRST-CLASS UI STATES TO IMPLEMENT
+
+Dashboard
+
+New project
+
+Import
+
+Analyzing
+
+Workspace
+
+Transcript review
+
+Captions
+
+Export
+
+Settings
+
+Missing model
+
+Downloading model
+
+Missing source media
+
+Unsupported media
+
+Error
+
+Cancelled job
+
+Recovered project
+
+No speech detected
+
+Export complete
+
+---
+
+# SETTINGS
+
+Keep Settings clean.
+
+General
+
+Playback
+
+Processing
+
+Speech Model
+
+Captions
+
+Export
+
+Storage
+
+Privacy
+
+Advanced
+
+Show:
+
+Cache location
+
+Cache size
+
+Clear cache
+
+Processing device
+
+Speech quality
+
+Default language
+
+Default caption preset
+
+Do not expose 100 technical options.
+
+---
+
+# MODEL MANAGEMENT
+
+Models must be manageable.
+
+Display:
+
+Fast
+
+Balanced
+
+Best Quality
+
+Instead of exposing confusing technical model names as the primary UI.
+
+Advanced can show actual model.
+
+Download progress.
+
+Model size.
+
+Disk usage.
+
+Delete model.
+
+Verify checksum.
+
+Resume failed download.
+
+---
+
+# OFFLINE INSTALLATION QUALITY
+
+Once required model is present:
+
+core workflow must work without internet.
+
+If model must be downloaded on first use:
+
+clearly explain size before download.
+
+Never silently download several GB.
+
+---
+
+# FINAL PRODUCT EXPERIENCE
+
+The finished product should feel like this:
+
+User drops a 52-minute raw video.
+
+Within seconds:
+
+waveform appears.
+
+Then transcript begins appearing.
+
+Silence is marked.
+
+Later:
+
+fillers
+
+false starts
+
+retakes
+
+are suggested.
+
+User clicks:
+
+Clean Safe Edits
+
+Duration changes:
+
+52:14
+
+→
+
+38:42
+
+User selects:
+
+Highlight Caption
+
+Preview immediately displays professional word-synced captions.
+
+User reviews 7 uncertain edits.
+
+Then:
+
+Export MP4
+
+or:
+
+Send to Final Cut
+
+Total interaction should feel dramatically simpler than manually rough-cutting the footage.
+
+---
+
+# FINAL DESIGN QUALITY BAR
+
+The interface must make the user think:
+
+“This feels fast.”
+
+“This feels safe.”
+
+“This is easy.”
+
+“This looks expensive.”
+
+“I know exactly what to do.”
+
+Do not let the result feel like:
+
+an AI demo
+
+a hackathon app
+
+an admin dashboard
+
+a web page inside Electron
+
+a Premiere clone
+
+a generic shadcn starter
+
+---
+
+# EXECUTION INSTRUCTION
+
+Do not only propose the solution.
+
+BUILD IT.
+
+Do not stop after designing mock screens.
+
+Do not leave core workflows as static placeholders.
+
+Start with the strongest vertical slice:
+
+IMPORT REAL VIDEO
+→ ANALYZE
+→ SHOW REAL WAVEFORM
+→ SHOW TRANSCRIPT
+→ MARK CUTS
+→ PREVIEW
+→ CAPTION
+→ EXPORT
+
+Keep the application runnable after every major phase.
+
+Run tests frequently.
+
+Profile real performance.
+
+Fix errors instead of hiding them.
+
+Use real representative media fixtures.
+
+When choosing dependencies:
+
+verify current maintenance status and compatibility first.
+
+Prefer stable, proven libraries.
+
+Avoid adding a large dependency for a trivial feature.
+
+---
+
+# FINAL ACCEPTANCE CRITERIA
+
+The release candidate is NOT done until:
+
+✓ Electron app runs on macOS
+
+✓ Electron app runs on Windows
+
+✓ Real videos import
+
+✓ Large files do not freeze renderer
+
+✓ Waveform displays smoothly
+
+✓ Timeline zoom/scrub is smooth
+
+✓ Project autosaves
+
+✓ Project reopens correctly
+
+✓ Speech transcription works locally
+
+✓ Word timing is usable for animated captions
+
+✓ Silence detection works
+
+✓ Pause compression works
+
+✓ Filler detection works
+
+✓ False starts can be detected
+
+✓ Retake suggestions exist
+
+✓ AI decisions are reversible
+
+✓ Transcript editing seeks correctly
+
+✓ Caption Clean works
+
+✓ Caption Highlight works
+
+✓ Caption Pop works
+
+✓ Caption Karaoke works
+
+✓ Caption Punch works
+
+✓ Caption Minimal works
+
+✓ Caption timing stays synchronized
+
+✓ Thai captions display correctly
+
+✓ English captions display correctly
+
+✓ MP4 export works
+
+✓ SRT export works
+
+✓ NLE export works
+
+✓ Export uses original-quality source
+
+✓ Cancelling jobs works
+
+✓ Worker crash does not destroy project
+
+✓ Missing source files can be relinked
+
+✓ App has recovery behavior
+
+✓ UI is visually polished
+
+✓ Light theme looks exceptional
+
+✓ Inputs use shadcn/ui consistently
+
+✓ UI does not look like default shadcn
+
+✓ UI does not look AI-generated
+
+✓ No excessive gradients
+
+✓ No unnecessary animations
+
+✓ No giant memory leaks
+
+✓ No renderer freeze during export
+
+✓ All critical paths have proper error handling
+
+✓ Core app works without cloud
+
+✓ Final result is a focused professional creator tool, NOT a full video editor
+
+---
+
+# MOST IMPORTANT PRIORITIES
+
+If tradeoffs are required, prioritize in this exact order:
+
+1. RELIABILITY
+2. CUT QUALITY
+3. PERFORMANCE
+4. EASE OF USE
+5. CAPTION QUALITY
+6. VISUAL POLISH
+7. ADVANCED FEATURES
+
+Never sacrifice reliability just to add another AI feature.
+
+Never sacrifice performance for decorative UI.
+
+Never add functionality that moves the product toward becoming a bloated traditional video editor.
+
+The competitive advantage must come from:
+
+SMARTER FIRST CUT
+
++
+
+BETTER CAPTIONS
+
++
+
+FASTER WORKFLOW
+
++
+
+EXCELLENT DESKTOP EXPERIENCE.

@@ -1,0 +1,123 @@
+{
+  "platform": "darwin",
+  "arch": "arm64",
+  "date": "2026-10-08T05:54:07.321Z",
+  "dataRoot": "/var/folders/pc/rkh3_rl14mjclb1s1jllqtwh0000gn/T/precut-media-zZAdrG",
+  "cases": [
+    {
+      "name": "Audio-only",
+      "sourceDurationUs": 14500000,
+      "words": 22,
+      "thaiWords": 0,
+      "suggestions": 6,
+      "duration": 14,
+      "video": "h264",
+      "audio": "aac",
+      "exportMs": 2466
+    },
+    {
+      "name": "Thai",
+      "sourceDurationUs": 17880000,
+      "words": 44,
+      "thaiWords": 44,
+      "suggestions": 4,
+      "duration": 17.366667,
+      "video": "h264",
+      "audio": "aac",
+      "exportMs": 2723
+    },
+    {
+      "name": "Mixed",
+      "sourceDurationUs": 32380000,
+      "words": 67,
+      "thaiWords": 45,
+      "suggestions": 8,
+      "duration": 31.866667,
+      "video": "h264",
+      "audio": "aac",
+      "exportMs": 4676
+    },
+    {
+      "name": "HEVC",
+      "sourceDurationUs": 6000000,
+      "words": 0,
+      "thaiWords": 0,
+      "suggestions": 1,
+      "duration": 5.5,
+      "video": "h264",
+      "audio": "aac",
+      "exportMs": 1307
+    },
+    {
+      "name": "ProRes",
+      "sourceDurationUs": 6000000,
+      "words": 0,
+      "thaiWords": 0,
+      "suggestions": 1,
+      "duration": 5.5,
+      "video": "h264",
+      "audio": "aac",
+      "exportMs": 1756
+    },
+    {
+      "name": "VFR",
+      "sourceDurationUs": 15466667,
+      "words": 0,
+      "thaiWords": 0,
+      "suggestions": 1,
+      "duration": 14.966667,
+      "video": "h264",
+      "audio": "aac",
+      "exportMs": 3054
+    },
+    {
+      "name": "External microphone",
+      "duration": 14.466667,
+      "video": "h264",
+      "audio": "aac",
+      "exportMs": 2365
+    }
+  ],
+  "coldLaunchMs": 833,
+  "relink": "passed",
+  "cancel": "passed",
+  "memory": [
+    {
+      "type": "Browser",
+      "memory": {
+        "workingSetSize": 155216,
+        "peakWorkingSetSize": 191456
+      }
+    },
+    {
+      "type": "GPU",
+      "memory": {
+        "workingSetSize": 81280,
+        "peakWorkingSetSize": 109824
+      }
+    },
+    {
+      "type": "Utility",
+      "name": "Network Service",
+      "memory": {
+        "workingSetSize": 41216,
+        "peakWorkingSetSize": 48240
+      }
+    },
+    {
+      "type": "Utility",
+      "name": "Precut project database",
+      "memory": {
+        "workingSetSize": 80016,
+        "peakWorkingSetSize": 85824
+      }
+    },
+    {
+      "type": "Tab",
+      "memory": {
+        "workingSetSize": 145024,
+        "peakWorkingSetSize": 146480
+      }
+    }
+  ]
+}

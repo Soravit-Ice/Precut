@@ -1,0 +1,16 @@
+name: Release Precut to T2ETECH Store
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+jobs:
+  release:
+    # Keep this reusable workflow at main so Store's exact OIDC workflow binding
+    # is stable when the caller moves from v1.0.0 to v1.0.1.
+    uses: Soravit-Ice/Precut/.github/workflows/store-release.yml@main
+    with:
+      targets: ${{ vars.PRECUT_RELEASE_TARGETS || '[{"runner":"macos-15","platform":"darwin","arch":"arm64","bundle_url":"PRECUT_NATIVE_MAC_ARM64_URL","bundle_sha":"PRECUT_NATIVE_MAC_ARM64_SHA256"}]' }}

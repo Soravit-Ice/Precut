@@ -1,0 +1,47 @@
+# Precut × T2ETECH licensing
+
+The signed vendor archive is `@t2e/license-sdk@1.0.0-rc.1`. Its SHA256 is `430b5058e4a49951e817c24410c72884dc5a6f74e6e38e13d92d2f711c58c0f5`. Run `pnpm verify:sdk` to verify the manifest, Ed25519 signature and archive against `vendor/sdk-release-public-key.json`. The SDK is bundled into main and is never exposed to the renderer.
+
+## Required store setup
+
+Create the actual Precut product with code `PC`, app ID `com.t2etech.precut`, a public OAuth client and the exact callback `com.t2etech.precut://oauth/callback`. Select the active policy for each price in the Store; the app does not hardcode a policy version or device allowance. Configure the anonymous online trial with **`featureLimits: { export: 3 }`**, shared across MP4, SRT and all NLE exports. Ownership, quota, device limits and update eligibility are enforced by the store/SDK; no local counter substitutes for these decisions.
+
+The Supabase OAuth client must use **`token_endpoint_auth_method: none`** (Public). A Confidential client requires a secret and rejects this desktop SDK's secret-free PKCE token exchange, even after the Store shows approval. Never place its client secret in `product.config.json` or the desktop application. Correcting the existing client's token authentication method keeps its Client ID, exact callback and product allowlist; if a new Public client is created instead, update the Store allowlist and SDK configuration with the new Client ID. Start a fresh sign-in request after correcting it.
+
+Export `product.config.json` using the SDK/store integration tools and put it at the Precut root. It must contain actual public origins, JWKS and OAuth/Supabase public client values. Installer publisher pins may be empty for account login and licensing; installing an SDK update requires the relevant real signer pin and a verified installer. The schema, product/app identity and exact callback are validated in main. Account APIs and production exports fail closed without valid configuration. This file contains public client configuration; do not insert store administrator or service-role credentials.
+
+The authoritative integration guide supplied with the workspace is `../t2e-license-sdk/docs/integration.md`. The release-config schema is `ProductSdkConfigSchema` from the installed SDK contracts entry point. Precut's desired business policy is recorded in `product.identity.json`; that file is **not** a usable SDK product configuration.
+
+## Access boundary
+
+`Licensing` owns `ElectronSdkStorage(userData/license-sdk.enc, 'PC')`, account login, key/account activation, deactivation, logout and update flows. OAuth uses the SDK's state/callback validation and the app's single-instance lifecycle. A cached summary restores the encrypted account state without a network request. Native window startup/focus refreshes and explicit Licence settings/Export status checks can refresh access and register the SDK's online trial; every actual export still checks through `runWithAccess`.
+
+The renderer receives only a display status. It cannot request an entitlement token, access encrypted storage, provide a shell command or override the SDK gate. `PRECUT_DEV_EXPORT=1` permits the testing adapter only when **not packaged**, no SDK instance exists and configuration did not fail validation. `app.isPackaged` permanently disables that adapter.
+
+## Browser sign-in and development
+
+1. Deploy the Store consent UI/action changes, then quit the older Electron/Precut session and run `pnpm start` using Node 24. This now builds and launches the native Precut bundle so macOS/Windows can return the browser link to the app. Open Settings → Account & licence → Sign in → Continue in browser.
+2. In the system browser, sign in with the Store account that owns the purchase and choose **Allow and return to app**. Being signed into the website alone does not finish desktop sign-in.
+3. Packaged applications register `com.t2etech.precut`. macOS `open-url` handlers are attached before app readiness; startup callbacks wait for SDK initialization. Windows callbacks are accepted through the single-instance arguments. A successful SDK completion focuses the existing app and updates its account status.
+4. macOS command-line development does not register an application bundle protocol. For `pnpm dev` or `pnpm start:unpackaged`, on the approved Store page open **Browser cannot open the app? → Copy return link**. In Precut's sign-in modal open **Cannot open the app?**, paste that private link and choose **Complete sign-in**. The same SDK `completeLogin` checks the saved state, exact callback, expiration and PKCE verifier. No account password or tokens are handled by the renderer.
+5. If the request expired, was cancelled, or the code was consumed, start a new request from Precut and use its new link. Closing the dialog does not cancel the request; re-open **Waiting for sign-in** to continue. Never share return links or add them to logs.
+
+The global sign-in dialog opens when a callback arrives, even away from Settings. It shows connecting, connected and retry states. The Electron internal app name remains `@t2e/precut` to preserve the existing macOS Keychain service; the OS bundle and UI display Precut. Secure-storage initialization follows native window/session creation, and early IPC/callbacks wait for it. Persisted account presence and pending sign-in requests are restored from OS-encrypted SDK storage on startup. If the SDK completes token exchange but fails its subsequent automatic purchase activation, the app retains the account and reports activation pending. Network access checks never invent a zero quota or turn a stored connection into a sign-out. These are display states only; exports still require SDK authorization.
+
+The desktop status distinguishes signing in from activating a paid licence. An account with no eligible purchase can sign in and continue with its available trial. Activation and every export still follow the live Store policy.
+
+Token failures are classified from a bounded copy of the failed OAuth response, using only standard error identifiers and HTTP status. Successful token responses, request bodies, callback links, PKCE verifiers and server error descriptions are never included in diagnostics. The signed SDK receives the original response unchanged. An invalid OAuth client is shown as a sign-in configuration problem, separately from an expired return link or a network failure.
+
+## Durable export settlement
+
+Each operation uses a new UUID, a project export journal and a receipt in `projects/<id>/export-cache`. The engine stages outputs, writes/fsyncs the expected hashes before publication, publishes artifacts and then writes the final receipt. MP4 and its subtitle sidecar share the operation ID. Prepared receipts can complete an interrupted publish if the remaining staged files still match their expected hashes.
+
+Recovery returns `SUCCEEDED` only when every artifact matches; `FAILED` only with a definite failure receipt and no matching published artifact; otherwise it returns `UNKNOWN`. Missing or damaged receipts do not cause an automatic refund.
+
+SDK rc.1 treats a rejected engine callback as a definite failure. Precut therefore retains that callback's durable RUNNING reservation if a worker fails with an ambiguous result, reports the recovery condition to the UI and requires restart reconciliation after the export destination is restored. The callback is not rejected to the SDK in that ambiguous case. New exports are blocked while this reservation needs attention. This prevents a worker crash after publication from releasing quota incorrectly.
+
+Automated tests cover the installed SDK's OAuth state/PKCE exchange and one-use callback, offline-trial rejection, cross-product storage rejection and Precut artifact recovery decisions. These tests use isolated mocks; they do not replace an end-to-end sign-in, paid purchase/activation and trial-export test against the deployed PC product.
+
+## Updates and release
+
+Update checks use SDK eligibility. Downloads pass checksum and native signer verification; opening the installer requires the user's in-app confirmation. Real Apple Team ID / Windows SPKI publisher pins and signing credentials must be supplied before signed release acceptance. Public SDK configuration and a successful local build alone do not confirm a deployed product's purchase, trial or update readiness.

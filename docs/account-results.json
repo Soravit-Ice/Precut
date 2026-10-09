@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-09T03:15:27.750Z",
+  "version": "1.0.0-rc.1",
+  "platform": "darwin",
+  "arch": "arm64",
+  "appAsarSha256": "2a33e015c5f293d64034437f8405dd27cdc79365d00b198a22d7dae681bc3a30",
+  "checks": {
+    "product": true,
+    "callback": true,
+    "trial": true,
+    "stableEncryptedStorageIdentity": true,
+    "rendererMatchesBuild": true,
+    "macIconMatchesBrandKit": true,
+    "windowsIconMatchesBrandKit": true,
+    "rendererIconMatchesBrandKit": true,
+    "attribution": true,
+    "safeOAuthDiagnosticsBundled": true
+  },
+  "typecheck": "passed",
+  "unitIntegrationTests": {
+    "passed": 77,
+    "files": 8
+  },
+  "uiFixture": {
+    "viewport": "1280x720",
+    "lightDark": "passed",
+    "keyModalAutofocusAndEscapeRestore": "passed",
+    "globalCallbackSuccessFailureRetry": "passed",
+    "manualInvalidCallback": "passed",
+    "data": "simulated, no live account or billing"
+  },
+  "realOAuthRoundTrip": "Store approval and native callback delivery verified; token completion failed. Existing Precut OAuth client is Confidential. Correcting token authentication to none/Public is awaiting confirmation; macOS locked again.",
+  "signedDistribution": "not ready: Developer ID signing and notarization unavailable"
+}

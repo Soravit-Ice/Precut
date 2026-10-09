@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-08T05:56:30.120Z",
+  "platform": "darwin",
+  "arch": "arm64",
+  "packaged": true,
+  "coldLaunchMs": 2645,
+  "executableSearchPath": "/usr/bin:/bin",
+  "developmentAdapterRejected": true,
+  "import": "passed",
+  "speechWords": 22,
+  "sqlitePersistence": "passed",
+  "high": {
+    "words": 22,
+    "dtwWords": 22,
+    "autoSilence": 1
+  },
+  "productionExportFailsClosed": true,
+  "note": "Verified a public-domain English project in an isolated --user-data-dir. No real PC product configuration was present.",
+  "version": "1.0.0-rc.1",
+  "appAsarSha256": "b66fe1b466710c248ce3de03b247251ae71b4949b9e6a748de80478edb55d999",
+  "dmgIntegrity": "hdiutil verify passed"
+}

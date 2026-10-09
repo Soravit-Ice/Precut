@@ -1,0 +1,97 @@
+{
+  "date": "2026-10-08T05:52:29.285Z",
+  "platform": "darwin",
+  "arch": "arm64",
+  "model": "large-v3-q5_0",
+  "referenceSource": "https://huggingface.co/datasets/google/fleurs/resolve/main/data/th_th/dev.tsv",
+  "normalization": "NFC lowercase; punctuation/symbols/whitespace removed; Unicode codepoints",
+  "results": [
+    {
+      "case": "Thai",
+      "variant": "baseline",
+      "durationMs": 12560,
+      "edits": 8,
+      "referenceCharacters": 158,
+      "cer": 0.05063291139240506,
+      "unexpectedScriptWords": 0,
+      "autoCutsOverRecognizedWords": 0
+    },
+    {
+      "case": "Thai",
+      "variant": "new",
+      "durationMs": 8591,
+      "edits": 8,
+      "referenceCharacters": 158,
+      "cer": 0.05063291139240506,
+      "unexpectedScriptWords": 0,
+      "autoCutsOverRecognizedWords": 0
+    },
+    {
+      "case": "English",
+      "variant": "baseline",
+      "durationMs": 8152,
+      "edits": 0,
+      "referenceCharacters": 83,
+      "cer": 0,
+      "properNames": {
+        "Americans": true
+      },
+      "unexpectedScriptWords": 0,
+      "autoCutsOverRecognizedWords": 0
+    },
+    {
+      "case": "English",
+      "variant": "new",
+      "durationMs": 3752,
+      "edits": 0,
+      "referenceCharacters": 83,
+      "cer": 0,
+      "properNames": {
+        "Americans": true
+      },
+      "unexpectedScriptWords": 0,
+      "autoCutsOverRecognizedWords": 0
+    },
+    {
+      "case": "Mixed",
+      "variant": "baseline",
+      "durationMs": 21789,
+      "edits": 8,
+      "referenceCharacters": 241,
+      "cer": 0.03319502074688797,
+      "unexpectedScriptWords": 0,
+      "autoCutsOverRecognizedWords": 0
+    },
+    {
+      "case": "Mixed",
+      "variant": "new",
+      "durationMs": 9478,
+      "edits": 8,
+      "referenceCharacters": 241,
+      "cer": 0.03319502074688797,
+      "unexpectedScriptWords": 0,
+      "autoCutsOverRecognizedWords": 0
+    },
+    {
+      "case": "Mixed Auto",
+      "variant": "baseline",
+      "durationMs": 21444,
+      "edits": 8,
+      "referenceCharacters": 241,
+      "cer": 0.03319502074688797,
+      "unexpectedScriptWords": 0,
+      "autoCutsOverRecognizedWords": 0
+    },
+    {
+      "case": "Mixed Auto",
+      "variant": "new",
+      "durationMs": 9863,
+      "edits": 8,
+      "referenceCharacters": 241,
+      "cer": 0.03319502074688797,
+      "unexpectedScriptWords": 0,
+      "autoCutsOverRecognizedWords": 0
+    }
+  ],
+  "limitations": "Three short public recordings, with mixed speech tested in Thai-English and Auto profiles. User clip has no human reference transcript; its CER and specialist-name accuracy are unverified."
+}

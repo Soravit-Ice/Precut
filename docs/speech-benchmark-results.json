@@ -1,0 +1,129 @@
+{
+  "date": "2026-10-08T05:49:47.679Z",
+  "host": {
+    "chip": "Apple M1 Pro",
+    "memoryGiB": 16,
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "workload": {
+    "durationSeconds": 447.1,
+    "profile": "thai-english",
+    "model": "ggml-large-v3-q5_0.bin",
+    "gpu": true,
+    "beam": 5,
+    "dtw": true,
+    "rounds": 3,
+    "asrCache": "empty per run",
+    "audio": "same pre-extracted 16 kHz source"
+  },
+  "baseline": [
+    {
+      "round": 1,
+      "durationMs": 334365,
+      "durationSeconds": 447.1,
+      "words": 1206,
+      "unexpectedScriptWords": 29,
+      "estimatedWords": 44,
+      "silenceCandidates": 5,
+      "safeSilence": 5,
+      "suggestions": 7
+    },
+    {
+      "round": 2,
+      "durationMs": 313205,
+      "durationSeconds": 447.1,
+      "words": 1206,
+      "unexpectedScriptWords": 29,
+      "estimatedWords": 44,
+      "silenceCandidates": 5,
+      "safeSilence": 5,
+      "suggestions": 7
+    },
+    {
+      "round": 3,
+      "durationMs": 313757,
+      "durationSeconds": 447.1,
+      "words": 1206,
+      "unexpectedScriptWords": 29,
+      "estimatedWords": 44,
+      "silenceCandidates": 5,
+      "safeSilence": 5,
+      "suggestions": 7
+    }
+  ],
+  "current": [
+    {
+      "round": 1,
+      "durationMs": 218532,
+      "durationSeconds": 447.1,
+      "words": 1199,
+      "unexpectedScriptWords": 0,
+      "estimatedWords": 2,
+      "silenceCandidates": 93,
+      "safeSilence": 9,
+      "suggestions": 100,
+      "language": "th",
+      "model": "ggml-large-v3-q5_0.bin",
+      "chunks": 19,
+      "retries": 8,
+      "reviewWords": 40,
+      "speechSeconds": 307.21992,
+      "nonSpeechSeconds": 139.88008
+    },
+    {
+      "round": 2,
+      "durationMs": 217519,
+      "durationSeconds": 447.1,
+      "words": 1199,
+      "unexpectedScriptWords": 0,
+      "estimatedWords": 2,
+      "silenceCandidates": 93,
+      "safeSilence": 9,
+      "suggestions": 100,
+      "language": "th",
+      "model": "ggml-large-v3-q5_0.bin",
+      "chunks": 19,
+      "retries": 8,
+      "reviewWords": 40,
+      "speechSeconds": 307.21992,
+      "nonSpeechSeconds": 139.88008
+    },
+    {
+      "round": 3,
+      "durationMs": 217394,
+      "durationSeconds": 447.1,
+      "words": 1199,
+      "unexpectedScriptWords": 0,
+      "estimatedWords": 2,
+      "silenceCandidates": 93,
+      "safeSilence": 9,
+      "suggestions": 100,
+      "language": "th",
+      "model": "ggml-large-v3-q5_0.bin",
+      "chunks": 19,
+      "retries": 8,
+      "reviewWords": 40,
+      "speechSeconds": 307.21992,
+      "nonSpeechSeconds": 139.88008
+    }
+  ],
+  "summary": {
+    "baselineMedianMs": 313757,
+    "currentMedianMs": 217519,
+    "fasterPercent": 30.67278180247771,
+    "rtf": 0.4865108476850816
+  },
+  "limitations": [
+    "Real native analysis with an isolated mock persistence adapter; excludes import/proxy/UI and final SQLite transaction.",
+    "The OS file cache was not flushed and the host was not rebooted.",
+    "Baseline round 1 overlapped native compilation; rounds 2/3 were uncontended. Reported medians avoid that slow outlier.",
+    "No human reference transcript for the complete user recording; script detection and word counts are not CER."
+  ],
+  "hashes": {
+    "baselineEngineSha256": "fc8e0803e44f1e709ce1b7568ce994cf99d706d61643acddfc52c524cfd0c258",
+    "nativeSpeechProtocol": 1,
+    "releaseEngineSha256": "a7b828a1d12c003b543c9d64732fcd337c2eada74a99ee211f791b5d4e485e28"
+  },
+  "note": "Final Thai-English ASR path unchanged by subsequent database reconciliation and Auto representative-probe improvements."
+}

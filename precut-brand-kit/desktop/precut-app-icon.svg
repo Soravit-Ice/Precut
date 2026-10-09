@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="precut logo">
+<defs>
+  <linearGradient id="stem" x1=".1" y1="0" x2=".92" y2="1" gradientUnits="objectBoundingBox">
+    <stop offset="0" stop-color="#27D6FA"/><stop offset=".47" stop-color="#118CFF"/><stop offset="1" stop-color="#0750EF"/>
+  </linearGradient>
+  <linearGradient id="ribbon" x1="0" y1=".92" x2=".91" y2=".1" gradientUnits="objectBoundingBox">
+    <stop offset="0" stop-color="#168BFF"/><stop offset=".43" stop-color="#23C5F9"/><stop offset="1" stop-color="#23E1D7"/>
+  </linearGradient>
+  <linearGradient id="fold" x1="0" y1="0" x2="1" y2="1" gradientUnits="objectBoundingBox">
+    <stop offset="0" stop-color="#168BFF"/><stop offset="1" stop-color="#075EF7"/>
+  </linearGradient>
+  <linearGradient id="lower" x1="0" y1=".95" x2=".9" y2=".15" gradientUnits="objectBoundingBox">
+    <stop offset="0" stop-color="#1AA5F9"/><stop offset="1" stop-color="#19CEF1"/>
+  </linearGradient>
+
+<linearGradient id="appbg" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0" stop-color="#102D51"/>
+  <stop offset=".48" stop-color="#07182D"/>
+  <stop offset="1" stop-color="#040C17"/>
+</linearGradient>
+<linearGradient id="edge" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0" stop-color="#36C5FF" stop-opacity=".48"/>
+  <stop offset=".55" stop-color="#075EF7" stop-opacity=".11"/>
+  <stop offset="1" stop-color="#075EF7" stop-opacity=".18"/>
+</linearGradient>
+</defs>
+<rect x="12" y="12" width="488" height="488" rx="112" fill="url(#appbg)"/><rect x="13" y="13" width="486" height="486" rx="111" fill="none" stroke="url(#edge)" stroke-width="2"/><g transform="translate(40 -100) scale(.79)"><path d="M 71,315 C 71,250 112,210 163,206 C 186,203 201,208 216,221 L 216,575 C 216,631 190,665 137,692 C 104,709 71,688 71,654 Z" fill="url(#stem)"/>
+<path d="M 71,316 C 71,249 114,205 164,205 C 190,202 210,210 237,225 L 432,332 C 476,356 487,408 458,445 C 441,467 417,480 401,488 C 409,465 396,448 380,440 L 215,354 L 71,384 Z" fill="url(#ribbon)"/>
+<path d="M 231,472 C 231,457 240,447 253,439 L 327,398 L 388,433 C 413,447 422,468 401,488 L 269,558 C 250,571 231,558 231,539 Z" fill="url(#lower)"/>
+<path d="M 71,316 L 215,354 L 71,402 Z" fill="url(#fold)" opacity=".34"/>
+</g>
+</svg>

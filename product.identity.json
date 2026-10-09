@@ -1,0 +1,21 @@
+{
+  "productCode": "PC",
+  "appId": "com.t2etech.precut",
+  "name": "Precut",
+  "oauthRedirectUri": "com.t2etech.precut://oauth/callback",
+  "intendedPolicy": {
+    "licenseType": "PERPETUAL",
+    "enforcementMode": "DEVICE",
+    "majorVersion": 1,
+    "maxDevices": 2,
+    "offlineMode": "PERMANENT",
+    "features": ["export"],
+    "trial": {
+      "enabled": true,
+      "featureLimits": { "export": 3 },
+      "requiresOnline": true
+    }
+  },
+  "status": "AWAITING_STORE_PRODUCT_CONFIG",
+  "note": "Business requirements only. This is not product.config.json and cannot enable exports."
+}

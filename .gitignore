@@ -1,0 +1,13 @@
+node_modules/
+dist/
+out/
+.cache/
+.tools/
+native/*/
+test-results/
+playwright-report/
+tests/fixtures/generated/
+product.config.json
+.env*
+*.key
+.DS_Store
