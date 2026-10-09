@@ -12,20 +12,39 @@ if (
   throw new Error("Build on a supported native macOS/Windows target.");
 const { version } = await checkRelease();
 async function pnpm(args) {
+  const packaging = args.includes("electron-builder");
   await new Promise((done, fail) => {
+    let output = "";
     const child = spawn(
       process.platform === "win32" ? "pnpm.cmd" : "pnpm",
       args,
       {
-        stdio: "inherit",
+        stdio: packaging ? ["inherit", "pipe", "pipe"] : "inherit",
         shell: process.platform === "win32",
         env: { ...process.env, CSC_IDENTITY_AUTO_DISCOVERY: "false" },
       },
     );
+    if (packaging) {
+      for (const [stream, destination] of [
+        [child.stdout, process.stdout],
+        [child.stderr, process.stderr],
+      ]) {
+        stream.on("data", (chunk) => {
+          destination.write(chunk);
+          output = (output + chunk.toString()).slice(-32768);
+        });
+      }
+    }
     child.on("error", fail);
-    child.on("exit", (code) =>
-      code === 0 ? done() : fail(new Error("Release step failed: " + args[0])),
-    );
+    child.on("close", (code) => {
+      if (code === 0) return done();
+      const error = new Error("Release step failed: " + args[0]);
+      error.transientDmg =
+        process.platform === "darwin" &&
+        output.includes("Resource busy") &&
+        output.includes("couldn't eject");
+      fail(error);
+    });
   });
 }
 for (const step of [
@@ -36,7 +55,7 @@ for (const step of [
   "build",
 ])
   await pnpm([step]);
-await pnpm([
+const packagingArgs = [
   "exec",
   "electron-builder",
   process.platform === "darwin" ? "--mac" : "--win",
@@ -46,7 +65,19 @@ await pnpm([
     : []),
   "--publish",
   "never",
-]);
+];
+for (let attempt = 0; ; attempt++) {
+  try {
+    await pnpm(packagingArgs);
+    break;
+  } catch (error) {
+    if (!error.transientDmg || attempt >= 2) throw error;
+    console.log(
+      "The DMG temporary volume is busy; retrying packaging after 15 seconds.",
+    );
+    await new Promise((resolveRetry) => setTimeout(resolveRetry, 15_000));
+  }
+}
 console.log(
   JSON.stringify(
     await createReleaseManifest(
