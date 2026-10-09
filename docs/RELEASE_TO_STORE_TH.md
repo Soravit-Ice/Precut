@@ -18,7 +18,18 @@
 
 ตัวติดตั้งนี้ไม่ลง Developer ID/Windows publisher และไม่ notarize สามารถส่งเข้า backend ที่ปรับแล้วได้; ลูกค้าอาจพบคำเตือนของระบบปฏิบัติการ การอัปเดตแบบ unsigned ใช้ดาวน์โหลดและติดตั้งเองจาก Store ส่วนการติดตั้งอัตโนมัติที่ตรวจผู้ลงลายเซ็นยังต้องมี signer pins
 
-**Source ขึ้น GitHub และตั้งค่า Actions แล้ว; ยังไม่ได้ส่ง customer installer เข้า Store หรือกด Publish สินค้าให้ลูกค้า** และยังไม่มีตัวติดตั้ง Windows หรือ Mac Intel ที่ผ่านการทดสอบ ให้เปิดขายเฉพาะระบบที่มีไฟล์และทดสอบแล้ว
+**Source ขึ้น GitHub และ customer installer อัปโหลดเข้า private R2 แล้ว**:
+[release run 37942852278](https://github.com/Soravit-Ice/Precut/actions/runs/37942852278)
+ผ่านเมื่อ 9 ตุลาคม 2026 และ Trigger.dev Production ตรวจไฟล์จริงสำเร็จ:
+`precut-1.0.0-mac-arm64.dmg` เป็น **VERIFIED**, release `PC 1.0.0` เป็น
+**READY** ยังไม่ได้กด Publish release หรือสินค้าให้ลูกค้า และยังไม่มีตัวติดตั้ง
+Windows หรือ Mac Intel ที่ผ่านการทดสอบ ให้เปิดขายเฉพาะระบบที่มีไฟล์และทดสอบแล้ว
+
+ก่อนส่งเวอร์ชันถัดไป ตรวจว่า Vercel Production ใช้ `TRIGGER_SECRET_KEY`
+ของ Trigger.dev **Production** และ redeploy หลังบันทึก key; development key
+ไม่ส่งงานไป worker production อย่าใส่ key นี้ใน desktop config หรือ GitHub
+variables ของ Precut เมื่อไฟล์อยู่ใน R2 และค้าง VERIFYING ให้แก้ worker/outbox
+แทนการอัปโหลดซ้ำหรือย้าย tag
 
 native FFmpeg ที่ใช้เป็น GPL-enabled build: ก่อนแจกไฟล์สาธารณะต้องเตรียม corresponding source/build materials ตาม `THIRD_PARTY_NOTICES.md` และ `docs/BUILDING.md` รักษา notices ที่อยู่ในตัวติดตั้งด้วย การไม่มี Team ID ไม่ได้ยกเลิกเงื่อนไขนี้
 
@@ -134,12 +145,10 @@ Source ขึ้น `main` ใน GitHub แล้ว ไม่ต้อง `git
 
 ก่อนส่ง release ครั้งแรก เปิด Actions → **Precut installer candidates** → Run workflow เลือก `main` workflow นี้แพ็กตัวติดตั้งและทดสอบแอปจริงตาม targets ที่ตั้งไว้ เก็บ DMG/manifest/acceptance report เป็น artifact และไม่มีสิทธิ์อัปโหลดหรือ Publish เข้า Store
 
-เมื่อ Store repository binding, variables และ services พร้อมแล้ว:
-
-```sh
-git tag -a v1.0.0 -m "Precut 1.0.0"
-git push origin v1.0.0
-```
+tag `v1.0.0` ถูกสร้างและส่งแล้วที่ commit
+`535f417197670c80339444b0979b6920d62fdc4b` ห้ามสร้างทับ ย้าย หรือ force-push
+tag นี้ ขณะนี้ให้ไปขั้น Publish และทดสอบด้านล่าง; เวอร์ชันถัดไปใช้เลขและ tag ใหม่
+ตามหัวข้ออัปเดต
 
 เปิด GitHub → Actions → **Release Precut to T2ETECH Store** แล้วดูขั้นตอน:
 
