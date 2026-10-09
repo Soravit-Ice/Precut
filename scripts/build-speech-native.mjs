@@ -48,6 +48,25 @@ execFileSync(
     "-DGGML_METAL_EMBED_LIBRARY=ON",
     "-DWHISPER_BUILD_SERVER=OFF",
     "-DWHISPER_BUILD_TESTS=OFF",
+    "-DWHISPER_BUILD_IS_DEV=OFF",
+    // Distribute a portable CPU build, not instructions selected for the runner.
+    "-DGGML_NATIVE=OFF",
+    "-DGGML_AVX2=OFF",
+    "-DGGML_FMA=OFF",
+    "-DGGML_F16C=OFF",
+    "-DGGML_BMI2=OFF",
+    "-DGGML_OPENMP=OFF",
+    ...(process.platform === "win32"
+      ? [
+          "-DCMAKE_POLICY_DEFAULT_CMP0091=NEW",
+          "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded",
+        ]
+      : process.arch === "x64"
+        ? [
+            "-DCMAKE_OSX_DEPLOYMENT_TARGET=15.0",
+            "-DCMAKE_OSX_ARCHITECTURES=x86_64",
+          ]
+        : []),
     "-DCMAKE_BUILD_TYPE=Release",
   ],
   { stdio: "inherit" },
@@ -67,38 +86,45 @@ execFileSync(
   ],
   { stdio: "inherit" },
 );
-const target = resolve(`native/${process.platform}-${process.arch}`),
-  ext = process.platform === "win32" ? ".exe" : "";
-const manifest = JSON.parse(
-  await readFile(join(target, "manifest.json"), "utf8"),
-);
-for (const name of ["whisper-cli", "whisper-vad-speech-segments"]) {
-  let input = join(build, "bin", name + ext);
-  if (!existsSync(input)) input = join(build, "bin", "Release", name + ext);
-  const output = join(target, "bin", name + ext);
-  await copyFile(input, output);
-  await chmod(output, 0o755);
-  if (process.platform === "darwin")
-    execFileSync("codesign", ["--force", "--sign", "-", output], {
-      stdio: "pipe",
-    });
-  if (
-    execFileSync(output, ["--precut-protocol"], { encoding: "utf8" }).trim() !==
-    "1"
-  )
-    throw new Error("Native speech protocol unavailable");
-  manifest.files.find((f) => f.path === `bin/${name}${ext}`).sha256 =
-    createHash("sha256")
-      .update(await readFile(output))
-      .digest("hex");
+if (process.env.PRECUT_SPEECH_BUILD_ONLY === "1") {
+  console.log(
+    "Precut speech native protocol compiled; bundling is a separate step",
+  );
+} else {
+  const target = resolve(`native/${process.platform}-${process.arch}`),
+    ext = process.platform === "win32" ? ".exe" : "";
+  const manifest = JSON.parse(
+    await readFile(join(target, "manifest.json"), "utf8"),
+  );
+  for (const name of ["whisper-cli", "whisper-vad-speech-segments"]) {
+    let input = join(build, "bin", name + ext);
+    if (!existsSync(input)) input = join(build, "bin", "Release", name + ext);
+    const output = join(target, "bin", name + ext);
+    await copyFile(input, output);
+    await chmod(output, 0o755);
+    if (process.platform === "darwin")
+      execFileSync("codesign", ["--force", "--sign", "-", output], {
+        stdio: "pipe",
+      });
+    if (
+      execFileSync(output, ["--precut-protocol"], {
+        encoding: "utf8",
+      }).trim() !== "1"
+    )
+      throw new Error("Native speech protocol unavailable");
+    manifest.files.find((f) => f.path === `bin/${name}${ext}`).sha256 =
+      createHash("sha256")
+        .update(await readFile(output))
+        .digest("hex");
+  }
+  manifest.speechProtocol = 1;
+  manifest.whisperVersion = "1.9.5";
+  manifest.speechPatchSha256 = createHash("sha256")
+    .update(await readFile(patch))
+    .digest("hex");
+  await writeFile(
+    join(target, "manifest.json"),
+    JSON.stringify(manifest, null, 2),
+  );
+  console.log("Precut speech native protocol 1 installed and hashed");
 }
-manifest.speechProtocol = 1;
-manifest.whisperVersion = "1.9.5";
-manifest.speechPatchSha256 = createHash("sha256")
-  .update(await readFile(patch))
-  .digest("hex");
-await writeFile(
-  join(target, "manifest.json"),
-  JSON.stringify(manifest, null, 2),
-);
-console.log("Precut speech native protocol 1 installed and hashed");

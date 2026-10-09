@@ -41,6 +41,9 @@ await pnpm([
   "electron-builder",
   process.platform === "darwin" ? "--mac" : "--win",
   "--" + process.arch,
+  ...(process.platform === "darwin" && process.arch === "x64"
+    ? ["-c.mac.minimumSystemVersion=15.0.0"]
+    : []),
   "--publish",
   "never",
 ]);

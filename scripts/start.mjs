@@ -18,7 +18,12 @@ function run(command, args) {
 }
 // A native bundle is required for the browser to deliver custom-scheme OAuth
 // callbacks on macOS. Never register the generic Electron.app as Precut.
-await run(pnpm, ["package:dir"]);
+await run(pnpm, [
+  "package:dir",
+  ...(process.platform === "darwin" && process.arch === "x64"
+    ? ["-c.mac.minimumSystemVersion=15.0.0"]
+    : []),
+]);
 const executable =
   process.platform === "darwin"
     ? resolve(

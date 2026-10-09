@@ -66,6 +66,34 @@ for (const file of [
   for await (const b of createReadStream(file.location)) hash.update(b);
   if (hash.digest("hex") !== file.sha256)
     throw new Error(`Integrity mismatch: ${file.location}`);
+  if (process.platform === "darwin" && file.location.startsWith(target + "/")) {
+    const arch = process.arch === "x64" ? "x86_64" : "arm64";
+    const architectures = execFileSync("lipo", ["-archs", file.location], {
+      encoding: "utf8",
+    })
+      .trim()
+      .split(/\s+/);
+    if (!architectures.includes(arch))
+      throw new Error(`Native architecture mismatch: ${file.location}`);
+    const commands = execFileSync(
+      "otool",
+      ["-arch", arch, "-l", file.location],
+      { encoding: "utf8" },
+    );
+    const minimums = [
+      ...commands.matchAll(
+        /cmd LC_(?:BUILD_VERSION|VERSION_MIN_MACOSX)[\s\S]*?\n\s+(?:minos|version) (\d+(?:\.\d+)*)/g,
+      ),
+    ];
+    const maximum = process.arch === "x64" ? 15 : 27;
+    if (
+      !minimums.length ||
+      minimums.some((match) => Number(match[1].split(".")[0]) > maximum)
+    )
+      throw new Error(
+        `Native tool exceeds advertised macOS minimum: ${file.location}`,
+      );
+  }
 }
 if (!models.some((m) => m.id === "fast") || !models.some((m) => m.id === "vad"))
   throw new Error("Fast and VAD models must be bundled");

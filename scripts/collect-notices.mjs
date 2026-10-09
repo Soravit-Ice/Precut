@@ -48,6 +48,10 @@ if (existsSync(`${native}/manifest.json`)) {
     { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
   );
   await writeFile(
+    "licenses/native-provenance.json",
+    JSON.stringify({ ...manifest, ffmpegBuildConfiguration: config }, null, 2),
+  );
+  await writeFile(
     "docs/native-provenance.json",
     JSON.stringify(
       {
@@ -59,8 +63,9 @@ if (existsSync(`${native}/manifest.json`)) {
           sha256:
             "ff1a9053feb509ff9d7729703355541ae9690073a6b1c40eb692c962e0dc1720",
         },
-        notes:
-          "Local macOS candidate inputs are Homebrew FFmpeg 9.0.2 plus a static whisper.cpp build. Native bundle dylib references are rewritten and ad-hoc signed.",
+        notes: manifest.sources
+          ? "Pinned vendor FFmpeg 9.0.2 archives and patched static whisper.cpp 1.9.5. See sources for archive URLs/checksums."
+          : "Local macOS candidate inputs are Homebrew FFmpeg 9.0.2 plus a static whisper.cpp build. Native bundle dylib references are rewritten and ad-hoc signed.",
       },
       null,
       2,

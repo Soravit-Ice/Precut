@@ -8,7 +8,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(vars.PRECUT_RELEASE_TARGETS || '[{"runner":"xcode-27","platform":"darwin","arch":"arm64","bundle_url":"PRECUT_NATIVE_MAC_ARM64_URL","bundle_sha":"PRECUT_NATIVE_MAC_ARM64_SHA256"}]') }}
+        include: ${{ fromJSON(vars.PRECUT_RELEASE_TARGETS || '[{"runner":"xcode-27","platform":"darwin","arch":"arm64","bundle_url":"PRECUT_NATIVE_MAC_ARM64_URL","bundle_sha":"PRECUT_NATIVE_MAC_ARM64_SHA256"},{"runner":"macos-15-intel","platform":"darwin","arch":"x64","build_native":true},{"runner":"windows-2025","platform":"win32","arch":"x64","build_native":true}]') }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     steps:
@@ -32,16 +32,21 @@ jobs:
           PRECUT_PRODUCT_CONFIG_JSON: ${{ vars.PRECUT_PRODUCT_CONFIG_JSON }}
         run: |
           node --input-type=module -e 'import { writeFileSync } from "node:fs"; const config = JSON.parse(process.env.PRECUT_PRODUCT_CONFIG_JSON); writeFileSync("product.config.json", JSON.stringify(config, null, 2));'
-      - run: node scripts/fetch-native-bundle.mjs
+      - name: Restore pinned native bundle
+        if: ${{ !matrix.build_native }}
+        run: node scripts/fetch-native-bundle.mjs
         env:
           PRECUT_NATIVE_BUNDLE_URL: ${{ vars[matrix.bundle_url] }}
           PRECUT_NATIVE_BUNDLE_SHA256: ${{ vars[matrix.bundle_sha] }}
           PRECUT_NATIVE_BUNDLE_TOKEN: ${{ github.token }}
+      - name: Build pinned native tools for this platform
+        if: ${{ matrix.build_native }}
+        run: node scripts/bootstrap-native.mjs
       - run: pnpm models:prepare
       - name: Build an installer candidate without submitting to Store
         # Candidate packaging is not a tagged Store submission. GitHub default
         # GITHUB_* variables cannot be overridden through a step env mapping.
-        run: node --input-type=module -e 'delete process.env.GITHUB_REF; await import("./scripts/build-release.mjs");' 
+        run: node --input-type=module -e 'delete process.env.GITHUB_REF; await import("./scripts/build-release.mjs");'
       - run: pnpm fixtures:prepare
       - name: Test the actual packaged application
         run: node scripts/release-smoke.mjs

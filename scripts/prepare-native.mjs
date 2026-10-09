@@ -108,6 +108,9 @@ await writeFile(
         ["-version"],
         { encoding: "utf8" },
       ).split("\n")[0],
+      ...(process.env.PRECUT_NATIVE_SOURCES
+        ? { sources: JSON.parse(process.env.PRECUT_NATIVE_SOURCES) }
+        : {}),
       files,
     },
     null,
