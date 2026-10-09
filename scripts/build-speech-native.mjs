@@ -51,6 +51,8 @@ execFileSync(
     "-DWHISPER_BUILD_IS_DEV=OFF",
     // Distribute a portable CPU build, not instructions selected for the runner.
     "-DGGML_NATIVE=OFF",
+    "-DGGML_SSE42=OFF",
+    "-DGGML_AVX=OFF",
     "-DGGML_AVX2=OFF",
     "-DGGML_FMA=OFF",
     "-DGGML_F16C=OFF",

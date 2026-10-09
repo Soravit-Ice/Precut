@@ -29,17 +29,17 @@ CSC_IDENTITY_AUTO_DISCOVERY=false pnpm exec electron-builder --mac --arm64
 
 For this prepared workspace, `pnpm native:speech` verifies the local pinned source archive, applies the checked-in patch idempotently, builds static speech sidecars and updates their signed file hashes. `PRECUT_WHISPER_SOURCE`, `PRECUT_WHISPER_BUILD` and `PRECUT_CMAKE` can override build paths. The manifest requires `speechProtocol: 1`, `whisperVersion: "1.9.5"` and the checked-in patch SHA256. Both binaries must answer `--precut-protocol` with `1`; upstream/unpatched whisper binaries are rejected before bundling. Protocol 1 adds a bounded JSON input manifest, persistent retry commands, structured checkpoints and Silero per-frame probability JSON. Rebuild platform-specific speech binaries with the same patch before generating an Intel or Windows archive.
 
-For Intel Mac, run these steps on an x64 macOS host with x64 native inputs. `PRECUT_NATIVE_INPUTS` may supply an explicit JSON mapping for all four binaries rather than the Apple Silicon defaults. `/usr/local` and `/opt/homebrew` dylib dependencies are both relocated. For Windows, compile whisper.cpp using MSVC with static CRT (`CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded`) and supply approved FFmpeg 9.0.2 binaries plus any required DLLs. Validate the complete distribution on Windows before building NSIS; cross-compiling a macOS bundle does not prove Windows compatibility.
+## Intel and Windows native builds
 
-## Approved native CI archives
+`node scripts/bootstrap-native.mjs` runs on an Intel macOS or Windows x64 host. It downloads versioned FFmpeg 9.0.2 archives with SHA256 pins from Evermeet (Intel) or Gyan (Windows), verifies the pinned whisper.cpp 1.9.5 source, applies the Precut patch and compiles static speech binaries. It rejects nonfree FFmpeg builds and runner-specific SSE4.2/AVX/AVX2/FMA/BMI2 speech optimizations. Windows uses static MSVC CRT and no OpenMP DLL. Intel speech tools are built with macOS 15.0 deployment target.
 
-`.github/workflows/installers.yml` defines separate macOS arm64, macOS x64 and Windows x64 jobs. Set repository variables:
+The media archive URLs and hashes are checked into `scripts/bootstrap-native.mjs`; the resulting native manifest records these sources. This path needs no extra Intel/Windows GitHub credentials or native archive variables. The ARM64 path continues to use the pinned approved private archive via `PRECUT_NATIVE_MAC_ARM64_URL` / `PRECUT_NATIVE_MAC_ARM64_SHA256`.
 
-- `PRECUT_NATIVE_MAC_ARM64_URL` / `PRECUT_NATIVE_MAC_ARM64_SHA256`
-- `PRECUT_NATIVE_MAC_X64_URL` / `PRECUT_NATIVE_MAC_X64_SHA256`
-- `PRECUT_NATIVE_WINDOWS_X64_URL` / `PRECUT_NATIVE_WINDOWS_X64_SHA256`
+`native:verify` checks individual binary/model SHA256 pins, speech protocol and architecture. On macOS it also rejects native Mach-O files whose OS deployment minimum exceeds the installer target. Intel release packaging explicitly sets `mac.minimumSystemVersion=15.0.0`; ARM64 stays at 27.0.0.
 
-Each URL must be HTTPS and point to an approved ZIP with **relative** `bin/`, `lib/` and `manifest.json` at its root. Each manifest identifies the target architecture, FFmpeg version and hashes of every file. Required tools are ffmpeg, ffprobe, whisper-cli and whisper-vad-speech-segments (with `.exe` on Windows). `fetch-native-bundle.mjs` verifies the pinned archive hash before extraction; `native:verify` verifies individual files and bundled models before packaging. These external variables were not available locally, so the Intel/Windows jobs have not been dispatched.
+`.github/workflows/installers.yml` runs native installer candidates on `xcode-27` ARM64, `macos-15-intel` x64 and `windows-2025` x64. The manual `target` choice allows testing a failed platform independently. Tagged `release.yml` uses the configured full matrix, waits for all builds and packaged analysis/restart smoke tests, and submits all three installers together. The Store must verify every artifact before publication. CI cannot publish.
+
+The signed SDK manifest is byte-preserved with `.gitattributes`, including Windows checkouts; line-ending conversion must never be worked around by skipping signature verification.
 
 Bundled Fast and VAD models have fixed upstream SHA256 pins. Fonts live in `apps/desktop/public/fonts`. Platform resources, models, fonts and notices are copied into the installer; no system Node, Python or FFmpeg is required afterwards.
 
