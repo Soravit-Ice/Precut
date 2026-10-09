@@ -13,4 +13,4 @@ jobs:
     # is stable when the caller moves from v1.0.0 to v1.0.1.
     uses: Soravit-Ice/Precut/.github/workflows/store-release.yml@main
     with:
-      targets: ${{ vars.PRECUT_RELEASE_TARGETS || '[{"runner":"macos-15","platform":"darwin","arch":"arm64","bundle_url":"PRECUT_NATIVE_MAC_ARM64_URL","bundle_sha":"PRECUT_NATIVE_MAC_ARM64_SHA256"}]' }}
+      targets: ${{ vars.PRECUT_RELEASE_TARGETS || '[{"runner":"xcode-27","platform":"darwin","arch":"arm64","bundle_url":"PRECUT_NATIVE_MAC_ARM64_URL","bundle_sha":"PRECUT_NATIVE_MAC_ARM64_SHA256"}]' }}

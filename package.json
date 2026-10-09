@@ -141,7 +141,8 @@
           "to": "native"
         }
       ],
-      "icon": "build/icon.icns"
+      "icon": "build/icon.icns",
+      "minimumSystemVersion": "27.0.0"
     },
     "win": {
       "target": "nsis",

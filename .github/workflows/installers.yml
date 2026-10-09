@@ -8,23 +8,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: macos-15
-            architecture: arm64
-            bundle_url: PRECUT_NATIVE_MAC_ARM64_URL
-            bundle_sha: PRECUT_NATIVE_MAC_ARM64_SHA256
-            target: --mac --arm64
-          - os: macos-15-intel
-            architecture: x64
-            bundle_url: PRECUT_NATIVE_MAC_X64_URL
-            bundle_sha: PRECUT_NATIVE_MAC_X64_SHA256
-            target: --mac --x64
-          - os: windows-2025
-            architecture: x64
-            bundle_url: PRECUT_NATIVE_WINDOWS_X64_URL
-            bundle_sha: PRECUT_NATIVE_WINDOWS_X64_SHA256
-            target: --win --x64
-    runs-on: ${{ matrix.os }}
+        include: ${{ fromJSON(vars.PRECUT_RELEASE_TARGETS || '[{"runner":"xcode-27","platform":"darwin","arch":"arm64","bundle_url":"PRECUT_NATIVE_MAC_ARM64_URL","bundle_sha":"PRECUT_NATIVE_MAC_ARM64_SHA256"}]') }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -33,29 +19,43 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24.21.0
-          architecture: ${{ matrix.architecture }}
+          architecture: ${{ matrix.arch }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Restore public product configuration
+        shell: bash
+        env:
+          PRECUT_PRODUCT_CONFIG_JSON: ${{ vars.PRECUT_PRODUCT_CONFIG_JSON }}
+        run: |
+          node --input-type=module -e 'import { writeFileSync } from "node:fs"; const config = JSON.parse(process.env.PRECUT_PRODUCT_CONFIG_JSON); writeFileSync("product.config.json", JSON.stringify(config, null, 2));'
       - run: node scripts/fetch-native-bundle.mjs
         env:
           PRECUT_NATIVE_BUNDLE_URL: ${{ vars[matrix.bundle_url] }}
           PRECUT_NATIVE_BUNDLE_SHA256: ${{ vars[matrix.bundle_sha] }}
           PRECUT_NATIVE_BUNDLE_TOKEN: ${{ github.token }}
       - run: pnpm models:prepare
-      - run: pnpm native:verify
-      - run: pnpm notices:prepare
-      - run: pnpm icons:prepare
-      - run: pnpm typecheck && pnpm test && pnpm build
-      - run: pnpm fixtures:prepare
-      - run: pnpm exec playwright test
-      - run: pnpm exec electron-builder ${{ matrix.target }}
+      - name: Build an installer candidate without submitting to Store
+        run: pnpm release:build
         env:
-          CSC_IDENTITY_AUTO_DISCOVERY: false
+          # Candidate packaging deliberately has no release tag. The Store
+          # submission workflow retains its exact version/tag check.
+          GITHUB_REF: ""
+      - run: pnpm fixtures:prepare
+      - name: Test the actual packaged application
+        run: node scripts/release-smoke.mjs
       - uses: actions/upload-artifact@v4
         with:
-          name: precut-candidate-${{ runner.os }}-${{ matrix.architecture }}
+          name: precut-candidate-${{ matrix.platform }}-${{ matrix.arch }}
+          if-no-files-found: error
           path: |
-            out/*.dmg
-            out/*.zip
-            out/*.exe
-            out/*.blockmap
+            out/precut-*.dmg
+            out/precut-*.zip
+            out/precut-*.exe
+            out/artifacts-*.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: precut-candidate-acceptance-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            docs/release-results-*.json
+            docs/screenshots/release-*.png
