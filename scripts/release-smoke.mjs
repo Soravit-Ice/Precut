@@ -2,6 +2,7 @@ import { _electron } from "@playwright/test";
 import { mkdtemp, mkdir, writeFile, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { execFileSync } from "node:child_process";
 const root = await mkdtemp(join(tmpdir(), "precut-release-"));
 const { version } = JSON.parse(await readFile("package.json", "utf8"));
 if (!/^\d+\.\d+\.\d+$/.test(version))
@@ -63,6 +64,20 @@ try {
     productionConfigLoaded: true,
     unsignedStoreUpdatePolicy: "passed",
   };
+  if (process.platform === "darwin") {
+    const plist = resolve(target, "../../Info.plist");
+    const minimum = execFileSync(
+      "plutil",
+      ["-extract", "LSMinimumSystemVersion", "raw", "-o", "-", plist],
+      { encoding: "utf8" },
+    ).trim();
+    if (minimum !== (process.arch === "x64" ? "15.0.0" : "27.0.0"))
+      throw new Error("Packaged macOS minimum does not match this target");
+    report.minimumMacOS = minimum;
+    report.testedMacOS = execFileSync("sw_vers", ["-productVersion"], {
+      encoding: "utf8",
+    }).trim();
+  }
   const created = await call("projects.create", {
     name: "Release acceptance · bundled native tools",
   });

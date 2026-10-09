@@ -1,6 +1,12 @@
 name: Precut installer candidates
 on:
   workflow_dispatch:
+    inputs:
+      target:
+        description: Installer target to test (release submissions always use the configured full matrix)
+        type: choice
+        default: all
+        options: [all, mac-intel, windows]
 permissions:
   contents: read
 jobs:
@@ -8,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(vars.PRECUT_RELEASE_TARGETS || '[{"runner":"xcode-27","platform":"darwin","arch":"arm64","bundle_url":"PRECUT_NATIVE_MAC_ARM64_URL","bundle_sha":"PRECUT_NATIVE_MAC_ARM64_SHA256"},{"runner":"macos-15-intel","platform":"darwin","arch":"x64","build_native":true},{"runner":"windows-2025","platform":"win32","arch":"x64","build_native":true}]') }}
+        include: ${{ fromJSON(inputs.target == 'windows' && '[{"runner":"windows-2025","platform":"win32","arch":"x64","build_native":true}]' || inputs.target == 'mac-intel' && '[{"runner":"macos-15-intel","platform":"darwin","arch":"x64","build_native":true}]' || vars.PRECUT_RELEASE_TARGETS || '[{"runner":"xcode-27","platform":"darwin","arch":"arm64","bundle_url":"PRECUT_NATIVE_MAC_ARM64_URL","bundle_sha":"PRECUT_NATIVE_MAC_ARM64_SHA256"},{"runner":"macos-15-intel","platform":"darwin","arch":"x64","build_native":true},{"runner":"windows-2025","platform":"win32","arch":"x64","build_native":true}]') }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     steps:

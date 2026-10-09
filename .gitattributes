@@ -1,0 +1,9 @@
+# Cross-platform builds must verify the exact signed vendor manifest bytes.
+* text=auto eol=lf
+vendor/manifest.json -text
+vendor/manifest.sig -text
+*.tgz -text
+*.png -text
+*.ico -text
+*.icns -text
+*.ttf -text

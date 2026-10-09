@@ -24,10 +24,23 @@
       {
         "runner": "xcode-27",
         "platform": "darwin",
-        "arch": "arm64"
+        "arch": "arm64",
+        "minimumMacOS": "27.0.0"
+      },
+      {
+        "runner": "macos-15-intel",
+        "platform": "darwin",
+        "arch": "x64",
+        "minimumMacOS": "15.0.0",
+        "buildNative": true
+      },
+      {
+        "runner": "windows-2025",
+        "platform": "win32",
+        "arch": "x64",
+        "buildNative": true
       }
-    ],
-    "minimumMacOS": "27.0.0"
+    ]
   },
   "nativeInput": {
     "releaseTag": "native-darwin-arm64-78605daab575",
@@ -43,9 +56,16 @@
     "workflowRunId": "37942852278",
     "sessionId": "ce6a59b3-e6d5-41d4-b01c-006efcfba51d",
     "artifactStatus": "VERIFIED",
-    "releaseStatus": "READY",
+    "releaseStatus": "PUBLISHED",
     "verificationRunId": "run_06gi2nd0q1uatol2br7eak5101",
     "verificationRunCompletedAt": "2026-10-09T15:52:54.225Z",
-    "published": false
+    "published": true
+  },
+  "nextRelease": {
+    "version": "1.0.1",
+    "targets": 3,
+    "candidateRunId": "37961073674",
+    "status": "BUILDING",
+    "submittedToStore": false
   }
 }

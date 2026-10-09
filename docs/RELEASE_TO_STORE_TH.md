@@ -1,6 +1,6 @@
 # นำ Precut ขึ้นขายบน T2ETECH Store
 
-ฉบับสำหรับ Precut `1.0.0` วันที่ 9 ตุลาคม 2026 — Made by t2etech
+ฉบับสำหรับ Precut `1.0.1` (กำลังทดสอบ release ทั้ง 3 ระบบ) วันที่ 9 ตุลาคม 2026 — Made by t2etech
 
 ## 1. สิ่งที่เตรียมแล้วและสิ่งที่ต้องทำก่อนเปิดขาย
 
@@ -22,8 +22,8 @@
 [release run 37942852278](https://github.com/Soravit-Ice/Precut/actions/runs/37942852278)
 ผ่านเมื่อ 9 ตุลาคม 2026 และ Trigger.dev Production ตรวจไฟล์จริงสำเร็จ:
 `precut-1.0.0-mac-arm64.dmg` เป็น **VERIFIED**, release `PC 1.0.0` เป็น
-**READY** ยังไม่ได้กด Publish release หรือสินค้าให้ลูกค้า และยังไม่มีตัวติดตั้ง
-Windows หรือ Mac Intel ที่ผ่านการทดสอบ ให้เปิดขายเฉพาะระบบที่มีไฟล์และทดสอบแล้ว
+**PUBLISHED** และ trial-installer API คืนไฟล์ ARM64 `1.0.0` ได้แล้วเมื่อ 9 ตุลาคม
+ส่วน `1.0.1` กำลังทดสอบ Windows และ Mac Intel; อย่าอ้างว่ารองรับจน CI ผ่านและเผยแพร่ release ใหม่
 
 ก่อนส่งเวอร์ชันถัดไป ตรวจว่า Vercel Production ใช้ `TRIGGER_SECRET_KEY`
 ของ Trigger.dev **Production** และ redeploy หลังบันทึก key; development key
@@ -93,25 +93,11 @@ workflow ส่ง GitHub token ที่มี `contents: read` เฉพาะ
 
 ค่านี้เป็น build tools สำหรับ CI **ไม่ใช่ไฟล์ DMG ให้ลูกค้าซื้อ** และต้องจัด source/notices สำหรับ native distribution ด้วย
 
-ตั้ง `PRECUT_RELEASE_TARGETS` สำหรับ Apple Silicon ไว้แล้ว โดยใช้ runner `xcode-27` เพราะ FFmpeg ใน native archive นี้มี deployment target macOS 27 (whisper-cli 26.2) ใช้ macOS 15 runner จะรันไม่ได้ แอปกำหนด `minimumSystemVersion: 27.0.0` ให้ตรงกับไฟล์จริง ดู [runner image](https://github.com/actions/runner-images/blob/main/images/macos/xcode-27-arm64-Readme.md)
+target Apple Silicon ใช้ โดยใช้ runner `xcode-27` เพราะ FFmpeg ใน native archive นี้มี deployment target macOS 27 (whisper-cli 26.2) ใช้ macOS 15 runner จะรันไม่ได้ แอปกำหนด `minimumSystemVersion: 27.0.0` ให้ตรงกับไฟล์จริง ดู [runner image](https://github.com/actions/runner-images/blob/main/images/macos/xcode-27-arm64-Readme.md)
 
 หากต้องการรองรับ macOS รุ่นเก่า ต้อง rebuild FFmpeg, dependencies และ speech tools ด้วย deployment target ที่ต้องการ แล้วทดสอบบน OS นั้นก่อนลด minimumSystemVersion; การเปลี่ยนชื่อ runner หรือแก้เลข minimum เพียงอย่างเดียวไม่ทำให้ native tools รองรับ
 
-ค่าปัจจุบัน:
-
-```json
-[
-  {
-    "runner": "xcode-27",
-    "platform": "darwin",
-    "arch": "arm64",
-    "bundle_url": "PRECUT_NATIVE_MAC_ARM64_URL",
-    "bundle_sha": "PRECUT_NATIVE_MAC_ARM64_SHA256"
-  }
-]
-```
-
-หากมี approved native bundles ของ Intel/Windows และพร้อมทดสอบแล้ว จึงขยาย targets เช่น:
+ค่าปัจจุบันสำหรับ release ใหม่รวม 3 ระบบ (บันทึก `PRECUT_RELEASE_TARGETS` แล้ว):
 
 ```json
 [
@@ -126,20 +112,22 @@ workflow ส่ง GitHub token ที่มี `contents: read` เฉพาะ
     "runner": "macos-15-intel",
     "platform": "darwin",
     "arch": "x64",
-    "bundle_url": "PRECUT_NATIVE_MAC_X64_URL",
-    "bundle_sha": "PRECUT_NATIVE_MAC_X64_SHA256"
+    "build_native": true
   },
   {
     "runner": "windows-2025",
     "platform": "win32",
     "arch": "x64",
-    "bundle_url": "PRECUT_NATIVE_WINDOWS_X64_URL",
-    "bundle_sha": "PRECUT_NATIVE_WINDOWS_X64_SHA256"
+    "build_native": true
   }
 ]
 ```
 
-เพิ่ม URL/hash variables ของ target ที่เพิ่มตามชื่อใน JSON ห้ามนำ ARM64 ZIP ไปใช้กับ x64 runner
+Intel/Windows ใช้ `scripts/bootstrap-native.mjs`: ดาวน์โหลด FFmpeg/FFprobe 9.0.2 จาก versioned URL ที่ pin SHA-256 ไว้ แล้ว compile whisper.cpp 1.9.5 พร้อม patch ของ Precut บน runner ระบบนั้น ไม่ต้องใส่ native URL/hash variables อีกสองชุด และไม่ใช้ archive ARM64 กับ x64
+
+ตัวติดตั้ง Intel กำหนดขั้นต่ำ macOS 15 แยกจาก ARM64 ที่ยังเป็น macOS 27; `native:verify` ตรวจ architecture และ deployment target ของ native Mach-O ทุกไฟล์ก่อน packaging ข้อมูลแหล่งที่มาและ binary hashes อยู่ใน `licenses/native-provenance.json` ในตัวติดตั้ง
+
+workflow เปิดแอปที่แพ็กจริงทุก target แล้วทดสอบ analysis/restart; upload job เริ่มเมื่อ **ทั้ง 3 build ผ่าน** และ merge manifest ต้องมี installer ครบ 3 เป้าหมาย ก่อนส่ง release เดียวไป Store
 
 สร้าง environment **`release-upload`** แล้ว จำกัด tag ที่อนุญาตเป็น `v*` ส่วน reviewer/wait timer ไม่ได้เปิดเพราะ plan ปัจจุบันไม่รองรับ protection ดังกล่าว workflow ใช้ OIDC จึงไม่ต้องใส่ Store API token/Cloudflare secret/Supabase service role ใน repo นี้
 
@@ -155,7 +143,7 @@ Source ขึ้น `main` ใน GitHub แล้ว ไม่ต้อง `git
 
 tag `v1.0.0` ถูกสร้างและส่งแล้วที่ commit
 `535f417197670c80339444b0979b6920d62fdc4b` ห้ามสร้างทับ ย้าย หรือ force-push
-tag นี้ ขณะนี้ให้ไปขั้น Publish และทดสอบด้านล่าง; เวอร์ชันถัดไปใช้เลขและ tag ใหม่
+tag นี้ ขณะนี้ให้ไปขั้นทดสอบด้านล่าง; เวอร์ชันถัดไปใช้เลขและ tag ใหม่
 ตามหัวข้ออัปเดต
 
 เปิด GitHub → Actions → **Release Precut to T2ETECH Store** แล้วดูขั้นตอน:
@@ -170,7 +158,7 @@ tag นี้ ขณะนี้ให้ไปขั้น Publish และท
 
 ผล upload จะเป็น `submittedForVerification: true`, `published: false` ตรวจสอบ hash/ขนาดของ artifact ที่ได้จาก **CI**; hash อาจต่างจาก DMG ที่ build ในเครื่องเพราะเวลา/packaging metadata อย่าใช้ manifest local กับไฟล์จากอีก build
 
-workflow_dispatch ใช้ได้เมื่อเลือก **tag `v1.0.0`**; เลือก `main` จะถูก `release:check` ปฏิเสธ หากอัปโหลดเสร็จแล้วให้ตรวจ release ที่มีอยู่ใน Store ก่อนกด rerun การ upload เป็นขั้นที่ผูก session ไม่ใช่ปุ่ม retry verification
+workflow_dispatch ใช้ได้เมื่อเลือก **tag ของเวอร์ชันใหม่ เช่น `v1.0.1`**; เลือก `main` จะถูก `release:check` ปฏิเสธ หากอัปโหลดเสร็จแล้วให้ตรวจ release ที่มีอยู่ใน Store ก่อนกด rerun การ upload เป็นขั้นที่ผูก session ไม่ใช่ปุ่ม retry verification
 
 DMG local ที่เตรียมไว้ใช้ทดสอบได้ทันที แต่ flow เข้า Store ปัจจุบันรับ release ผ่าน GitHub OIDC ดังนั้นไม่ใช่นำไฟล์วาง public R2 แล้วจะเปิดขายเอง
 
@@ -184,7 +172,7 @@ Bot Fight Mode ของ Free plan ทำข้อยกเว้นด้วย
 
 ## 6. Publish และทดสอบก่อนเปิดขาย
 
-1. Admin → Releases → ตรวจสินค้า `PC`, เวอร์ชัน `1.0.0`, channel **STABLE**, platform **MACOS**, architecture **ARM64**
+1. Admin → Releases → ตรวจสินค้า `PC`, เวอร์ชันใหม่ `1.0.1`, channel **STABLE** และ installer ครบ **MACOS/ARM64**, **MACOS/X64**, **WINDOWS/X64**
 2. รอทุก artifact เป็น **VERIFIED** และ release เป็น **READY** ถ้าค้าง `VERIFYING` ตรวจ Trigger.dev และ outbox; ถ้า FAILED อ่านเหตุผลและแก้ต้นเหตุ แล้วใช้ retry verification ใน Admin
 3. กด Publish release, ใส่ reason และยืนยันตัวตนตาม modal พิมพ์ confirmation ที่หน้าจอระบุ (`PUBLISH` สำหรับคำสั่ง publish release)
 4. เปิด Product → Publishing ตรวจ cover, Stripe pricing, active licensing policy และ published distributable release
