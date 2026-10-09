@@ -19,6 +19,10 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - name: Remove acceptance evidence from previous builds
+        shell: bash
+        run: |
+          node --input-type=module -e 'import { readdirSync, rmSync } from "node:fs"; for (const [dir, pattern] of [["docs", /^release-results-.*\.json$/], ["docs/screenshots", /^release-.*\.png$/]]) { for (const name of readdirSync(dir)) if (pattern.test(name)) rmSync(`${dir}/${name}`); }'
       - uses: pnpm/action-setup@v4
         with:
           version: 11.5.2

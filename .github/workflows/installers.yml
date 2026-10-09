@@ -13,6 +13,10 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - name: Remove acceptance evidence from previous builds
+        shell: bash
+        run: |
+          node --input-type=module -e 'import { readdirSync, rmSync } from "node:fs"; for (const [dir, pattern] of [["docs", /^release-results-.*\.json$/], ["docs/screenshots", /^release-.*\.png$/]]) { for (const name of readdirSync(dir)) if (pattern.test(name)) rmSync(`${dir}/${name}`); }'
       - uses: pnpm/action-setup@v4
         with:
           version: 11.5.2
@@ -35,11 +39,9 @@ jobs:
           PRECUT_NATIVE_BUNDLE_TOKEN: ${{ github.token }}
       - run: pnpm models:prepare
       - name: Build an installer candidate without submitting to Store
-        run: pnpm release:build
-        env:
-          # Candidate packaging deliberately has no release tag. The Store
-          # submission workflow retains its exact version/tag check.
-          GITHUB_REF: ""
+        # Candidate packaging is not a tagged Store submission. GitHub default
+        # GITHUB_* variables cannot be overridden through a step env mapping.
+        run: node --input-type=module -e 'delete process.env.GITHUB_REF; await import("./scripts/build-release.mjs");' 
       - run: pnpm fixtures:prepare
       - name: Test the actual packaged application
         run: node scripts/release-smoke.mjs
