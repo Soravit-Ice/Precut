@@ -49,15 +49,16 @@ jobs:
         if: ${{ matrix.build_native }}
         run: node scripts/bootstrap-native.mjs
       - run: pnpm models:prepare
-      - name: Test native speech language detection before packaging
+      - name: Test native CPU speech detection and transcription before packaging
         if: ${{ matrix.platform == 'win32' }}
         run: |
           pnpm fixtures:prepare
           node scripts/native-speech-smoke.mjs
       - name: Build an installer candidate without submitting to Store
-        # Candidate packaging is not a tagged Store submission. GitHub default
-        # GITHUB_* variables cannot be overridden through a step env mapping.
-        run: node --input-type=module -e 'delete process.env.GITHUB_REF; await import("./scripts/build-release.mjs");'
+        # Candidates use local packaging checks, with no Store submission.
+        # Tagged Store release workflows retain their strict ref checks.
+        # GitHub's default GITHUB_* variables cannot be set in step env.
+        run: node --input-type=module -e 'delete process.env.GITHUB_REF; delete process.env.GITHUB_ACTIONS; await import("./scripts/build-release.mjs");'
       - run: pnpm fixtures:prepare
       - name: Test the actual packaged application
         run: node scripts/release-smoke.mjs
@@ -77,3 +78,4 @@ jobs:
           path: |
             docs/release-results-*.json
             docs/screenshots/release-*.png
+            .tools/native-speech-smoke/results.json

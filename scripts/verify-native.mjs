@@ -3,6 +3,7 @@ import { createReadStream } from "node:fs";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
+import { requiredSpeechLibraries } from "./windows-speech-libraries.mjs";
 const target = `native/${process.platform}-${process.arch}`;
 const native = JSON.parse(await readFile(`${target}/manifest.json`, "utf8"));
 if (
@@ -15,6 +16,15 @@ if (native.speechProtocol !== 1 || native.whisperVersion !== "1.9.5")
   throw new Error(
     "Rebuild the speech native bundle with native:speech; protocol 1 is required",
   );
+if (process.platform === "win32") {
+  if (native.speechCpuVariants !== true)
+    throw new Error(
+      "Rebuild Windows speech with runtime CPU variants before packaging.",
+    );
+  for (const name of requiredSpeechLibraries)
+    if (!native.files.some((file) => file.path === `bin/${name}`))
+      throw new Error(`Windows speech manifest is missing ${name}`);
+}
 if (
   native.speechPatchSha256 !==
   createHash("sha256")

@@ -21,6 +21,8 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
+import { availableParallelism } from "node:os";
+import { speechRuntime } from "./speech-runtime";
 import { z } from "zod";
 import {
   schemas,
@@ -166,9 +168,19 @@ async function launch(job: Job, task: EngineTask) {
     const pids = new Set<number>();
     let completed = false,
       lastProgress = 0;
+    let stageStartedAt = Date.now();
+    const timeStage = () => {
+      // Group changing chunk counts into one useful diagnostic stage.
+      const key = job.stage.replace(/\d+/g, "#");
+      job.stageDurationsMs ??= {};
+      job.stageDurationsMs[key] =
+        (job.stageDurationsMs[key] ?? 0) + Date.now() - stageStartedAt;
+      stageStartedAt = Date.now();
+    };
     const finish = async (error?: Error, result?: Record<string, unknown>) => {
       if (completed) return;
       completed = true;
+      timeStage();
       active.delete(job.id);
       job.durationMs = Date.now() - job.startedAt;
       job.state = error
@@ -224,7 +236,10 @@ async function launch(job: Job, task: EngineTask) {
             // Announce cancellation only after the worker has stopped and cleanup
             // has finished, so Retry cannot race the previous analysis run.
             if (job.state === "cancelled") return;
-            job.stage = message.stage!;
+            if (job.stage !== message.stage) {
+              timeStage();
+              job.stage = message.stage!;
+            }
             // Cached chunks and CPU recovery can revisit an earlier stage.
             // Keep the overall analysis bar moving forwards through those retries.
             job.progress =
@@ -504,6 +519,7 @@ async function handle(
         throw new Error("An export request is already open.");
       exportRequests.add(options.projectId);
       try {
+        await licensing.ensureExportAccess();
         const snap = await snapshot(options.projectId);
         if (!snap.assets.length || snap.assets[0].missing)
           throw new Error("Locate the original source before exporting.");
@@ -591,6 +607,8 @@ async function handle(
       return licensing.deactivate();
     case "license.logout":
       return licensing.logout();
+    case "license.openStore":
+      return licensing.openStore();
     case "license.checkUpdates":
       return licensing.checkUpdates();
     case "license.installUpdate":
@@ -662,11 +680,20 @@ async function handle(
             version: app.getVersion(),
             platform: process.platform,
             arch: process.arch,
+            speechRuntime: {
+              logicalCPUs: availableParallelism(),
+              ...speechRuntime(
+                process.platform,
+                availableParallelism(),
+                (await db.call<Settings>("settings.get")).useGPU,
+              ),
+            },
             jobs: [...jobs.values()].map((j) => ({
               type: j.type,
               state: j.state,
               stage: j.stage,
               durationMs: j.durationMs,
+              stageDurationsMs: j.stageDurationsMs,
               error: j.error ? "PROCESSING_FAILED" : undefined,
             })),
             licence: (await licensing.status()).mode,

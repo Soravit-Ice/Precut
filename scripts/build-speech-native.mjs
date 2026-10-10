@@ -2,7 +2,9 @@ import { execFileSync } from "node:child_process";
 import { readFile, writeFile, copyFile, chmod } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { resolve, join } from "node:path";
+import { resolve, join, dirname } from "node:path";
+import { bundleWindowsSpeechLibraries } from "./windows-speech-libraries.mjs";
+const cpuVariants = process.platform === "win32" && process.arch === "x64";
 const source = resolve(
   process.env.PRECUT_WHISPER_SOURCE ?? ".tools/whisper.cpp-1.9.5",
 );
@@ -43,13 +45,15 @@ execFileSync(
     source,
     "-B",
     build,
-    "-DBUILD_SHARED_LIBS=OFF",
-    "-DGGML_BACKEND_DL=OFF",
+    `-DBUILD_SHARED_LIBS=${cpuVariants ? "ON" : "OFF"}`,
+    `-DGGML_BACKEND_DL=${cpuVariants ? "ON" : "OFF"}`,
+    `-DGGML_CPU_ALL_VARIANTS=${cpuVariants ? "ON" : "OFF"}`,
     "-DGGML_METAL_EMBED_LIBRARY=ON",
     "-DWHISPER_BUILD_SERVER=OFF",
     "-DWHISPER_BUILD_TESTS=OFF",
     "-DWHISPER_BUILD_IS_DEV=OFF",
-    // Distribute a portable CPU build, not instructions selected for the runner.
+    // Keep the entry point portable. Windows loads the fastest compatible CPU
+    // variant at runtime, including a baseline for CPUs without AVX/AVX2.
     "-DGGML_NATIVE=OFF",
     "-DGGML_SSE42=OFF",
     "-DGGML_AVX=OFF",
@@ -98,9 +102,11 @@ if (process.env.PRECUT_SPEECH_BUILD_ONLY === "1") {
   const manifest = JSON.parse(
     await readFile(join(target, "manifest.json"), "utf8"),
   );
+  let speechBin;
   for (const name of ["whisper-cli", "whisper-vad-speech-segments"]) {
     let input = join(build, "bin", name + ext);
     if (!existsSync(input)) input = join(build, "bin", "Release", name + ext);
+    speechBin = dirname(input);
     const output = join(target, "bin", name + ext);
     await copyFile(input, output);
     await chmod(output, 0o755);
@@ -108,17 +114,36 @@ if (process.env.PRECUT_SPEECH_BUILD_ONLY === "1") {
       execFileSync("codesign", ["--force", "--sign", "-", output], {
         stdio: "pipe",
       });
-    if (
-      execFileSync(output, ["--precut-protocol"], {
-        encoding: "utf8",
-      }).trim() !== "1"
-    )
-      throw new Error("Native speech protocol unavailable");
     manifest.files.find((f) => f.path === `bin/${name}${ext}`).sha256 =
       createHash("sha256")
         .update(await readFile(output))
         .digest("hex");
   }
+  if (cpuVariants) {
+    const libraries = await bundleWindowsSpeechLibraries(
+      speechBin,
+      join(target, "bin"),
+    );
+    manifest.files = manifest.files.filter(
+      (f) => !/^bin\/(?:ggml.*|whisper)\.dll$/i.test(f.path),
+    );
+    for (const name of libraries)
+      manifest.files.push({
+        path: `bin/${name}`,
+        sha256: createHash("sha256")
+          .update(await readFile(join(target, "bin", name)))
+          .digest("hex"),
+      });
+  }
+  for (const name of ["whisper-cli", "whisper-vad-speech-segments"]) {
+    if (
+      execFileSync(join(target, "bin", name + ext), ["--precut-protocol"], {
+        encoding: "utf8",
+      }).trim() !== "1"
+    )
+      throw new Error("Native speech protocol unavailable");
+  }
+  manifest.speechCpuVariants = cpuVariants;
   manifest.speechProtocol = 1;
   manifest.whisperVersion = "1.9.5";
   manifest.speechPatchSha256 = createHash("sha256")

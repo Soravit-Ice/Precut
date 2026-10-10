@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   bind: vi.fn(),
@@ -11,12 +11,21 @@ const mocks = vi.hoisted(() => ({
   storageSave: vi.fn(),
   recover: vi.fn(),
   run: vi.fn(),
+  licenseStatus: vi.fn(),
+  verify: vi.fn(),
+  packaged: false,
 }));
 vi.mock("../../packages/core/src/receipts", () => ({
   recoverExport: mocks.recover,
 }));
 vi.mock("electron", () => ({
-  app: { isPackaged: false, getVersion: () => "1.0.0" },
+  app: {
+    get isPackaged() {
+      return mocks.packaged;
+    },
+    getVersion: () => "1.0.0",
+    setAsDefaultProtocolClient: () => true,
+  },
   shell: { openExternal: vi.fn() },
   dialog: {},
 }));
@@ -83,10 +92,16 @@ const status = {
 };
 beforeEach(() => {
   vi.resetAllMocks();
+  mocks.packaged = false;
   mocks.bind.mockReturnValue(mocks.unbind);
   mocks.storageLoad.mockResolvedValue(null);
   mocks.complete.mockResolvedValue({ signedIn: true, activated: false });
   mocks.access.mockResolvedValue(status);
+  mocks.licenseStatus.mockResolvedValue({ activated: false });
+  mocks.verify.mockResolvedValue({
+    features: ["export"],
+    kind: "PERMANENT_OFFLINE",
+  });
   mocks.recover.mockResolvedValue("FAILED");
   mocks.run.mockImplementation(async (_input, engine) => engine());
   mocks.create.mockImplementation((_config, options) => ({
@@ -110,8 +125,10 @@ beforeEach(() => {
     login: mocks.login,
     dispose: mocks.dispose,
     runWithAccess: mocks.run,
+    license: { status: mocks.licenseStatus, ensureValidLicense: mocks.verify },
   }));
 });
+afterEach(() => vi.unstubAllEnvs());
 describe("Precut account status notification", () => {
   it("uses the Store page for unsigned updates without calling the SDK signed installer flow", async () => {
     const licensing = new Licensing(
@@ -147,7 +164,9 @@ describe("Precut account status notification", () => {
     expect(result).toMatchObject({
       signedIn: true,
       activated: false,
-      remaining: 3,
+      remaining: 0,
+      valid: false,
+      purchaseRequired: true,
     });
     expect(changed).toHaveBeenLastCalledWith(result);
     expect(changed.mock.calls[0][0].loginPhase).toBe("completing");
@@ -328,6 +347,7 @@ it("waits for secure-storage startup instead of briefly reporting missing config
 });
 
 it("reports a proven startup failure and lets the next export retry through the SDK", async () => {
+  mocks.licenseStatus.mockResolvedValue({ activated: true });
   const licensing = new Licensing("/tmp/unused", "/tmp/projects");
   await licensing.initialize("product.config.json");
   const error = new Error("EPERM: receipt fsync"),
@@ -348,6 +368,7 @@ it("reports a proven startup failure and lets the next export retry through the 
 });
 
 it("keeps ambiguous work reserved and blocks even cached status without queuing another SDK request", async () => {
+  mocks.licenseStatus.mockResolvedValue({ activated: true });
   mocks.recover.mockResolvedValue("UNKNOWN");
   const licensing = new Licensing("/tmp/unused", "/tmp/projects");
   await licensing.initialize("product.config.json");
@@ -371,4 +392,132 @@ it("keeps ambiguous work reserved and blocks even cached status without queuing 
   expect(mocks.run).toHaveBeenCalledOnce();
   expect(mocks.access).toHaveBeenCalledOnce();
   await licensing.dispose();
+});
+
+describe("paid-only Precut export authorization", () => {
+  it("isolates explicitly opted-in development exports from real Store configuration", async () => {
+    vi.stubEnv("PRECUT_DEV_EXPORT", "1");
+    vi.stubEnv("PRECUT_TEST_DATA", "/tmp/isolated-precut-e2e");
+    const licensing = new Licensing(
+      "/tmp/isolated-precut-e2e",
+      "/tmp/projects",
+    );
+    await licensing.initialize("product.config.json");
+    expect(mocks.create).not.toHaveBeenCalled();
+    expect(await licensing.status()).toMatchObject({
+      mode: "development",
+      valid: true,
+    });
+    await expect(
+      licensing.run(
+        crypto.randomUUID(),
+        crypto.randomUUID(),
+        async () => "development export",
+      ),
+    ).resolves.toBe("development export");
+    await licensing.dispose();
+  });
+  it("never enables the development adapter in a packaged installer", async () => {
+    mocks.packaged = true;
+    vi.stubEnv("PRECUT_DEV_EXPORT", "1");
+    vi.stubEnv("PRECUT_TEST_DATA", "/tmp/isolated-precut-e2e");
+    const licensing = new Licensing(
+      "/tmp/isolated-precut-e2e",
+      "/tmp/projects",
+    );
+    await licensing.initialize("product.config.json");
+    expect(mocks.create).toHaveBeenCalledOnce();
+    expect(await licensing.status()).toMatchObject({
+      mode: "configured",
+      valid: false,
+    });
+    const engine = vi.fn();
+    await expect(
+      licensing.run(crypto.randomUUID(), crypto.randomUUID(), engine),
+    ).rejects.toThrow("Purchase Precut");
+    expect(engine).not.toHaveBeenCalled();
+    await licensing.dispose();
+  });
+  it("blocks a free signed-in account before reservation or engine execution even if the SDK reports free quota", async () => {
+    const licensing = new Licensing("/tmp/unused", "/tmp/projects");
+    await licensing.initialize("product.config.json");
+    expect(await licensing.status()).toMatchObject({
+      valid: false,
+      remaining: 0,
+      purchaseRequired: true,
+    });
+    const engine = vi.fn();
+    await expect(
+      licensing.run(crypto.randomUUID(), crypto.randomUUID(), engine),
+    ).rejects.toThrow("Purchase Precut");
+    expect(mocks.run).not.toHaveBeenCalled();
+    expect(mocks.verify).not.toHaveBeenCalled();
+    expect(engine).not.toHaveBeenCalled();
+    await licensing.dispose();
+  });
+  it.each(["PAID", "LIFETIME"])(
+    "permits a verified %s entitlement with export",
+    async (tier) => {
+      mocks.licenseStatus.mockResolvedValue({ activated: true });
+      mocks.access.mockResolvedValue({
+        ...status,
+        tier,
+        activated: true,
+        features: ["export"],
+      });
+      const licensing = new Licensing("/tmp/unused", "/tmp/projects");
+      await licensing.initialize("product.config.json");
+      expect(await licensing.status()).toMatchObject({
+        valid: true,
+        purchaseRequired: false,
+      });
+      const engine = vi.fn().mockResolvedValue("exported");
+      await expect(
+        licensing.run(crypto.randomUUID(), crypto.randomUUID(), engine),
+      ).resolves.toBe("exported");
+      expect(engine).toHaveBeenCalledOnce();
+      expect(mocks.verify).toHaveBeenCalledTimes(2);
+      await licensing.dispose();
+    },
+  );
+  it("rejects licence verification failures instead of allowing the SDK to fall back to trial", async () => {
+    mocks.licenseStatus.mockResolvedValue({ activated: true });
+    mocks.verify.mockRejectedValue(new Error("Expired licence"));
+    const licensing = new Licensing("/tmp/unused", "/tmp/projects");
+    await licensing.initialize("product.config.json");
+    const engine = vi.fn();
+    await expect(
+      licensing.run(crypto.randomUUID(), crypto.randomUUID(), engine),
+    ).rejects.toThrow("Expired licence");
+    expect(mocks.run).not.toHaveBeenCalled();
+    expect(engine).not.toHaveBeenCalled();
+    await licensing.dispose();
+  });
+  it("rechecks immediately before the engine and avoids uncertain-result recovery for preflight denials", async () => {
+    mocks.licenseStatus.mockResolvedValue({ activated: true });
+    mocks.verify
+      .mockResolvedValueOnce({ features: ["export"] })
+      .mockRejectedValueOnce(new Error("Licence revoked"));
+    const licensing = new Licensing("/tmp/unused", "/tmp/projects");
+    await licensing.initialize("product.config.json");
+    const engine = vi.fn();
+    await expect(
+      licensing.run(crypto.randomUUID(), crypto.randomUUID(), engine),
+    ).rejects.toThrow("Licence revoked");
+    expect(mocks.run).toHaveBeenCalledOnce();
+    expect(engine).not.toHaveBeenCalled();
+    expect(mocks.recover).not.toHaveBeenCalled();
+    await licensing.dispose();
+  });
+  it("requires the export feature even for an activated licence", async () => {
+    mocks.licenseStatus.mockResolvedValue({ activated: true });
+    mocks.verify.mockResolvedValue({ features: ["other"] });
+    const licensing = new Licensing("/tmp/unused", "/tmp/projects");
+    await licensing.initialize("product.config.json");
+    await expect(
+      licensing.run(crypto.randomUUID(), crypto.randomUUID(), vi.fn()),
+    ).rejects.toThrow("does not include export");
+    expect(mocks.run).not.toHaveBeenCalled();
+    await licensing.dispose();
+  });
 });

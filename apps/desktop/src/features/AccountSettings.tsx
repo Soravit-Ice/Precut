@@ -25,7 +25,7 @@ export function AccountSettings() {
     licence?.loginPhase === "waiting" || licence?.loginPhase === "completing";
   const checked = licence?.verification === "verified";
   const active = Boolean(licence?.valid && licence.activated);
-  const trial = licence?.tier === "FREE" && licence.valid;
+  const trial = licence?.purchaseRequired === true;
   async function run(
     method:
       | "license.status"
@@ -161,23 +161,17 @@ export function AccountSettings() {
                     : "Purchase policy applies"
                 : trial
                   ? th
-                    ? "ทดลองฟรี · ใช้อินเทอร์เน็ต"
-                    : "Trial · internet required"
+                    ? "ซื้อไลเซนส์เพื่อส่งออก"
+                    : "Purchase to export"
                   : th
                     ? "ยังไม่ยืนยัน"
                     : "Not verified"}
             </strong>
           </div>
           <div>
-            <span>{th ? "โควตาทดลองที่เหลือ" : "Trial exports remaining"}</span>
+            <span>{th ? "ตัดต่อและดูตัวอย่าง" : "Editing and preview"}</span>
             <strong>
-              {active
-                ? "—"
-                : licence?.remaining === undefined
-                  ? th
-                    ? "ยังตรวจไม่ได้"
-                    : "Not yet verified"
-                  : `${licence.remaining} ${th ? "ครั้ง" : "exports"}`}
+              {th ? "ฟรี · ไม่ต้องเข้าสู่ระบบ" : "Free · no sign-in required"}
             </strong>
           </div>
         </div>

@@ -104,6 +104,10 @@ export class Licensing {
   async initialize(configFile: string) {
     let encrypted: ElectronSdkStorage | undefined;
     try {
+      // Isolated unpackaged E2E runs opt into the existing development adapter.
+      // Never load customer configuration or consume real trial reservations.
+      // Packaged applications cannot enter this path, even with these flags.
+      if (this.development && process.env.PRECUT_TEST_DATA) return;
       const raw = await readFile(configFile, "utf8");
       const config = ProductSdkConfigSchema.parse(JSON.parse(raw));
       if (config.productCode !== "PC" || config.appId !== "com.t2etech.precut")
@@ -230,15 +234,22 @@ export class Licensing {
       };
     try {
       const status = await this.sdk.getAccess();
+      const purchaseRequired =
+        status.tier === "FREE" || status.reason === "TRIAL_DISABLED";
       return (this.lastStatus = {
         mode: "configured",
-        valid: status.valid,
+        valid:
+          status.valid &&
+          status.activated &&
+          ["PAID", "LIFETIME"].includes(status.tier) &&
+          status.features.includes("export"),
         tier: status.tier,
         activated: status.activated,
         permanentOffline: status.permanentOffline,
         requiresOnline: status.requiresOnline,
-        remaining: status.quota.export?.remaining,
-        reason: status.reason,
+        remaining: purchaseRequired ? 0 : undefined,
+        purchaseRequired,
+        reason: purchaseRequired ? this.purchaseMessage : status.reason,
         pendingOperations: status.pendingOperations,
         verification:
           status.reason && status.reason !== "TRIAL_DISABLED"
@@ -261,17 +272,47 @@ export class Licensing {
       });
     }
   }
+  private purchaseMessage =
+    "Purchase Precut to export. Editing and preview are free.";
+  async ensureExportAccess() {
+    await this.initialized;
+    this.available();
+    if (!this.sdk) {
+      if (this.development) return;
+      throw new Error(
+        this.fault ?? "Precut product configuration has not been supplied.",
+      );
+    }
+    if (!(await this.sdk.license.status()).activated)
+      throw new Error(this.purchaseMessage);
+    // Verify signed device/entitlement claims, including offline licences.
+    // A displayed tier or a signed-in account alone never authorizes export.
+    const claims = await this.sdk.license.ensureValidLicense();
+    if (!Array.isArray(claims.features) || !claims.features.includes("export"))
+      throw new Error("This licence does not include export access.");
+  }
+  async openStore() {
+    await this.initialized;
+    if (!this.config)
+      throw new Error("Precut Store configuration is unavailable.");
+    await shell.openExternal(precutStoreUrl(this.config.licenseApiOrigin));
+    return { opened: true };
+  }
   async run<T>(
     operationId: string,
     projectId: string,
     engine: () => Promise<T>,
   ) {
-    this.available();
+    await this.ensureExportAccess();
     if (this.sdk)
       return new Promise<T>((resolveResult, rejectResult) => {
         void this.sdk!.runWithAccess(
           { feature: "export", operationId, recovery: { projectId } },
           async () => {
+            // The SDK can fall back to trial when paid verification fails.
+            // Recheck at the engine boundary and reject before writing files.
+            // This uses the separate LicenseClient queue, not getAccess().
+            await this.ensureExportAccess();
             try {
               return await engine();
             } catch (error) {

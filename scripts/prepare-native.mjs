@@ -9,7 +9,8 @@ import {
 } from "node:fs/promises";
 import { existsSync, createReadStream } from "node:fs";
 import { createHash } from "node:crypto";
-import { basename, resolve, join } from "node:path";
+import { basename, resolve, join, dirname } from "node:path";
+import { bundleWindowsSpeechLibraries } from "./windows-speech-libraries.mjs";
 const target = `native/${process.platform}-${process.arch}`;
 await mkdir(`${target}/bin`, { recursive: true });
 await mkdir(`${target}/lib`, { recursive: true });
@@ -83,6 +84,11 @@ for (const [name, path] of Object.entries(inputs)) {
   }
 }
 const files = [];
+if (process.platform === "win32")
+  await bundleWindowsSpeechLibraries(
+    dirname(inputs["whisper-cli"]),
+    `${target}/bin`,
+  );
 for (const folder of ["bin", "lib"])
   for (const name of await readdir(`${target}/${folder}`)) {
     const hash = createHash("sha256");
@@ -98,6 +104,7 @@ await writeFile(
       arch: process.arch,
       whisperVersion: "1.9.5",
       speechProtocol: 1,
+      speechCpuVariants: process.platform === "win32",
       speechPatchSha256: createHash("sha256")
         .update(await readFile("native-src/whisper-1.9.5-precut.patch"))
         .digest("hex"),
