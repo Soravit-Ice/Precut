@@ -1,5 +1,12 @@
 import { useStore } from "./store";
 const th: Record<string, string> = {
+  "Windows uses CPU acceleration selected for your processor.":
+    "Windows ใช้ชุดคำสั่งเร่งความเร็วที่ CPU ของคุณรองรับ",
+  "Buy to unlock export": "ซื้อไลเซนส์เพื่อส่งออก",
+  "Purchase Precut to export. Editing and preview are free.":
+    "ซื้อไลเซนส์เพื่อส่งออกไฟล์ ทดลองตัดต่อและดูตัวอย่างได้ฟรี",
+  "This licence does not include export access.":
+    "ไลเซนส์นี้ไม่มีสิทธิ์ส่งออกไฟล์",
   "Auto Edit progress": "ความคืบหน้าการตัดอัตโนมัติ",
   "Auto Edit steps": "ขั้นตอนการตัดอัตโนมัติ",
   "Auto editing…": "กำลังตัดอัตโนมัติ…",

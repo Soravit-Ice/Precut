@@ -10,6 +10,7 @@ import {
 import { Button, Select, Checkbox } from "../components/ui/primitives";
 import { useStore, call, safe, flushCaptionSave } from "../lib/store";
 import { useT } from "../lib/i18n";
+import { SignInButton } from "./SignInDialog";
 import type {
   ExportOptions,
   Job,
@@ -186,12 +187,25 @@ export function ExportPanel() {
       </div>
       <Button
         className="full-width"
-        disabled={choosing || job?.state === "running" || !licence?.valid}
-        onClick={start}
+        disabled={
+          choosing ||
+          job?.state === "running" ||
+          (!licence?.valid && !licence?.purchaseRequired)
+        }
+        onClick={
+          licence?.purchaseRequired
+            ? () => safe(() => call("license.openStore"))
+            : start
+        }
       >
         <Download size={15} />
-        {t("Export first cut")}
+        {t(
+          licence?.purchaseRequired
+            ? "Buy to unlock export"
+            : "Export first cut",
+        )}
       </Button>
+      {licence?.purchaseRequired && <SignInButton />}
       {licence?.mode === "development" ? (
         <p className="development-note">
           {t("Development export \u00b7 Store activation pending")}
@@ -201,9 +215,9 @@ export function ExportPanel() {
           {t("Configuration pending")}.{" "}
           {t("Store activation is pending for this build.")}
         </p>
-      ) : licence?.remaining !== undefined ? (
+      ) : licence?.purchaseRequired ? (
         <p className="safe-note">
-          {licence.remaining} trial exports remaining · online required
+          {t("Purchase Precut to export. Editing and preview are free.")}
         </p>
       ) : (
         <p className="safe-note">

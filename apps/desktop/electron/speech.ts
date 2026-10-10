@@ -15,6 +15,7 @@ import {
 } from "../../../packages/speech/src/language";
 import { join } from "node:path";
 import { availableParallelism } from "node:os";
+import { speechRuntime } from "./speech-runtime";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import {
@@ -51,11 +52,6 @@ const modelFiles = {
   balanced: "ggml-large-v3-turbo-q5_0.bin",
   quality: "ggml-large-v3-q5_0.bin",
 };
-// Keep the UI responsive on dual-core hosts and avoid oversubscribing native
-// spin barriers. GPU-backed hosts still use up to four CPU support threads.
-const speechThreads = String(
-  Math.max(1, Math.min(4, availableParallelism() - 1)),
-);
 const WhisperSchema = z.object({
   result: z.object({ language: z.string() }),
   transcription: z.array(
@@ -262,6 +258,11 @@ export async function runSpeech(
   sourceStartOffset: number,
   sourceDurationUs: number,
 ) {
+  const runtime = speechRuntime(
+    process.platform,
+    availableParallelism(),
+    task.settings.useGPU,
+  );
   const snap = task.snapshot!,
     durationUs = snap.project.durationUs;
   const speech: SpeechConfig = task.speech ??
@@ -299,7 +300,7 @@ export async function runSpeech(
     autoLanguageVersion: speech.profile === "auto" ? 2 : undefined,
     beam: 5,
     dtw: true,
-    gpu: task.settings.useGPU,
+    gpu: runtime.gpu,
     classifierHash:
       speech.profile !== "english"
         ? await sha256(join(task.modelsRoot, modelFiles.fast))
@@ -416,8 +417,8 @@ export async function runSpeech(
           "--input-manifest",
           path,
           "-t",
-          speechThreads,
-          ...(task.settings.useGPU ? [] : ["-ng"]),
+          String(runtime.threads),
+          ...(runtime.gpu ? [] : ["-ng"]),
         ],
         { signal: ctx.signal, onSpawn: ctx.spawn },
       );
@@ -495,8 +496,8 @@ export async function runSpeech(
           "--input-manifest",
           path,
           "-t",
-          speechThreads,
-          ...(task.settings.useGPU ? [] : ["-ng"]),
+          String(runtime.threads),
+          ...(runtime.gpu ? [] : ["-ng"]),
         ],
         { signal: ctx.signal, onSpawn: ctx.spawn },
       );
@@ -766,7 +767,7 @@ export async function runSpeech(
         path,
         "-sns",
         "-t",
-        speechThreads,
+        String(runtime.threads),
         "-bs",
         "5",
         "-dtw",
@@ -776,7 +777,7 @@ export async function runSpeech(
             ? "large.v3.turbo"
             : "large.v3",
         "-nfa",
-        ...(task.settings.useGPU ? [] : ["-ng"]),
+        ...(runtime.gpu ? [] : ["-ng"]),
       ];
       const onSpawn = (pid: number) => {
         nativePid = pid > 0 ? pid : 0;
@@ -796,7 +797,7 @@ export async function runSpeech(
           if (
             failure ||
             ctx.signal.aborted ||
-            !task.settings.useGPU ||
+            !runtime.gpu ||
             !/(?:ggml_metal[^\n]*failed|failed[^\n]*(?:metal|cuda|vulkan)|out.of.memory|device lost)/i.test(
               message,
             )
@@ -822,7 +823,12 @@ export async function runSpeech(
           stream = commands(ctx.signal);
           carry = "";
           await atomicJSON(path, { schema: 1, chunks: remaining });
-          await run(binary(task.nativeRoot, "whisper-cli"), [...args, "-ng"], {
+          const cpuArgs = [...args, "-ng"];
+          cpuArgs[cpuArgs.indexOf("-t") + 1] = String(
+            speechRuntime(process.platform, availableParallelism(), false)
+              .threads,
+          );
+          await run(binary(task.nativeRoot, "whisper-cli"), cpuArgs, {
             signal: ctx.signal,
             onSpawn,
             onData: handle,

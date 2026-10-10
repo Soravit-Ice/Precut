@@ -200,6 +200,7 @@ export type Job = {
   output?: string;
   startedAt: number;
   durationMs?: number;
+  stageDurationsMs?: Record<string, number>;
 };
 export type Model = {
   id: "fast" | "balanced" | "quality" | "vad" | "semantic";
@@ -218,6 +219,7 @@ export type LicenseStatus = {
   permanentOffline: boolean;
   requiresOnline: boolean;
   remaining?: number;
+  purchaseRequired?: boolean;
   reason?: string;
   pendingOperations: number;
   verification?: "unchecked" | "verified" | "unavailable";
@@ -396,6 +398,7 @@ export const schemas = {
     .strict(),
   "license.deactivate": z.object({}).strict(),
   "license.logout": z.object({}).strict(),
+  "license.openStore": z.object({}).strict(),
   "license.checkUpdates": z.object({}).strict(),
   "license.installUpdate": z.object({}).strict(),
   "settings.get": z.object({}).strict(),

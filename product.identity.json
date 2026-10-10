@@ -12,7 +12,7 @@
     "features": ["export"],
     "trial": {
       "enabled": true,
-      "featureLimits": { "export": 3 },
+      "featureLimits": { "export": 0 },
       "requiresOnline": true
     }
   },

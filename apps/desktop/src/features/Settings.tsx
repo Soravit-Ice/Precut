@@ -178,15 +178,19 @@ export function Settings() {
               <strong>{t("Hardware acceleration")}</strong>
               <p>
                 {t(
-                  "CPU fallback is available when a GPU cannot process the recording.",
+                  window.precut.platform === "win32"
+                    ? "Windows uses CPU acceleration selected for your processor."
+                    : "CPU fallback is available when a GPU cannot process the recording.",
                 )}
               </p>
             </div>
-            <Checkbox
-              checked={settings.useGPU}
-              onCheckedChange={(useGPU) => updateSetting({ useGPU })}
-              label={t("Use GPU when available")}
-            />
+            {window.precut.platform === "darwin" && (
+              <Checkbox
+                checked={settings.useGPU}
+                onCheckedChange={(useGPU) => updateSetting({ useGPU })}
+                label={t("Use GPU when available")}
+              />
+            )}
           </div>
         </section>
         <section className="settings-section">
