@@ -48,6 +48,10 @@ it.each(["initial-temporary", "primary-running", "prepared-temporary"])(
           });
         if (String(url).endsWith("/challenges")) {
           const challengeId = randomUUID();
+          // The signed protocol caps the challenge lifetime at five minutes.
+          // Reading the clock twice can add a millisecond on slower hosts and
+          // make the SDK correctly reject this fixture as CHALLENGE_INVALID.
+          const issuedAt = Date.now();
           const canonicalPayload = JSON.stringify({
             version: 1,
             challengeId,
@@ -65,8 +69,8 @@ it.each(["initial-temporary", "primary-running", "prepared-temporary"])(
             nonce: "a".repeat(43),
             feature: body.feature ?? null,
             operationId: body.operationId ?? null,
-            issuedAt: new Date().toISOString(),
-            expiresAt: new Date(Date.now() + 300000).toISOString(),
+            issuedAt: new Date(issuedAt).toISOString(),
+            expiresAt: new Date(issuedAt + 300000).toISOString(),
           });
           challenges.set(challengeId, {
             canonicalPayload,
@@ -156,6 +160,7 @@ it.each(["initial-temporary", "primary-running", "prepared-temporary"])(
         ],
       });
       const access = await sdk.getAccess();
+      expect(access.valid, access.reason).toBe(true);
       const unstarted = kind === "initial-temporary";
       expect(access.pendingOperations).toBe(unstarted ? 0 : 1);
       expect(access.quota.export).toMatchObject({
