@@ -183,6 +183,21 @@ export class Licensing {
   }
   async status(check = true): Promise<LicenseStatus> {
     await this.initialized;
+    if (this.heldOperation)
+      return {
+        ...(this.lastStatus ?? {
+          mode: "configured",
+          tier: "NONE",
+          signedIn: false,
+          activated: false,
+          permanentOffline: false,
+          requiresOnline: true,
+        }),
+        valid: false,
+        pendingOperations: 1,
+        reason: this.recoveryMessage,
+        ...this.display(),
+      };
     if (this.sdk && !check)
       return {
         ...(this.lastStatus ?? {
@@ -197,21 +212,6 @@ export class Licensing {
           reason: "Licence will be checked at export.",
           verification: "unchecked",
         }),
-        ...this.display(),
-      };
-    if (this.heldOperation)
-      return {
-        ...(this.lastStatus ?? {
-          mode: "configured",
-          tier: "NONE",
-          signedIn: false,
-          activated: false,
-          permanentOffline: false,
-          requiresOnline: true,
-        }),
-        valid: false,
-        pendingOperations: 1,
-        reason: this.recoveryMessage,
         ...this.display(),
       };
     if (!this.sdk)

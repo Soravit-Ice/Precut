@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-11",
+  "platform": "darwin-arm64",
+  "typecheck": "passed",
+  "unitAndIntegration": { "files": 16, "tests": 122, "status": "passed" },
+  "electronE2E": [
+    "Real 150-second speech analysis, live worker progress and elapsed time",
+    "Animated activity indicator, five processing steps and monotonic overall progress",
+    "Continue in background, reopen progress and completed review banner",
+    "Worker cancellation, retry and missing-model failure without false completion",
+    "Thai dark interface at 1100 x 760 with both action buttons visible",
+    "Existing transcript correction, caption colors and recent-project restore regression test"
+  ],
+  "packagedApp": {
+    "path": "out/mac-arm64/Precut.app",
+    "build": "passed",
+    "nativeVerification": "passed",
+    "realPackagedE2E": "passed",
+    "isolatedUserData": true
+  },
+  "screenshots": [
+    "screenshots/auto-edit-progress-native-light.png",
+    "screenshots/auto-edit-progress-native-th-dark.png"
+  ]
+}

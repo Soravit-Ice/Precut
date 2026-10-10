@@ -277,6 +277,7 @@ export async function runSpeech(
     };
   const selected = join(task.modelsRoot, modelFiles[speech.quality]),
     vadModel = join(task.modelsRoot, "ggml-silero-v6.2.0.bin");
+  ctx.stage("Preparing speech model", 0.19);
   const modelHash = await sha256(selected).catch(() => {
     throw new Error(
       "Selected speech model is missing. Choose an installed model in Settings.",
@@ -621,6 +622,10 @@ export async function runSpeech(
       }
     }
     if (pending.length) {
+      ctx.stage(
+        `Transcribing · ${parsed.size} / ${chunks.length}`,
+        0.3 + (0.5 * parsed.size) / Math.max(1, chunks.length),
+      );
       const path = join(root, `manifest-${task.id}.json`);
       await atomicJSON(path, { schema: 1, chunks: pending });
       let stream = commands(ctx.signal);
@@ -876,6 +881,7 @@ export async function runSpeech(
       .filter((s) => s.wordIds.length)
       .sort((a, b) => a.startUs - b.startUs);
   }
+  ctx.stage("Aligning words and captions", 0.85);
   const summary: AnalysisSummary = {
     language:
       chunks.some((c) => c.language === "en") &&

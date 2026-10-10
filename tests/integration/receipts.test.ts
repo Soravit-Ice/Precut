@@ -77,3 +77,76 @@ it("resumes a prepared sidecar publication only when its staged bytes match", as
   expect(await recoverExport(root, id, projectId)).toBe("SUCCEEDED");
   await rm(root, { recursive: true });
 });
+
+it("recovers the initial receipt stranded by older Windows builds without touching the destination", async () => {
+  const root = await mkdtemp(join(tmpdir(), "precut-receipt-")),
+    id = randomUUID(),
+    projectId = randomUUID(),
+    folder = join(root, projectId, "export-cache"),
+    file = join(folder, `${id}.receipt.json`);
+  try {
+    await mkdir(folder, { recursive: true });
+    await writeFile(
+      file + ".tmp",
+      JSON.stringify({
+        operationId: id,
+        state: "running",
+        artifacts: [],
+        projectRevision: 2,
+        sourceFingerprint: "f".repeat(64),
+        format: "mp4",
+        updatedAt: new Date().toISOString(),
+      }),
+    );
+    expect(await recoverExport(root, id, projectId)).toBe("FAILED");
+    expect(await recoverExport(root, id, projectId)).toBe("FAILED");
+    // A primary receipt means the engine could have started. A stale temp
+    // receipt must never override that evidence, including a corrupt primary.
+    await writeFile(
+      file,
+      JSON.stringify({ operationId: id, state: "running", artifacts: [] }),
+    );
+    expect(await recoverExport(root, id, projectId)).toBe("UNKNOWN");
+    await writeFile(file, "{corrupt");
+    expect(await recoverExport(root, id, projectId)).toBe("UNKNOWN");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+it.each([
+  { state: "prepared" },
+  { state: "published" },
+  { state: "failed" },
+  { operationId: randomUUID() },
+  { artifacts: [{ path: "missing.mp4", sha256: "f".repeat(64) }] },
+  { artifacts: null },
+  { sourceFingerprint: "invalid" },
+  { projectRevision: -1 },
+  { format: "invalid" },
+  { updatedAt: "invalid" },
+])("retains an ambiguous or invalid staged receipt: %j", async (override) => {
+  const root = await mkdtemp(join(tmpdir(), "precut-receipt-")),
+    id = randomUUID(),
+    projectId = randomUUID(),
+    folder = join(root, projectId, "export-cache");
+  try {
+    await mkdir(folder, { recursive: true });
+    await writeFile(
+      join(folder, `${id}.receipt.json.tmp`),
+      JSON.stringify({
+        operationId: id,
+        state: "running",
+        artifacts: [],
+        projectRevision: 1,
+        sourceFingerprint: "f".repeat(64),
+        format: "mp4",
+        updatedAt: new Date().toISOString(),
+        ...override,
+      }),
+    );
+    expect(await recoverExport(root, id, projectId)).toBe("UNKNOWN");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

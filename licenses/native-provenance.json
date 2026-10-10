@@ -1,0 +1,103 @@
+{
+  "platform": "darwin",
+  "arch": "arm64",
+  "ffmpegVersion": "ffmpeg version 9.0.2 Copyright (c) 2000-2026 the FFmpeg developers",
+  "files": [
+    {
+      "path": "bin/ffmpeg",
+      "sha256": "10b9c8435c9da537ac5706e3b630f28a0a32d1f68b2648b7450d1eeba4191483"
+    },
+    {
+      "path": "bin/ffprobe",
+      "sha256": "6018ddad692aac66bf34fa90999d4e0484e1336202f926dbbd945096bcce360d"
+    },
+    {
+      "path": "bin/whisper-cli",
+      "sha256": "7771862fd0f1ce1648c5efacc76969cd658635935cb160386d20ed7ffa53b8d0"
+    },
+    {
+      "path": "bin/whisper-vad-speech-segments",
+      "sha256": "8269de9bb21b28c7135aad2c08b67c78440e8ba1e6d5808b6403a0b308f1758c"
+    },
+    {
+      "path": "lib/libSvtAv1Enc.4.dylib",
+      "sha256": "c71627a71958c95eacbd2edce25f23fbb88341f934251e5bd2d74f6ffafa21bb"
+    },
+    {
+      "path": "lib/libavcodec.63.dylib",
+      "sha256": "00599124df46b59b6529384755febc5a72a259e23b25e7a675bb284adddcc9f6"
+    },
+    {
+      "path": "lib/libavdevice.63.dylib",
+      "sha256": "8bc57ef1e54b223e2de230b6cc03675cf3935ec79bb13dd6c43f268f2985f594"
+    },
+    {
+      "path": "lib/libavfilter.12.dylib",
+      "sha256": "af2e28a825f5c766aa21a102584e204ff65cf637e915122562dfd0981d402b62"
+    },
+    {
+      "path": "lib/libavformat.63.dylib",
+      "sha256": "0a3e67270b15b4fd914451d4b4bed9f9295169105922ad9c4bafb698e3ae7e43"
+    },
+    {
+      "path": "lib/libavutil.61.dylib",
+      "sha256": "4223359a2e9edc007838310e1df9b3f0e2d13503a5e10cf3bcf880b30ebc993a"
+    },
+    {
+      "path": "lib/libcrypto.3.dylib",
+      "sha256": "6947c6ae1327fd75fca2049e1d243803e9f0dccf25b872d01366bb08717a2e1a"
+    },
+    {
+      "path": "lib/libdav1d.7.dylib",
+      "sha256": "d72b86a2a6103118bf421752d172a291a703de409e0ca355c627989a8dc7aef2"
+    },
+    {
+      "path": "lib/liblzma.5.dylib",
+      "sha256": "60ff6730f47bd78dc6386eabd93645ec95b966fadb7b6946789f1f628da500ff"
+    },
+    {
+      "path": "lib/libmp3lame.0.dylib",
+      "sha256": "ff6da81838fa084b32b8b5b2c44217939d101492f72ce866a4acd7b97107b638"
+    },
+    {
+      "path": "lib/libmpg123.0.dylib",
+      "sha256": "6928d5576e66049b351ee4ed4d0f3bdc581edefedef1a124be29ef7b78b5cdf9"
+    },
+    {
+      "path": "lib/libopus.0.dylib",
+      "sha256": "b4060c636931fb2794115634ab0d4b51b93249ef35ea0641303f28b4030a14ea"
+    },
+    {
+      "path": "lib/libssl.3.dylib",
+      "sha256": "26c2817904192bb5f140b682ebd216de774c0c3430c9d676769fbb1de9122d82"
+    },
+    {
+      "path": "lib/libswresample.7.dylib",
+      "sha256": "adee947941825c6ba79012c093e5a43581b3b0b6d811b71bcb420104a92e5d80"
+    },
+    {
+      "path": "lib/libswscale.10.dylib",
+      "sha256": "42726bd11444b349773439d48af0d7f7264a8989c836a86f77771cc469f51095"
+    },
+    {
+      "path": "lib/libvmaf.3.dylib",
+      "sha256": "eefd05bdec7f4acc5f9d6127ce499ca6b536470ad1edcb4966c8f7e05e6a3409"
+    },
+    {
+      "path": "lib/libvpx.12.dylib",
+      "sha256": "f8880e0bb2cb2902ded2097785db8b363c5be3760c0198e695bb9b85c81f2615"
+    },
+    {
+      "path": "lib/libx264.165.dylib",
+      "sha256": "0da91e4176870d3165de8c6af293c2abab5a84ca63c0ccdd09b81f8ef1417b70"
+    },
+    {
+      "path": "lib/libx265.217.dylib",
+      "sha256": "eaccf2fa6d6df5a813e517b1ce99a1f923022d110118c12a1a63159520c2fc81"
+    }
+  ],
+  "speechProtocol": 1,
+  "whisperVersion": "1.9.5",
+  "speechPatchSha256": "f13345a8d2b1026d808ab53a4652cdbeaf740d5bd0eb5c5690358edb4f703ed4",
+  "ffmpegBuildConfiguration": "\n  configuration:\n    --prefix=/opt/homebrew/Cellar/ffmpeg/9.0.2\n    --enable-shared\n    --enable-pthreads\n    --enable-version3\n    --cc=clang\n    --host-cflags=\n    --host-ldflags=\n    --enable-ffplay\n    --enable-gpl\n    --enable-libsvtav1\n    --enable-libopus\n    --enable-libx264\n    --enable-libmp3lame\n    --enable-libdav1d\n    --enable-libvmaf\n    --enable-libvpx\n    --enable-libx265\n    --enable-openssl\n    --enable-videotoolbox\n    --enable-audiotoolbox\n    --enable-neon\n\nExiting with exit code 0\n"
+}

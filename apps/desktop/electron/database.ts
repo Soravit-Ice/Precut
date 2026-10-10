@@ -25,13 +25,22 @@ catalog.pragma("synchronous=FULL");
 catalog.exec(
   `CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY,name TEXT NOT NULL,createdAt TEXT NOT NULL,updatedAt TEXT NOT NULL,durationUs INTEGER NOT NULL DEFAULT 0,status TEXT NOT NULL DEFAULT 'empty',revision INTEGER NOT NULL DEFAULT 0); CREATE TABLE IF NOT EXISTS settings(id INTEGER PRIMARY KEY CHECK(id=1),data TEXT NOT NULL);CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY,data TEXT NOT NULL);`,
 );
+if (
+  !(catalog.pragma("table_info(projects)") as { name: string }[]).some(
+    (c) => c.name === "archived",
+  )
+)
+  catalog.exec(
+    "ALTER TABLE projects ADD COLUMN archived INTEGER NOT NULL DEFAULT 0",
+  );
 catalog
   .prepare("INSERT OR IGNORE INTO settings VALUES(1,?)")
   .run(JSON.stringify(defaultSettings));
 const cache = new Map<string, Database.Database>();
 const getProject = (id: string) =>
-  catalog.prepare("SELECT * FROM projects WHERE id=?").get(id) as
-    Project | undefined;
+  catalog
+    .prepare("SELECT * FROM projects WHERE id=? AND archived=0")
+    .get(id) as Project | undefined;
 function db(id: string) {
   if (!getProject(id)) throw new Error("Project not found");
   let database = cache.get(id);
@@ -317,7 +326,15 @@ export async function dispatch(
   switch (method) {
     case "projects.list":
       return catalog
-        .prepare("SELECT * FROM projects ORDER BY updatedAt DESC")
+        .prepare(
+          "SELECT * FROM projects WHERE archived=0 ORDER BY updatedAt DESC",
+        )
+        .all();
+    case "projects.listRemoved":
+      return catalog
+        .prepare(
+          "SELECT * FROM projects WHERE archived=1 ORDER BY updatedAt DESC",
+        )
         .all();
     case "projects.create": {
       const now = new Date().toISOString(),
@@ -332,6 +349,33 @@ export async function dispatch(
     }
     case "projects.open":
       return snapshot(args.id as string);
+    case "projects.remove": {
+      const projectId = args.id as string;
+      if (!getProject(projectId)) throw new Error("Project not found");
+      if (
+        jsonRows<Job>(catalog, "jobs").some(
+          (j) =>
+            j.projectId === projectId &&
+            ["running", "queued"].includes(j.state),
+        )
+      )
+        throw new Error(
+          "Wait for processing to finish before removing this project.",
+        );
+      cache.get(projectId)?.close();
+      cache.delete(projectId);
+      catalog
+        .prepare("UPDATE projects SET archived=1 WHERE id=?")
+        .run(projectId);
+      return true;
+    }
+    case "projects.restore": {
+      const result = catalog
+        .prepare("UPDATE projects SET archived=0 WHERE id=? AND archived=1")
+        .run(args.id);
+      if (!result.changes) throw new Error("Removed project not found");
+      return snapshot(args.id as string);
+    }
     case "projects.rename":
       catalog
         .prepare("UPDATE projects SET name=?,updatedAt=? WHERE id=?")
@@ -890,6 +934,38 @@ export async function dispatch(
           },
         ],
       );
+      return snapshot(id);
+    }
+    case "captions.correctMany": {
+      const words = new Map(snapshot(id).words.map((w) => [w.id, w]));
+      const corrections = args.corrections as {
+        wordId: string;
+        text: string;
+      }[];
+      const before: Change[] = [],
+        after: Change[] = [];
+      for (const correction of corrections) {
+        const word = words.get(correction.wordId);
+        if (!word)
+          throw new Error(
+            "Word not found. Reopen Find & replace and try again.",
+          );
+        if (word.text === correction.text) continue;
+        before.push({
+          id: word.id,
+          text: word.text,
+          extra: {
+            corrected: word.corrected ?? false,
+            reviewReason: word.reviewReason,
+          },
+        });
+        after.push({
+          id: word.id,
+          text: correction.text,
+          extra: { corrected: true },
+        });
+      }
+      if (after.length) command(id, "word", before, after);
       return snapshot(id);
     }
     case "settings.get":

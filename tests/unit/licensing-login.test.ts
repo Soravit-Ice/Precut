@@ -9,6 +9,11 @@ const mocks = vi.hoisted(() => ({
   dispose: vi.fn(),
   storageLoad: vi.fn(),
   storageSave: vi.fn(),
+  recover: vi.fn(),
+  run: vi.fn(),
+}));
+vi.mock("../../packages/core/src/receipts", () => ({
+  recoverExport: mocks.recover,
 }));
 vi.mock("electron", () => ({
   app: { isPackaged: false, getVersion: () => "1.0.0" },
@@ -82,6 +87,8 @@ beforeEach(() => {
   mocks.storageLoad.mockResolvedValue(null);
   mocks.complete.mockResolvedValue({ signedIn: true, activated: false });
   mocks.access.mockResolvedValue(status);
+  mocks.recover.mockResolvedValue("FAILED");
+  mocks.run.mockImplementation(async (_input, engine) => engine());
   mocks.create.mockImplementation((_config, options) => ({
     initialize: async () => {},
     completeLogin: async (url: string) => {
@@ -102,6 +109,7 @@ beforeEach(() => {
     getAccess: mocks.access,
     login: mocks.login,
     dispose: mocks.dispose,
+    runWithAccess: mocks.run,
   }));
 });
 describe("Precut account status notification", () => {
@@ -316,5 +324,51 @@ it("waits for secure-storage startup instead of briefly reporting missing config
     mode: "configured",
     verification: "unchecked",
   });
+  await licensing.dispose();
+});
+
+it("reports a proven startup failure and lets the next export retry through the SDK", async () => {
+  const licensing = new Licensing("/tmp/unused", "/tmp/projects");
+  await licensing.initialize("product.config.json");
+  const error = new Error("EPERM: receipt fsync"),
+    engine = vi
+      .fn()
+      .mockRejectedValueOnce(error)
+      .mockResolvedValueOnce({ path: "output.mp4" });
+  const projectId = crypto.randomUUID();
+  await expect(
+    licensing.run(crypto.randomUUID(), projectId, engine),
+  ).rejects.toBe(error);
+  await expect(
+    licensing.run(crypto.randomUUID(), projectId, engine),
+  ).resolves.toEqual({ path: "output.mp4" });
+  expect(mocks.run).toHaveBeenCalledTimes(2);
+  expect(engine).toHaveBeenCalledTimes(2);
+  await licensing.dispose();
+});
+
+it("keeps ambiguous work reserved and blocks even cached status without queuing another SDK request", async () => {
+  mocks.recover.mockResolvedValue("UNKNOWN");
+  const licensing = new Licensing("/tmp/unused", "/tmp/projects");
+  await licensing.initialize("product.config.json");
+  await licensing.status();
+  const engine = vi.fn().mockRejectedValue(new Error("Worker crashed"));
+  await expect(
+    licensing.run(crypto.randomUUID(), crypto.randomUUID(), engine),
+  ).rejects.toThrow("trial reservation has been retained");
+  expect(await licensing.status(false)).toMatchObject({
+    valid: false,
+    pendingOperations: 1,
+  });
+  expect(await licensing.status()).toMatchObject({
+    valid: false,
+    pendingOperations: 1,
+  });
+  await expect(
+    licensing.run(crypto.randomUUID(), crypto.randomUUID(), engine),
+  ).rejects.toThrow("trial reservation has been retained");
+  expect(engine).toHaveBeenCalledOnce();
+  expect(mocks.run).toHaveBeenCalledOnce();
+  expect(mocks.access).toHaveBeenCalledOnce();
   await licensing.dispose();
 });

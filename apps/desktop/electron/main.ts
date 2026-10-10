@@ -221,8 +221,19 @@ async function launch(job: Job, task: EngineTask) {
             if (message.pid! > 0) pids.add(message.pid!);
             else pids.delete(-message.pid!);
           } else if (message.type === "progress") {
+            // Announce cancellation only after the worker has stopped and cleanup
+            // has finished, so Retry cannot race the previous analysis run.
+            if (job.state === "cancelled") return;
             job.stage = message.stage!;
-            job.progress = message.progress!;
+            // Cached chunks and CPU recovery can revisit an earlier stage.
+            // Keep the overall analysis bar moving forwards through those retries.
+            job.progress =
+              job.type === "analyze"
+                ? Math.max(
+                    job.progress,
+                    Math.min(1, Math.max(0, message.progress!)),
+                  )
+                : message.progress!;
             if (Date.now() - lastProgress > 200) {
               lastProgress = Date.now();
               await record(job);
@@ -285,7 +296,9 @@ function newJob(projectId: string, type: Job["type"]): Job {
 function processing(projectId: string) {
   return [...jobs.values()].some(
     (j) =>
-      j.projectId === projectId && j.state === "running" && j.type !== "proxy",
+      j.projectId === projectId &&
+      (j.state === "running" || active.has(j.id)) &&
+      j.type !== "proxy",
   );
 }
 async function importFile(projectId: string, path: string, external = false) {
@@ -338,9 +351,32 @@ async function handle(
     case "projects.create":
       return db.call(method, input);
     case "projects.list":
+    case "projects.listRemoved":
     case "projects.rename":
     case "settings.get":
       return db.call(method, input);
+    case "projects.remove": {
+      const id = input.id as string;
+      if (
+        [...jobs.values()].some(
+          (j) => j.projectId === id && ["running", "queued"].includes(j.state),
+        ) ||
+        exportRequests.has(id)
+      )
+        throw new Error(
+          "Wait for processing to finish before removing this project.",
+        );
+      const result = await db.call(method, input);
+      for (const [assetId, asset] of assets)
+        if (asset.projectId === id) assets.delete(assetId);
+      emit({ type: "project", projectId: id });
+      return result;
+    }
+    case "projects.restore": {
+      await db.call(method, input);
+      emit({ type: "project", projectId: input.id as string });
+      return snapshot(input.id as string);
+    }
     case "settings.update":
       nativeTheme.themeSource = input.theme as "light" | "dark" | "system";
       return db.call(method, input);
@@ -419,7 +455,8 @@ async function handle(
     case "edits.undo":
     case "edits.redo":
     case "captions.style":
-    case "captions.correct": {
+    case "captions.correct":
+    case "captions.correctMany": {
       const result = await db.call(method, input);
       emit({ type: "project", projectId: input.projectId as string });
       return result;

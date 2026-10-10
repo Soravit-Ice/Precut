@@ -44,7 +44,7 @@ try {
     .click();
   await page
     .getByLabel("Names and specialist terms")
-    .fill("Precut, CK, NVIDIA, T2ETECH");
+    .fill("Precut, NVIDIA, T2ETECH");
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(
     page

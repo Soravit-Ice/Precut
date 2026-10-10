@@ -2,6 +2,32 @@ import { readFile, rename, open } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { sha256 } from "../../media/src/process";
 export type Settlement = "SUCCEEDED" | "FAILED" | "UNKNOWN";
+async function recoverUnstartedReceipt(
+  receiptPath: string,
+  operationId: string,
+): Promise<Settlement> {
+  // Older Windows builds failed while flushing the initial receipt with a
+  // read-only handle. The engine awaits that receipt's rename before rendering
+  // anything. A complete initial .tmp with no primary receipt therefore proves
+  // the engine never reached artifact generation or publication. Later staged
+  // states, damaged records and published/running primary receipts stay unknown.
+  const staged = JSON.parse(await readFile(receiptPath + ".tmp", "utf8"));
+  return staged.operationId === operationId &&
+    staged.state === "running" &&
+    Array.isArray(staged.artifacts) &&
+    staged.artifacts.length === 0 &&
+    Number.isSafeInteger(staged.projectRevision) &&
+    staged.projectRevision >= 0 &&
+    typeof staged.sourceFingerprint === "string" &&
+    /^[a-f0-9]{64}$/.test(staged.sourceFingerprint) &&
+    ["mp4", "srt", "final-cut", "premiere", "resolve"].includes(
+      staged.format,
+    ) &&
+    typeof staged.updatedAt === "string" &&
+    Number.isFinite(Date.parse(staged.updatedAt))
+    ? "FAILED"
+    : "UNKNOWN";
+}
 async function flushArtifact(path: string) {
   const file = await open(path, "r+");
   try {
@@ -28,18 +54,21 @@ export async function recoverExport(
     !/^[a-f0-9-]{36}$/.test(operationId)
   )
     return "UNKNOWN";
+  const receiptPath = join(
+    projectRoot,
+    projectId,
+    "export-cache",
+    `${operationId}.receipt.json`,
+  );
   try {
-    const receipt = JSON.parse(
-      await readFile(
-        join(
-          projectRoot,
-          projectId,
-          "export-cache",
-          `${operationId}.receipt.json`,
-        ),
-        "utf8",
-      ),
-    ) as {
+    let raw: string;
+    try {
+      raw = await readFile(receiptPath, "utf8");
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      return await recoverUnstartedReceipt(receiptPath, operationId);
+    }
+    const receipt = JSON.parse(raw) as {
       operationId: string;
       state: string;
       artifacts: { path: string; sha256: string; temp?: string }[];

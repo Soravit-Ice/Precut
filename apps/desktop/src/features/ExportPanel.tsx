@@ -221,7 +221,13 @@ export function ExportPanel() {
               <Film size={17} />
             )}
             <strong>
-              {job.state === "completed" ? t("Export complete") : job.stage}
+              {job.state === "completed"
+                ? t("Export complete")
+                : job.state === "failed"
+                  ? t("Export failed")
+                  : job.state === "cancelled"
+                    ? t("Export cancelled")
+                    : t(job.stage)}
             </strong>
           </div>
           {job.state === "running" && (
@@ -250,7 +256,7 @@ export function ExportPanel() {
               {t("Show in folder")}
             </Button>
           )}
-          {job.error && <p>{job.error}</p>}
+          {job.error && <p>{t(job.error)}</p>}
         </div>
       )}
     </aside>

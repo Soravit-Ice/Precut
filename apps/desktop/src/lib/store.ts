@@ -65,6 +65,8 @@ export async function mutate(
   input?: unknown,
 ) {
   const state = useStore.getState();
+  if ((method === "edits.undo" || method === "edits.redo") && state.snapshot)
+    await flushCaptionSave(state.snapshot.project.id);
   state.set({ saving: true });
   try {
     const result = await call<Snapshot>(method, input);
@@ -118,5 +120,6 @@ export class PlaybackClock {
   seek?: (timeUs: number) => void;
   toggle?: () => void;
   preview?: (startUs: number, endUs: number, original: boolean) => void;
+  showCaptions?: () => void;
 }
 export const clock = new PlaybackClock();

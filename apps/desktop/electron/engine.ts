@@ -344,6 +344,7 @@ async function analyze(task: EngineTask, ctx: Context) {
     const semantic = await semanticSuggestions(task, words, ctx);
     suggestions.push(...semantic);
   }
+  ctx.stage("Saving your first cut", 0.97);
   await ctx.db("analysis.finish", {
     projectId: task.projectId,
     suggestions,
@@ -597,21 +598,25 @@ async function exportMedia(task: EngineTask, ctx: Context) {
     output + `.${task.id}.partial${options.format === "mp4" ? ".mp4" : ""}`;
   const artifacts: { path: string; temp: string; sha256: string }[] = [];
   const receipt = async (state: string) => {
-    await writeFile(
-      receiptPath + ".tmp",
-      JSON.stringify({
-        operationId: task.id,
-        state,
-        artifacts,
-        projectRevision: snap.project.revision,
-        sourceFingerprint: asset.fingerprint,
-        format: options.format,
-        updatedAt: new Date().toISOString(),
-      }),
-    );
-    const h = await open(receiptPath + ".tmp", "r");
-    await h.sync();
-    await h.close();
+    // Windows FlushFileBuffers requires write access. Flush the same handle
+    // that wrote the receipt, and close it even if writing or flushing fails.
+    const h = await open(receiptPath + ".tmp", "w");
+    try {
+      await h.writeFile(
+        JSON.stringify({
+          operationId: task.id,
+          state,
+          artifacts,
+          projectRevision: snap.project.revision,
+          sourceFingerprint: asset.fingerprint,
+          format: options.format,
+          updatedAt: new Date().toISOString(),
+        }),
+      );
+      await h.sync();
+    } finally {
+      await h.close();
+    }
     await rename(receiptPath + ".tmp", receiptPath);
     await syncDirectory(dirname(receiptPath));
   };

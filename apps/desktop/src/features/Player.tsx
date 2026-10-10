@@ -70,6 +70,7 @@ export function Player() {
   useEffect(() => {
     const element = video.current;
     if (!element) return;
+    clock.showCaptions = () => setCaptions(true);
     clock.seek = (us) => {
       element.currentTime = Math.max(0, us / 1e6);
       clock.set(us);
@@ -88,6 +89,7 @@ export function Player() {
       clock.seek = undefined;
       clock.toggle = undefined;
       clock.preview = undefined;
+      clock.showCaptions = undefined;
     };
   }, [asset?.id]);
   useEffect(() => {

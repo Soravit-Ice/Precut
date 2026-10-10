@@ -38,9 +38,13 @@ Each operation uses a new UUID, a project export journal and a receipt in `proje
 
 Recovery returns `SUCCEEDED` only when every artifact matches; `FAILED` only with a definite failure receipt and no matching published artifact; otherwise it returns `UNKNOWN`. Missing or damaged receipts do not cause an automatic refund.
 
+The initial receipt is written and flushed through the same writable file handle, closed in `finally`, then renamed before rendering starts. Windows `FlushFileBuffers` requires write access; older builds reopened the receipt read-only and could fail at “Starting”, leave a complete initial `.receipt.json.tmp` and retain the trial reservation. Recovery now recognizes only that exact pre-render condition: the primary receipt must be absent, the staged receipt must belong to the operation, be `running` with no artifacts, and contain valid revision/fingerprint/format/timestamp metadata. This proves rendering never started, so the SDK can release that reservation on the next online access check after an update/restart. A present or corrupt primary receipt, a missing/corrupt temp, and later staged states remain ambiguous. See [`WINDOWS_EXPORT_RECOVERY.md`](WINDOWS_EXPORT_RECOVERY.md).
+
 SDK rc.1 treats a rejected engine callback as a definite failure. Precut therefore retains that callback's durable RUNNING reservation if a worker fails with an ambiguous result, reports the recovery condition to the UI and requires restart reconciliation after the export destination is restored. The callback is not rejected to the SDK in that ambiguous case. New exports are blocked while this reservation needs attention. This prevents a worker crash after publication from releasing quota incorrectly.
 
 Automated tests cover the installed SDK's OAuth state/PKCE exchange and one-use callback, offline-trial rejection, cross-product storage rejection and Precut artifact recovery decisions. These tests use isolated mocks; they do not replace an end-to-end sign-in, paid purchase/activation and trial-export test against the deployed PC product.
+
+Export regressions reject read-only receipt flushing to reproduce Windows behavior, verify SRT/NLE publication and failure cleanup, and exercise legacy reservation recovery through the installed SDK with device-signed challenges and a simulated Store. Where bundled native tools are available, an integration test renders a real MP4 with Thai captions and its SRT sidecar, probes the output and verifies both receipt hashes. Native Windows installer acceptance remains a separate check.
 
 ## Updates and release
 

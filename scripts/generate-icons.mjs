@@ -1,4 +1,4 @@
-import { mkdir, copyFile, readFile } from "node:fs/promises";
+import { mkdir, copyFile, readFile, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
@@ -17,18 +17,21 @@ const assets = [
   [
     "brand/precut-symbol-primary.svg",
     "apps/desktop/public/brand/precut-symbol.svg",
+    { width: 327, height: 399, viewBox: "92 57 327 399" },
   ],
   [
     "brand/precut-wordmark-dark.svg",
     "apps/desktop/public/brand/precut-wordmark-dark.svg",
+    { width: 366, height: 114, viewBox: "20 40 366 114" },
   ],
   [
     "brand/precut-wordmark-light.svg",
     "apps/desktop/public/brand/precut-wordmark-light.svg",
+    { width: 366, height: 114, viewBox: "20 40 366 114" },
   ],
   ["website/favicons/favicon.svg", "apps/desktop/public/favicon.svg"],
 ];
-for (const [source, destination] of assets) {
+for (const [source, destination, crop] of assets) {
   const bytes = await readFile(join(kit, source));
   if (source.endsWith(".icns") && bytes.toString("ascii", 0, 4) !== "icns")
     throw new Error("Invalid macOS brand icon");
@@ -45,6 +48,15 @@ for (const [source, destination] of assets) {
       ))
   )
     throw new Error("Brand SVG must be self-contained");
-  await copyFile(join(kit, source), join(root, destination));
+  if (crop) {
+    // Keep the supplied brand kit intact; trim its export padding for the sidebar.
+    const svg = bytes.toString().replace(/<svg\b[^>]*>/, (tag) =>
+      tag
+        .replace(/\bwidth="[^"]*"/, `width="${crop.width}"`)
+        .replace(/\bheight="[^"]*"/, `height="${crop.height}"`)
+        .replace(/\bviewBox="[^"]*"/, `viewBox="${crop.viewBox}"`),
+    );
+    await writeFile(join(root, destination), svg);
+  } else await copyFile(join(kit, source), join(root, destination));
 }
 console.log("Precut brand kit installed: macOS, Windows and desktop renderer");

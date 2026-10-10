@@ -24,6 +24,9 @@ import {
   Film,
   ArrowUpRight,
   PanelLeftClose,
+  Trash2,
+  Pencil,
+  LoaderCircle,
 } from "lucide-react";
 import {
   Button,
@@ -34,7 +37,15 @@ import {
   Tooltip,
   TooltipProvider,
 } from "./components/ui/primitives";
-import { useStore, call, mutate, refresh, safe, clock } from "./lib/store";
+import {
+  useStore,
+  call,
+  mutate,
+  refresh,
+  safe,
+  clock,
+  flushCaptionSave,
+} from "./lib/store";
 import { useT } from "./lib/i18n";
 import {
   defaultCleanup,
@@ -62,6 +73,10 @@ import { ExportPanel } from "./features/ExportPanel";
 import { SignInDialog } from "./features/SignInDialog";
 import { appVersion } from "./lib/app-info";
 import { Settings as SettingsPage } from "./features/Settings";
+import {
+  AutoEditProgress,
+  AutoEditProgressDialog,
+} from "./features/AutoEditProgress";
 const nav = [
   { id: "projects", label: "Projects", icon: FolderOpen },
   { id: "media", label: "Media", icon: Clapperboard },
@@ -76,8 +91,8 @@ function Logo() {
         className="brand-symbol"
         src="./brand/precut-symbol.svg"
         alt=""
-        width="30"
-        height="34"
+        width="26"
+        height="32"
       />
       <span className="brand-wordmark">
         <img
@@ -122,6 +137,42 @@ export default function App() {
     undefined,
   );
   const id = snap?.project.id;
+  const [removing, setRemoving] = useState<Project>(),
+    [removedProject, setRemovedProject] = useState<Project>(),
+    [removalBusy, setRemovalBusy] = useState(false),
+    [showArchived, setShowArchived] = useState(false),
+    [archivedProjects, setArchivedProjects] = useState<Project[]>([]);
+  useEffect(() => {
+    if (showArchived)
+      safe(async () =>
+        setArchivedProjects(await call<Project[]>("projects.listRemoved")),
+      );
+  }, [showArchived, projects]);
+  const displayedProjects = showArchived ? archivedProjects : projects;
+  const removeProject = async () => {
+    if (!removing || removalBusy) return;
+    setRemovalBusy(true);
+    try {
+      await flushCaptionSave(removing.id);
+      await call("projects.remove", { id: removing.id });
+      const state = useStore.getState();
+      if (state.snapshot?.project.id === removing.id) {
+        clock.set(0);
+        state.set({
+          snapshot: undefined,
+          reviewId: undefined,
+          view: "projects",
+        });
+      }
+      state.set({
+        projects: state.projects.filter((p) => p.id !== removing.id),
+      });
+      setRemovedProject(removing);
+      setRemoving(undefined);
+    } finally {
+      setRemovalBusy(false);
+    }
+  };
   const [speechDraft, setSpeechDraft] = useState<SpeechConfig>({
     profile: "thai-english",
     quality: settings.speechQuality,
@@ -146,7 +197,69 @@ export default function App() {
   const job = jobs
     .filter((j) => j.state === "running" && (!id || j.projectId === id))
     .at(-1);
+  const [analysisProgressOpen, setAnalysisProgressOpen] = useState(false),
+    [trackedAnalysisId, setTrackedAnalysisId] = useState<string>(),
+    [analysisRequest, setAnalysisRequest] = useState<Job>();
+  const activeAnalysis = jobs
+    .filter(
+      (j) =>
+        j.projectId === id &&
+        j.type === "analyze" &&
+        ["running", "queued"].includes(j.state),
+    )
+    .at(-1);
+  const pendingAnalysis =
+    analysisRequest?.projectId === id ? analysisRequest : undefined;
+  const analysisJob =
+    pendingAnalysis ??
+    activeAnalysis ??
+    jobs.find((j) => j.id === trackedAnalysisId && j.projectId === id);
+  useEffect(() => {
+    setAnalysisProgressOpen(false);
+    setTrackedAnalysisId(undefined);
+  }, [id]);
+  const showAnalysisProgress = () => {
+    if (activeAnalysis) setTrackedAnalysisId(activeAnalysis.id);
+    setAnalysisProgressOpen(true);
+  };
+  const startAnalysis = async () => {
+    if (!id || analysisRequest || activeAnalysis) return;
+    setAnalysisRequest({
+      id: "pending",
+      projectId: id,
+      type: "analyze",
+      state: "queued",
+      stage: "Starting",
+      progress: 0,
+      startedAt: Date.now(),
+    });
+    setAutoOpen(false);
+    setAnalysisProgressOpen(true);
+    set({ view: "transcript" });
+    try {
+      const started = await call<Job>("jobs.analyze", {
+        projectId: id,
+        options: cleanup,
+        speech: speechDraft,
+        force: forceAnalysis,
+        autoApplySilence: applySilence,
+        reassessKeptSilence: reassessKept,
+      });
+      setTrackedAnalysisId(started.id);
+      // A worker event can arrive before the request resolves. Keep its newer state.
+      const currentJobs = useStore.getState().jobs;
+      if (!currentJobs.some((j) => j.id === started.id))
+        set({ jobs: [...currentJobs, started] });
+    } catch (error) {
+      setAnalysisProgressOpen(false);
+      throw error;
+    } finally {
+      setAnalysisRequest(undefined);
+    }
+  };
   const openProject = async (projectId: string) => {
+    if (useStore.getState().snapshot)
+      await flushCaptionSave(useStore.getState().snapshot!.project.id);
     const snapshot = await call<Snapshot>("projects.open", { id: projectId });
     set({ snapshot, view: "transcript", reviewId: undefined });
     clock.set(0);
@@ -202,7 +315,10 @@ export default function App() {
     const handler = (e: KeyboardEvent) => {
       const input =
         e.target instanceof HTMLElement &&
-        ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName);
+        (["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName) ||
+          e.target.isContentEditable ||
+          Boolean(e.target.closest('[role="dialog"]')));
+      if (input) return;
       const state = useStore.getState(),
         snapshot = state.snapshot;
       const modifier = e.metaKey || e.ctrlKey;
@@ -377,16 +493,34 @@ export default function App() {
           </nav>
           {!collapsed && (
             <div className="sidebar-projects">
-              <span className="eyebrow">{t("RECENT")}</span>
-              {projects.slice(0, 4).map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => safe(() => openProject(p.id))}
-                  className={p.id === id ? "active" : ""}
-                >
-                  <span className="project-bullet" />
-                  <span>{p.name}</span>
+              <div className="recent-sidebar-heading">
+                <span className="eyebrow">{t("RECENT")}</span>
+                <button onClick={() => set({ view: "projects" })}>
+                  {t("Manage")}
                 </button>
+              </div>
+              {projects.slice(0, 4).map((p) => (
+                <div
+                  key={p.id}
+                  className={`recent-project-row ${p.id === id ? "active" : ""}`}
+                >
+                  <button
+                    onClick={() => safe(() => openProject(p.id))}
+                    className="recent-project-open"
+                    title={p.name}
+                  >
+                    <span className="project-bullet" />
+                    <span>{p.name}</span>
+                  </button>
+                  <button
+                    className="recent-project-remove"
+                    onClick={() => setRemoving(p)}
+                    aria-label={`${t("Remove from recent")}: ${p.name}`}
+                    title={t("Remove from recent")}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -477,11 +611,26 @@ export default function App() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setAutoOpen(true)}
-                    disabled={!snap.assets.length || job?.type === "analyze"}
+                    onClick={() =>
+                      activeAnalysis || pendingAnalysis
+                        ? showAnalysisProgress()
+                        : setAutoOpen(true)
+                    }
+                    disabled={
+                      !snap.assets.length ||
+                      Boolean(job && job.type !== "analyze" && !activeAnalysis)
+                    }
                   >
-                    <Scissors size={14} />
-                    {t("Auto Edit")}
+                    {activeAnalysis || pendingAnalysis ? (
+                      <LoaderCircle size={14} className="analysis-spinner" />
+                    ) : (
+                      <Scissors size={14} />
+                    )}
+                    {t(
+                      activeAnalysis || pendingAnalysis
+                        ? "Auto editing…"
+                        : "Auto Edit",
+                    )}
                   </Button>
                   <Button size="sm" onClick={() => set({ view: "export" })}>
                     <Download size={14} />
@@ -543,7 +692,22 @@ export default function App() {
                 </div>
               </div>
               <div className="recent-heading">
-                <h2>{t("Recent projects")}</h2>
+                <div className="project-list-tabs">
+                  <button
+                    className={!showArchived ? "selected" : ""}
+                    aria-pressed={!showArchived}
+                    onClick={() => setShowArchived(false)}
+                  >
+                    {t("Recent projects")}
+                  </button>
+                  <button
+                    className={showArchived ? "selected" : ""}
+                    aria-pressed={showArchived}
+                    onClick={() => setShowArchived(true)}
+                  >
+                    {t("Removed projects")}
+                  </button>
+                </div>
                 <div className="project-search">
                   <Search size={14} />
                   <Input
@@ -553,24 +717,26 @@ export default function App() {
                   />
                 </div>
               </div>
-              {projects.length ? (
+              {displayedProjects.length ? (
                 <div className="projects-list">
                   <div className="project-list-header">
                     <span>{t("PROJECT")}</span>
                     <span>{t("DURATION")}</span>
                     <span>{t("LAST UPDATED")}</span>
+                    <span>{t("Actions")}</span>
                   </div>
-                  {projects
+                  {displayedProjects
                     .filter((p) =>
                       p.name.toLowerCase().includes(query.toLowerCase()),
                     )
                     .map((p) => (
-                      <button
-                        className="project-list-row"
-                        key={p.id}
-                        onClick={() => safe(() => openProject(p.id))}
-                      >
-                        <div>
+                      <div className="project-list-row" key={p.id}>
+                        <button
+                          className="project-row-open"
+                          disabled={showArchived}
+                          onClick={() => safe(() => openProject(p.id))}
+                          aria-label={`${t("Open project")}: ${p.name}`}
+                        >
                           <div className="project-file-icon">
                             <Film size={19} />
                           </div>
@@ -584,27 +750,90 @@ export default function App() {
                                   : "Local project"}
                             </small>
                           </span>
-                        </div>
+                        </button>
                         <span>{formatTime(p.durationUs)}</span>
                         <span>
                           {new Intl.DateTimeFormat(
                             settings.language === "th" ? "th-TH" : "en",
                             { month: "short", day: "numeric" },
                           ).format(new Date(p.updatedAt))}
-                          <ArrowUpRight size={15} />
                         </span>
-                      </button>
+                        <div className="project-row-actions">
+                          {showArchived ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              aria-label={`${t("Restore project")}: ${p.name}`}
+                              onClick={() =>
+                                safe(async () => {
+                                  await call("projects.restore", { id: p.id });
+                                  await refresh();
+                                  if (removedProject?.id === p.id)
+                                    setRemovedProject(undefined);
+                                })
+                              }
+                            >
+                              {t("Restore")}
+                            </Button>
+                          ) : (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label={`${t("Rename project")}: ${p.name}`}
+                                title={t("Rename project")}
+                                onClick={() =>
+                                  safe(async () => {
+                                    await openProject(p.id);
+                                    setRenaming(true);
+                                    setName(p.name);
+                                    setNewOpen(true);
+                                  })
+                                }
+                              >
+                                <Pencil size={14} />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label={`${t("Remove from recent")}: ${p.name}`}
+                                title={t("Remove from recent")}
+                                onClick={() => setRemoving(p)}
+                              >
+                                <Trash2 size={14} />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     ))}
                 </div>
               ) : (
                 <div className="projects-empty">
                   <FolderOpen size={22} />
-                  <span>{t("No projects yet")}</span>
+                  <span>
+                    {t(
+                      showArchived ? "No removed projects" : "No projects yet",
+                    )}
+                  </span>
                   <p>
-                    {t("Drop a recording above. We'll take it from there.")}
+                    {t(
+                      showArchived
+                        ? "Projects removed from Recent can be restored here."
+                        : "Drop a recording above. We'll take it from there.",
+                    )}
                   </p>
                 </div>
               )}
+              {displayedProjects.length > 0 &&
+                !displayedProjects.some((p) =>
+                  p.name.toLowerCase().includes(query.toLowerCase()),
+                ) && (
+                  <div className="projects-empty">
+                    <Search size={22} />
+                    <span>{t("No matching projects")}</span>
+                  </div>
+                )}
               <div className="dashboard-workflow">
                 <span>
                   01 <b>{t("Import")}</b>
@@ -639,12 +868,24 @@ export default function App() {
               key={id}
               style={
                 {
-                  "--inspector-width": `${inspectorWidth}px`,
+                  "--inspector-width": `${view === "captions" ? Math.max(340, inspectorWidth) : inspectorWidth}px`,
                   "--transcript-height": `${transcriptHeight}px`,
                 } as React.CSSProperties
               }
             >
               <div className="workspace-main">
+                {analysisJob && analysisJob.state !== "cancelled" && (
+                  <AutoEditProgress
+                    job={analysisJob}
+                    onOpen={() => {
+                      if (analysisJob.state === "completed") {
+                        set({ view: "transcript" });
+                        setTrackedAnalysisId(undefined);
+                      } else showAnalysisProgress();
+                    }}
+                    onDismiss={() => setTrackedAnalysisId(undefined)}
+                  />
+                )}
                 {snap.assets[0].missing ? (
                   <div className="missing-banner">
                     <strong>{t("Media not found")}</strong>
@@ -675,7 +916,7 @@ export default function App() {
                 )}
                 <Player />
                 <Timeline />
-                {job && <JobProgress job={job} />}
+                {job && job.type !== "analyze" && <JobProgress job={job} />}
                 <Resizer
                   orientation="horizontal"
                   label={t("Resize transcript")}
@@ -753,6 +994,86 @@ export default function App() {
             </button>
           </div>
         )}
+        {removedProject && (
+          <div className="project-undo-toast" role="status">
+            <Trash2 size={16} />
+            <span>
+              <strong>{removedProject.name}</strong>
+              {t("Removed from recent")}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                safe(async () => {
+                  await call("projects.restore", { id: removedProject.id });
+                  await refresh();
+                  setRemovedProject(undefined);
+                })
+              }
+            >
+              <Undo2 size={14} />
+              {t("Undo")}
+            </Button>
+            <button
+              aria-label={t("Dismiss")}
+              onClick={() => setRemovedProject(undefined)}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+        <Dialog
+          open={Boolean(removing)}
+          onOpenChange={(open) => {
+            if (!open && !removalBusy) setRemoving(undefined);
+          }}
+          title={t("Remove from recent?")}
+          description={t(
+            "This project will disappear from Projects and Recent. Your original media and saved edits stay on this computer. You can undo this action.",
+          )}
+          footer={
+            <>
+              <Button
+                variant="ghost"
+                disabled={removalBusy}
+                onClick={() => setRemoving(undefined)}
+                data-dialog-autofocus
+              >
+                {t("Cancel")}
+              </Button>
+              <Button
+                variant="danger"
+                disabled={
+                  removalBusy ||
+                  jobs.some(
+                    (j) =>
+                      j.projectId === removing?.id &&
+                      ["running", "queued"].includes(j.state),
+                  )
+                }
+                onClick={() => safe(removeProject)}
+              >
+                <Trash2 size={14} />
+                {t(removalBusy ? "Removing…" : "Remove from recent")}
+              </Button>
+            </>
+          }
+        >
+          <div className="remove-project-summary">
+            <FolderOpen size={22} />
+            <strong>{removing?.name}</strong>
+          </div>
+          {jobs.some(
+            (j) =>
+              j.projectId === removing?.id &&
+              ["running", "queued"].includes(j.state),
+          ) && (
+            <p className="muted">
+              {t("Wait for processing to finish before removing this project.")}
+            </p>
+          )}
+        </Dialog>
         <Dialog
           open={newOpen}
           onOpenChange={setNewOpen}
@@ -793,21 +1114,8 @@ export default function App() {
                 {t("Cancel")}
               </Button>
               <Button
-                onClick={() =>
-                  safe(async () => {
-                    setAutoOpen(false);
-                    set({ view: "transcript" });
-                    const job = await call<Job>("jobs.analyze", {
-                      projectId: id,
-                      options: cleanup,
-                      speech: speechDraft,
-                      force: forceAnalysis,
-                      autoApplySilence: applySilence,
-                      reassessKeptSilence: reassessKept,
-                    });
-                    set({ jobs: [...useStore.getState().jobs, job] });
-                  })
-                }
+                disabled={Boolean(analysisRequest || activeAnalysis)}
+                onClick={() => safe(startAnalysis)}
               >
                 <Scissors size={15} />
                 {t("Auto Edit")}
@@ -857,7 +1165,7 @@ export default function App() {
               aria-label="Names and specialist terms"
               value={speechDraft.vocabulary}
               maxLength={1200}
-              placeholder="Precut, CK, NVIDIA, T2ETECH"
+              placeholder="Precut, NVIDIA, T2ETECH"
               onChange={(e) =>
                 setSpeechDraft({ ...speechDraft, vocabulary: e.target.value })
               }
@@ -941,6 +1249,23 @@ export default function App() {
             />
           </label>
         </Dialog>
+        {analysisJob && (
+          <AutoEditProgressDialog
+            job={analysisJob}
+            open={analysisProgressOpen}
+            onOpenChange={setAnalysisProgressOpen}
+            onReview={() => {
+              setAnalysisProgressOpen(false);
+              setTrackedAnalysisId(undefined);
+              set({ view: "transcript" });
+              safe(() => refresh(id));
+            }}
+            onRetry={() => {
+              setAnalysisProgressOpen(false);
+              setAutoOpen(true);
+            }}
+          />
+        )}
         <Dialog
           open={commandOpen}
           onOpenChange={setCommandOpen}

@@ -9,6 +9,8 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   ChevronDown,
+  Play,
+  Pause,
 } from "lucide-react";
 import {
   Button,
@@ -30,12 +32,15 @@ import {
   outputDuration,
   formatTime,
 } from "../../../../packages/core/src/timeline";
-import { presets, renderCaption } from "../../../../packages/core/src/captions";
+import {
+  presets,
+  segmentCaptions,
+} from "../../../../packages/core/src/captions";
+import { CaptionPreview } from "./CaptionPreview";
+import { CaptionColor } from "./CaptionColor";
 import type {
   Category,
   CaptionStyle,
-  CaptionScene,
-  Word,
 } from "../../../../packages/shared/src/contracts";
 const categories: { id: Category; name: string; className: string }[] = [
   { id: "silence", name: "Silence & pauses", className: "silence" },
@@ -371,50 +376,16 @@ export function CleanupInspector() {
     </aside>
   );
 }
-function PresetPreview({ preset }: { preset: (typeof presets)[number] }) {
-  const canvas = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const c = canvas.current;
-    if (!c) return;
-    const ctx = c.getContext("2d")!;
-    const draw = () => {
-      ctx.clearRect(0, 0, 240, 104);
-      const words = ["Make", "it", "count."].map((text, i) => ({
-        id: String(i),
-        text,
-        joiner: i ? " " : "",
-        startUs: i * 400000,
-        endUs: (i + 1) * 400000,
-        confidence: 1,
-        timingQuality: "aligned",
-        segmentId: "demo",
-        index: i,
-      })) as Word[];
-      const scene: CaptionScene = {
-        id: "demo",
-        startUs: 0,
-        endUs: 1200000,
-        words,
-        presetId: preset.id,
-      };
-      renderCaption(ctx, 240, 104, scene, 900000, {
-        ...preset.style,
-        size: preset.id === "punch" ? 230 : 185,
-        outline: preset.id === "minimal" ? 0 : 1,
-        maxWidth: 0.92,
-        bottomMargin: 0.25,
-      });
-    };
-    void document.fonts.ready.then(draw);
-    draw();
-  }, [preset]);
-  return <canvas width={240} height={104} ref={canvas} />;
-}
 export function CaptionInspector() {
   const snap = useStore((s) => s.snapshot)!,
     t = useT();
   const [advanced, setAdvanced] = useState(false),
     [draft, setDraft] = useState(snap.captionStyle);
+  const [sample, setSample] = useState(t("Make it count.")),
+    [animateSample, setAnimateSample] = useState(true),
+    [hoveredPreset, setHoveredPreset] = useState<string>(),
+    [studioTab, setStudioTab] = useState("styles");
+  const activePreset = presets.find((p) => p.id === draft.preset)!;
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => {
     setDraft(snap.captionStyle);
@@ -461,25 +432,194 @@ export function CaptionInspector() {
         {t("Give every word the right presence.")}
       </p>
       <div className="caption-inspector-scroll">
-        <div className="caption-preset-grid">
+        <div className="caption-studio-tabs" aria-label={t("Caption controls")}>
+          {[
+            { id: "styles", label: "Styles" },
+            { id: "colors", label: "Colors" },
+            { id: "layout", label: "Layout" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              aria-pressed={studioTab === tab.id}
+              onClick={() => {
+                setStudioTab(tab.id);
+              }}
+            >
+              {t(tab.label)}
+            </button>
+          ))}
+        </div>
+        <div className="caption-live-preview">
+          <div className="caption-preview-heading">
+            <span>
+              <i className="status-dot" />
+              {t("Live style preview")}
+            </span>
+            <button
+              aria-label={t(
+                animateSample ? "Pause style preview" : "Play style preview",
+              )}
+              onClick={() => setAnimateSample(!animateSample)}
+            >
+              {animateSample ? <Pause size={13} /> : <Play size={13} />}
+            </button>
+          </div>
+          <div className="caption-preview-stage">
+            <CaptionPreview
+              style={draft}
+              text={sample}
+              animated={animateSample}
+            />
+          </div>
+          <div className="caption-preview-meta">
+            <strong>{activePreset.name}</strong>
+            <span>{t(activePreset.description)}</span>
+          </div>
+          <Input
+            aria-label={t("Preview text")}
+            value={sample}
+            maxLength={80}
+            onChange={(e) => setSample(e.target.value)}
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            className="full-width"
+            disabled={!snap.words.length}
+            onClick={() => {
+              const kept = snap.words.filter(
+                (w) =>
+                  !snap.suggestions.some(
+                    (s) =>
+                      s.status === "accepted" &&
+                      w.startUs < s.endUs &&
+                      w.endUs > s.startUs,
+                  ),
+              );
+              const scenes = segmentCaptions(
+                kept,
+                draft,
+                snap.project.durationUs,
+              );
+              const scene =
+                scenes.find((s) => s.endUs > clock.currentUs) ?? scenes[0];
+              if (scene) {
+                clock.showCaptions?.();
+                clock.preview?.(scene.startUs, scene.endUs, false);
+              }
+            }}
+          >
+            <Play size={13} />
+            {t("Preview on video")}
+          </Button>
+        </div>
+        <div
+          className="caption-section-heading"
+          hidden={studioTab !== "styles"}
+        >
+          <h3>{t("Choose a style")}</h3>
+          <span>6 {t("styles")}</span>
+        </div>
+        <div className="caption-preset-grid" hidden={studioTab !== "styles"}>
           {presets.map((p) => (
             <button
               key={p.id}
               className={`preset-card ${draft.preset === p.id ? "selected" : ""}`}
-              onClick={() => update({ ...p.style })}
+              onClick={() =>
+                update({
+                  ...p.style,
+                  color: draft.color,
+                  activeColor: draft.activeColor,
+                })
+              }
               aria-label={`Caption preset ${p.name}`}
+              aria-pressed={draft.preset === p.id}
+              title={t(p.description)}
+              onMouseEnter={() => setHoveredPreset(p.id)}
+              onMouseLeave={() => setHoveredPreset(undefined)}
+              onFocus={() => setHoveredPreset(p.id)}
+              onBlur={() => setHoveredPreset(undefined)}
             >
               <div className="preset-art">
-                <PresetPreview preset={p} />
+                <CaptionPreview
+                  style={{
+                    ...p.style,
+                    color: draft.color,
+                    activeColor: draft.activeColor,
+                  }}
+                  text={t("Make it count.")}
+                  compact
+                  animated={hoveredPreset === p.id}
+                />
               </div>
               <div className="preset-name">
                 {p.name}
                 {draft.preset === p.id && <Check size={12} />}
               </div>
+              <small className="preset-description">{t(p.description)}</small>
             </button>
           ))}
         </div>
-        <div className="inspector-control-section">
+        <div
+          className="inspector-control-section"
+          hidden={studioTab !== "colors"}
+        >
+          <div className="caption-section-heading">
+            <h3>{t("Colors")}</h3>
+            <button
+              onClick={() =>
+                update({
+                  color: activePreset.style.color,
+                  activeColor: activePreset.style.activeColor,
+                })
+              }
+            >
+              {t("Reset colors")}
+            </button>
+          </div>
+          <div className="caption-palettes">
+            {[
+              { name: "Ocean", color: "#FFFFFF", activeColor: "#36C5FF" },
+              { name: "Sunshine", color: "#FFFFFF", activeColor: "#FFE066" },
+              { name: "Lime", color: "#FFFFFF", activeColor: "#A3E635" },
+              { name: "Rose", color: "#FFFFFF", activeColor: "#FB7185" },
+            ].map((p) => (
+              <button
+                key={p.name}
+                aria-label={`Color palette ${p.name}`}
+                aria-pressed={
+                  draft.color.toUpperCase() === p.color &&
+                  draft.activeColor.toUpperCase() === p.activeColor
+                }
+                onClick={() =>
+                  update({ color: p.color, activeColor: p.activeColor })
+                }
+              >
+                <i style={{ background: p.activeColor }} />
+                {t(p.name)}
+              </button>
+            ))}
+          </div>
+          <CaptionColor
+            label={t("Text color")}
+            value={draft.color}
+            onChange={(color) => update({ color })}
+          />
+          <CaptionColor
+            label={t("Active word color")}
+            value={draft.activeColor}
+            onChange={(activeColor) => update({ activeColor })}
+          />
+          <p className="caption-color-note">
+            {t(
+              "Active color appears in Highlight, Pop and Karaoke. Colors carry over when you switch styles.",
+            )}
+          </p>
+        </div>
+        <div
+          className="inspector-control-section"
+          hidden={studioTab !== "layout"}
+        >
           <h3>{t("Appearance")}</h3>
           <label className="control-row">
             <span>{t("Font")}</span>
@@ -508,26 +648,6 @@ export function CaptionInspector() {
               onValueChange={(size) => update({ size })}
             />
           </label>
-          <label className="control-row">
-            <span>{t("Text color")}</span>
-            <input
-              className="color-input"
-              type="color"
-              aria-label="Text color"
-              value={draft.color}
-              onChange={(e) => update({ color: e.target.value })}
-            />
-          </label>
-          <label className="control-row">
-            <span>{t("Active word")}</span>
-            <input
-              className="color-input"
-              type="color"
-              aria-label="Active word color"
-              value={draft.activeColor}
-              onChange={(e) => update({ activeColor: e.target.value })}
-            />
-          </label>
           <div className="check-controls">
             <Checkbox
               checked={draft.shadow}
@@ -541,7 +661,10 @@ export function CaptionInspector() {
             />
           </div>
         </div>
-        <div className="inspector-control-section">
+        <div
+          className="inspector-control-section"
+          hidden={studioTab !== "layout"}
+        >
           <h3>{t("Layout")}</h3>
           <label className="slider-control">
             <span>
@@ -587,6 +710,7 @@ export function CaptionInspector() {
         </div>
         <button
           className="advanced-toggle"
+          hidden={studioTab !== "layout"}
           onClick={() => setAdvanced(!advanced)}
         >
           <SlidersHorizontal size={14} />
@@ -596,7 +720,7 @@ export function CaptionInspector() {
             style={{ transform: advanced ? "rotate(180deg)" : "" }}
           />
         </button>
-        {advanced && (
+        {advanced && studioTab === "layout" && (
           <div className="inspector-control-section advanced-controls">
             <label className="slider-control">
               <span>

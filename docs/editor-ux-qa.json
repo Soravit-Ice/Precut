@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-11",
+  "version": "1.0.1",
+  "nativePackagedApp": true,
+  "platform": "darwin",
+  "arch": "arm64",
+  "typecheck": "passed",
+  "unitAndIntegration": {
+    "passed": 95
+  },
+  "electronE2E": {
+    "passed": 5,
+    "failed": 2,
+    "newEditorUxTest": "passed",
+    "failureReason": "Existing exports reached the licence service and received: The service rejected this request."
+  },
+  "nativeSmoke": {
+    "import": "passed",
+    "editorControls": "passed",
+    "captionPreview": "passed",
+    "colourAutosaveOnRemoval": "passed",
+    "removeAndUndo": "passed",
+    "rendererErrors": []
+  },
+  "screenshots": [
+    "editor-word-correction.png",
+    "editor-caption-studio-th-dark.png",
+    "editor-caption-colors-th-dark.png",
+    "editor-project-management.png"
+  ]
+}

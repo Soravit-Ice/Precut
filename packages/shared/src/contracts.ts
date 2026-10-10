@@ -276,10 +276,13 @@ export const PrecutOAuthCallbackSchema = z
   }, "Paste the complete Precut return link from the browser.");
 export const schemas = {
   "projects.list": z.object({}).strict(),
+  "projects.listRemoved": z.object({}).strict(),
   "projects.create": z
     .object({ name: z.string().trim().min(1).max(100) })
     .strict(),
   "projects.open": z.object({ id: Id }).strict(),
+  "projects.remove": z.object({ id: Id }).strict(),
+  "projects.restore": z.object({ id: Id }).strict(),
   "projects.rename": z
     .object({ id: Id, name: z.string().trim().min(1).max(100) })
     .strict(),
@@ -359,6 +362,27 @@ export const schemas = {
         (x.startUs !== undefined &&
           x.endUs !== undefined &&
           x.endUs > x.startUs),
+    ),
+  "captions.correctMany": z
+    .object({
+      projectId: Id,
+      corrections: z
+        .array(
+          z
+            .object({
+              wordId: Id,
+              text: z.string().trim().min(1).max(200),
+            })
+            .strict(),
+        )
+        .min(1)
+        .max(10000),
+    })
+    .strict()
+    .refine(
+      (x) =>
+        new Set(x.corrections.map((c) => c.wordId)).size ===
+        x.corrections.length,
     ),
   "exports.start": ExportSchema,
   "exports.reveal": z.object({ jobId: Id }).strict(),
