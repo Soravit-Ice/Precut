@@ -104,6 +104,10 @@ export class Licensing {
   async initialize(configFile: string) {
     let encrypted: ElectronSdkStorage | undefined;
     try {
+      // Isolated unpackaged E2E runs opt into the existing development adapter.
+      // Never load customer configuration or consume real trial reservations.
+      // Packaged applications cannot enter this path, even with these flags.
+      if (this.development && process.env.PRECUT_TEST_DATA) return;
       const raw = await readFile(configFile, "utf8");
       const config = ProductSdkConfigSchema.parse(JSON.parse(raw));
       if (config.productCode !== "PC" || config.appId !== "com.t2etech.precut")

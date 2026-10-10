@@ -71,3 +71,12 @@ macOS Intel and Windows x64 have separate packaging CI jobs and architecture-spe
 Premiere Pro 2023 was opened for an actual XML import check, but native UI control failed with ScreenCaptureKit error `-3812` before the import could complete. Final Cut Pro and DaVinci Resolve are not installed on this host. **No editor import certification is claimed.** Test each interchange format on its supported editor before publishing compatibility promises.
 
 Balanced, Best Quality and multilingual E5 download/semantic scoring paths are implemented with consent, resume/checksum and CPU runtime support, but optional model downloads and semantic quality have not been accepted on all targets. Natural 60–120-minute recordings, listening/sync checks, accessibility with assistive technology, long-running memory soak and clean installs on the other two targets remain release validation work.
+
+## 2026-10-11: free editing, paid export and Windows CPU variants
+
+- Precut: 138 unit/integration tests, typecheck, SDK signature verification, desktop build and native bundle integrity passed on macOS ARM64.
+- UI: all 8 Electron E2E tests passed. Import, Auto Edit progress/cancellation/recovery, editing, captions, project save/reopen and all export formats use an isolated opt-in development adapter. A packaged app with the same environment flags is explicitly tested to remain paid-only.
+- Store: 201 backend tests against temporary PostgreSQL 17 and 153 web tests passed; shared/server/web typechecks and production build passed. Zero free quota denies RESERVE without creating usage, keeps paid export available, settles older COMMIT/RELEASE operations, and preserves anonymous installer download.
+- Native CPU smoke on this Mac passed three language probes, one transcription with DTW alignment and pipe EOF. This is functional evidence, not a customer Windows performance benchmark.
+- Windows candidate CI: https://github.com/Soravit-Ice/Precut/actions/runs/38084901478 (native/packaged changes at `c3488ca`; later E2E-adapter changes are guarded out of packaged builds). Windows acceptance and timings are recorded by the workflow. Customer hardware, clean OS installation and real paid-account activation still need acceptance.
+- Review/deployment: Precut PR https://github.com/Soravit-Ice/Precut/pull/1 and Store PR https://github.com/Soravit-Ice/Project-t2e-store/pull/1. Production policy is not changed by these tests. Deploy the Store change, enable Precut free trial and set export to 0; keep SDK trialEnabled true for legacy reservation recovery.

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   bind: vi.fn(),
@@ -13,12 +13,19 @@ const mocks = vi.hoisted(() => ({
   run: vi.fn(),
   licenseStatus: vi.fn(),
   verify: vi.fn(),
+  packaged: false,
 }));
 vi.mock("../../packages/core/src/receipts", () => ({
   recoverExport: mocks.recover,
 }));
 vi.mock("electron", () => ({
-  app: { isPackaged: false, getVersion: () => "1.0.0" },
+  app: {
+    get isPackaged() {
+      return mocks.packaged;
+    },
+    getVersion: () => "1.0.0",
+    setAsDefaultProtocolClient: () => true,
+  },
   shell: { openExternal: vi.fn() },
   dialog: {},
 }));
@@ -85,6 +92,7 @@ const status = {
 };
 beforeEach(() => {
   vi.resetAllMocks();
+  mocks.packaged = false;
   mocks.bind.mockReturnValue(mocks.unbind);
   mocks.storageLoad.mockResolvedValue(null);
   mocks.complete.mockResolvedValue({ signedIn: true, activated: false });
@@ -120,6 +128,7 @@ beforeEach(() => {
     license: { status: mocks.licenseStatus, ensureValidLicense: mocks.verify },
   }));
 });
+afterEach(() => vi.unstubAllEnvs());
 describe("Precut account status notification", () => {
   it("uses the Store page for unsigned updates without calling the SDK signed installer flow", async () => {
     const licensing = new Licensing(
@@ -386,6 +395,49 @@ it("keeps ambiguous work reserved and blocks even cached status without queuing 
 });
 
 describe("paid-only Precut export authorization", () => {
+  it("isolates explicitly opted-in development exports from real Store configuration", async () => {
+    vi.stubEnv("PRECUT_DEV_EXPORT", "1");
+    vi.stubEnv("PRECUT_TEST_DATA", "/tmp/isolated-precut-e2e");
+    const licensing = new Licensing(
+      "/tmp/isolated-precut-e2e",
+      "/tmp/projects",
+    );
+    await licensing.initialize("product.config.json");
+    expect(mocks.create).not.toHaveBeenCalled();
+    expect(await licensing.status()).toMatchObject({
+      mode: "development",
+      valid: true,
+    });
+    await expect(
+      licensing.run(
+        crypto.randomUUID(),
+        crypto.randomUUID(),
+        async () => "development export",
+      ),
+    ).resolves.toBe("development export");
+    await licensing.dispose();
+  });
+  it("never enables the development adapter in a packaged installer", async () => {
+    mocks.packaged = true;
+    vi.stubEnv("PRECUT_DEV_EXPORT", "1");
+    vi.stubEnv("PRECUT_TEST_DATA", "/tmp/isolated-precut-e2e");
+    const licensing = new Licensing(
+      "/tmp/isolated-precut-e2e",
+      "/tmp/projects",
+    );
+    await licensing.initialize("product.config.json");
+    expect(mocks.create).toHaveBeenCalledOnce();
+    expect(await licensing.status()).toMatchObject({
+      mode: "configured",
+      valid: false,
+    });
+    const engine = vi.fn();
+    await expect(
+      licensing.run(crypto.randomUUID(), crypto.randomUUID(), engine),
+    ).rejects.toThrow("Purchase Precut");
+    expect(engine).not.toHaveBeenCalled();
+    await licensing.dispose();
+  });
   it("blocks a free signed-in account before reservation or engine execution even if the SDK reports free quota", async () => {
     const licensing = new Licensing("/tmp/unused", "/tmp/projects");
     await licensing.initialize("product.config.json");
