@@ -1,0 +1,125 @@
+{
+  "version": "2.0.0",
+  "tag": "v2.0.0",
+  "commit": "3095d90315722109abc606d6dc5619a670be0e4b",
+  "runId": 38082070020,
+  "runUrl": "https://github.com/Soravit-Ice/Precut/actions/runs/38082070020",
+  "conclusion": "success",
+  "status": "completed",
+  "builds": [
+    {
+      "jobId": 114300908200,
+      "jobName": "release / build (windows-2025, win32, x64, true)",
+      "conclusion": "success",
+      "tests": 126,
+      "testFiles": 17,
+      "installer": {
+        "fileName": "precut-2.0.0-win-x64.exe",
+        "fileSize": 390757083,
+        "sha256": "0235411f3c7a8e92c45aba155cd9ab30218db77002193f7fc8916dcdcaa3e836",
+        "deliveryType": "DESKTOP_INSTALLER",
+        "platform": "WINDOWS",
+        "architecture": "X64",
+        "mimeType": "application/vnd.microsoft.portable-executable",
+        "codeSigned": false,
+        "notarized": false
+      },
+      "acceptance": {
+        "date": "2026-10-10T20:06:35.977Z",
+        "platform": "win32",
+        "arch": "x64",
+        "packaged": true,
+        "version": "2.0.0",
+        "coldLaunchMs": 1834,
+        "developmentAdapterRejected": true,
+        "productionConfigLoaded": true,
+        "unsignedStoreUpdatePolicy": "passed",
+        "import": "passed",
+        "speechWords": 22,
+        "waveform": "passed",
+        "restartPersistence": "passed",
+        "scope": "Isolated user data. Bundled FFmpeg/Whisper/models/SQLite. No paid purchase, OAuth login, quota-consuming export, OS installation or prior-version migration performed."
+      }
+    },
+    {
+      "jobId": 114300908271,
+      "jobName": "release / build (macos-15-intel, darwin, x64, true)",
+      "conclusion": "success",
+      "tests": 126,
+      "testFiles": 17,
+      "installer": {
+        "fileName": "precut-2.0.0-mac-x64.dmg",
+        "fileSize": 403813437,
+        "sha256": "aa9b0fab9b715996c88a0d98e6549a14c373226b839e4fdd311c52f9d8f2a589",
+        "deliveryType": "DESKTOP_INSTALLER",
+        "platform": "MACOS",
+        "architecture": "X64",
+        "mimeType": "application/x-apple-diskimage",
+        "codeSigned": false,
+        "notarized": false
+      },
+      "acceptance": {
+        "date": "2026-10-10T20:07:04.459Z",
+        "platform": "darwin",
+        "arch": "x64",
+        "packaged": true,
+        "version": "2.0.0",
+        "coldLaunchMs": 2370,
+        "developmentAdapterRejected": true,
+        "productionConfigLoaded": true,
+        "unsignedStoreUpdatePolicy": "passed",
+        "minimumMacOS": "15.0.0",
+        "testedMacOS": "15.7.9",
+        "import": "passed",
+        "speechWords": 22,
+        "waveform": "passed",
+        "restartPersistence": "passed",
+        "scope": "Isolated user data. Bundled FFmpeg/Whisper/models/SQLite. No paid purchase, OAuth login, quota-consuming export, OS installation or prior-version migration performed."
+      }
+    },
+    {
+      "jobId": 114300908274,
+      "jobName": "release / build (xcode-27, darwin, arm64, PRECUT_NATIVE_MAC_ARM64_URL, PRECUT_NATIVE_MAC_ARM64_SHA256)",
+      "conclusion": "success",
+      "tests": 126,
+      "testFiles": 17,
+      "installer": {
+        "fileName": "precut-2.0.0-mac-arm64.dmg",
+        "fileSize": 361138541,
+        "sha256": "db36fd73e44b7f024eb34d98a22fd46eb5172729f5e77ac1aa3e47dab2fe992d",
+        "deliveryType": "DESKTOP_INSTALLER",
+        "platform": "MACOS",
+        "architecture": "ARM64",
+        "mimeType": "application/x-apple-diskimage",
+        "codeSigned": false,
+        "notarized": false
+      },
+      "acceptance": {
+        "date": "2026-10-10T20:03:58.515Z",
+        "platform": "darwin",
+        "arch": "arm64",
+        "packaged": true,
+        "version": "2.0.0",
+        "coldLaunchMs": 4614,
+        "developmentAdapterRejected": true,
+        "productionConfigLoaded": true,
+        "unsignedStoreUpdatePolicy": "passed",
+        "minimumMacOS": "27.0.0",
+        "testedMacOS": "27.0.1",
+        "import": "passed",
+        "speechWords": 22,
+        "waveform": "passed",
+        "restartPersistence": "passed",
+        "scope": "Isolated user data. Bundled FFmpeg/Whisper/models/SQLite. No paid purchase, OAuth login, quota-consuming export, OS installation or prior-version migration performed."
+      }
+    }
+  ],
+  "store": {
+    "sessionId": "7a219715-9cda-4da3-a89c-439341a36275",
+    "submittedForVerification": true,
+    "published": false,
+    "statusObserved": "SUBMITTED_FOR_VERIFICATION",
+    "readyVerified": false,
+    "ciMayPublish": false
+  }
+}

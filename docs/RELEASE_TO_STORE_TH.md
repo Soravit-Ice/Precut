@@ -4,6 +4,12 @@
 
 ## รุ่น 2.0.0 ผ่าน GitHub Actions
 
+รอบ [38082070020](https://github.com/Soravit-Ice/Precut/actions/runs/38082070020) ผ่านทุก job แล้วที่ commit `3095d90315722109abc606d6dc5619a670be0e4b` วันที่ 11 ตุลาคม 2026 ตามเวลาไทย: Mac Apple Silicon, Mac Intel และ Windows X64 ผ่าน 126 tests / 17 test files ต่อระบบ รวมถึงการเปิดแอปที่แพ็กจริงเพื่อทดสอบ import, speech, waveform และ restart persistence
+
+upload job ส่ง `precut-2.0.0-mac-arm64.dmg`, `precut-2.0.0-mac-x64.dmg` และ `precut-2.0.0-win-x64.exe` เข้า Store สำเร็จ โดย session `7a219715-9cda-4da3-a89c-439341a36275` ตอบ `submittedForVerification: true`, `published: false` ผลนี้ยืนยันการอัปโหลดและการขอตรวจไฟล์ ยังไม่ใช่การยืนยัน READY หรือ Publish ดูผลทดสอบและ SHA-256 ของไฟล์จาก CI ที่ `docs/github-release-acceptance-2.0.0.json`
+
+tag `v2.0.0` ชี้ไปยัง source ที่ผ่านรอบนี้แล้ว ห้ามย้าย tag หรือแทนที่ installer ของรุ่นนี้ การแก้แอปถัดไปให้ใช้เลขเวอร์ชันและ tag ใหม่
+
 `package.json` ต้องเป็น `2.0.0`, มี `releases/2.0.0.md` และ tag `v2.0.0` ต้องชี้ไปยัง commit ที่มีไฟล์ทั้งสองนี้แล้ว การตั้งชื่อ commit หรือสร้าง tag เพียงอย่างเดียวไม่เปลี่ยนเวอร์ชันแอป
 
 workflow เพิ่ม job `validate` เพื่อตรวจ tag, package version และ release notes ก่อนเริ่ม native build ทั้งสามระบบ ส่วนแต่ละ build ยังตรวจ production config, tests และ native binaries แล้วเปิดแอปที่แพ็กจริงก่อนอัปโหลด
@@ -141,7 +147,7 @@ native FFmpeg ที่ใช้เป็น GPL-enabled build: ก่อนแ�
 
 ## 3. ผูก GitHub repository ใน Store
 
-เชื่อม repository สำเร็จแล้วใน Store Admin: repository เป็น private, default branch `main`, source อยู่บน GitHub และ CI ตรวจโค้ดผ่านแล้ว
+เชื่อม repository สำเร็จแล้วใน Store Admin: default branch `main`, source อยู่บน GitHub และ CI ตรวจโค้ดผ่านแล้ว ณ release `2.0.0` repository เป็น public
 
 ค่าที่บันทึกใน Precut → เชื่อมต่อ GitHub:
 

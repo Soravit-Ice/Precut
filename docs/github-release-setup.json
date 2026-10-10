@@ -1,6 +1,6 @@
 {
   "repository": "Soravit-Ice/Precut",
-  "private": true,
+  "private": false,
   "defaultBranch": "main",
   "ownerId": "80631648",
   "repositoryId": "1411644739",
@@ -81,5 +81,23 @@
     "manualAcceptance": "docs/manual-release-acceptance-1.0.1.json",
     "macIntelReusedExistingArtifact": true,
     "macIntelArtifactId": "11632548137"
+  },
+  "latestCiSubmission": {
+    "version": "2.0.0",
+    "tag": "v2.0.0",
+    "tagCommit": "3095d90315722109abc606d6dc5619a670be0e4b",
+    "workflowRunId": "38082070020",
+    "workflowRunUrl": "https://github.com/Soravit-Ice/Precut/actions/runs/38082070020",
+    "conclusion": "success",
+    "targets": 3,
+    "testsPerTarget": 126,
+    "submittedToStore": true,
+    "sessionId": "7a219715-9cda-4da3-a89c-439341a36275",
+    "submittedForVerification": true,
+    "published": false,
+    "statusObserved": "SUBMITTED_FOR_VERIFICATION",
+    "readyVerified": false,
+    "ciMayPublish": false,
+    "acceptance": "docs/github-release-acceptance-2.0.0.json"
   }
 }
