@@ -13,36 +13,45 @@ async function fixture(version, notes = "Release notes") {
   return root;
 }
 describe("release preflight", () => {
-  it("accepts the matching 2.0.0 tag and local release preparation", async () => {
-    const root = await fixture("2.0.0");
-    try {
-      await expect(
-        checkReleaseRef(root, {
-          GITHUB_ACTIONS: "true",
-          GITHUB_REF: "refs/tags/v2.0.0",
-        }),
-      ).resolves.toEqual({ version: "2.0.0", tag: "v2.0.0" });
-      await expect(checkReleaseRef(root, {})).resolves.toEqual({
-        version: "2.0.0",
-        tag: "v2.0.0",
-      });
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
-  });
-  it("rejects the exact stale-package tag failure before native builds", async () => {
-    const root = await fixture("1.0.1");
-    try {
-      await expect(
-        checkReleaseRef(root, { GITHUB_REF: "refs/tags/v2.0.0" }),
-      ).rejects.toThrow("does not match package.json (1.0.1)");
-      await expect(
-        checkReleaseRef(root, { GITHUB_REF: "refs/heads/main" }),
-      ).rejects.toThrow("Run this workflow on v1.0.1");
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
-  });
+  it.each(["2.0.0", "2.1.0"])(
+    "accepts matching %s tags and local release preparation",
+    async (version) => {
+      const root = await fixture(version);
+      try {
+        await expect(
+          checkReleaseRef(root, {
+            GITHUB_ACTIONS: "true",
+            GITHUB_REF: `refs/tags/v${version}`,
+          }),
+        ).resolves.toEqual({ version, tag: `v${version}` });
+        await expect(checkReleaseRef(root, {})).resolves.toEqual({
+          version,
+          tag: `v${version}`,
+        });
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+  );
+  it.each([
+    ["1.0.1", "2.0.0"],
+    ["2.0.1", "2.1.0"],
+  ])(
+    "rejects package %s with stale release tag %s before native builds",
+    async (version, tagVersion) => {
+      const root = await fixture(version);
+      try {
+        await expect(
+          checkReleaseRef(root, { GITHUB_REF: `refs/tags/v${tagVersion}` }),
+        ).rejects.toThrow(`does not match package.json (${version})`);
+        await expect(
+          checkReleaseRef(root, { GITHUB_REF: "refs/heads/main" }),
+        ).rejects.toThrow(`Run this workflow on v${version}`);
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+  );
   it("requires release notes and a tag in Actions", async () => {
     const root = await fixture("2.0.0", "");
     try {

@@ -41,6 +41,8 @@ The media archive URLs and hashes are checked into `scripts/bootstrap-native.mjs
 
 `.github/workflows/installers.yml` runs native installer candidates on `xcode-27` ARM64, `macos-15-intel` x64 and `windows-2025` x64. The manual `target` choice allows testing a failed platform independently. Tagged `release.yml` uses the configured full matrix, waits for all builds and packaged analysis/restart smoke tests, and submits all three installers together. The Store must verify every artifact before publication. CI cannot publish.
 
+From 2.1.0, pushing `v*` tags starts `release.yml` automatically; manual dispatch on the same tag remains available for retries. Set `package.json` to the stable version and add `releases/<version>.md` before creating the immutable `v<version>` tag from `main`. Preflight rejects tag/version mismatches and missing notes before native builds. Runs for the same tag are serialized. The reusable Store workflow stays bound to `store-release.yml@main` for the existing OIDC trust binding. Windows release builds also run CPU language/transcription/DTW smoke checks and retain the timing evidence. Branch pushes do not start this release pipeline.
+
 The signed SDK manifest is byte-preserved with `.gitattributes`, including Windows checkouts; line-ending conversion must never be worked around by skipping signature verification.
 
 Bundled Fast and VAD models have fixed upstream SHA256 pins. Fonts live in `apps/desktop/public/fonts`. Platform resources, models, fonts and notices are copied into the installer; no system Node, Python or FFmpeg is required afterwards.

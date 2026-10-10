@@ -41,7 +41,8 @@
         "buildNative": true
       }
     ],
-    "automaticHostedRuns": false
+    "automaticHostedRuns": true,
+    "automaticRunTrigger": "version_tag_push"
   },
   "nativeInput": {
     "releaseTag": "native-darwin-arm64-78605daab575",

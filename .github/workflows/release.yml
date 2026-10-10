@@ -1,6 +1,11 @@
-name: Hosted release to T2ETECH Store (manual, uses GitHub quota)
+name: Tagged release to T2ETECH Store
 on:
+  push:
+    tags: ["v*"]
   workflow_dispatch:
+concurrency:
+  group: precut-store-release-${{ github.ref }}
+  cancel-in-progress: false
 permissions:
   contents: read
   actions: read

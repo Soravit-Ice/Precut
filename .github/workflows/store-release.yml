@@ -61,6 +61,11 @@ jobs:
         if: ${{ matrix.build_native }}
         run: node scripts/bootstrap-native.mjs
       - run: pnpm models:prepare
+      - name: Test Windows native CPU speech before packaging
+        if: ${{ matrix.platform == 'win32' }}
+        run: |
+          pnpm fixtures:prepare
+          node scripts/native-speech-smoke.mjs
       - run: pnpm release:build
       - run: pnpm fixtures:prepare
       - name: Test the actual packaged application
@@ -81,6 +86,7 @@ jobs:
           path: |
             docs/release-results-*.json
             docs/screenshots/release-*.png
+            .tools/native-speech-smoke/results.json
   upload:
     needs: build
     runs-on: ubuntu-24.04
