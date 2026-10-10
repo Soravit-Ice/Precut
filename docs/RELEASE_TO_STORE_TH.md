@@ -1,6 +1,20 @@
 # นำ Precut ขึ้นขายบน T2ETECH Store
 
-ฉบับสำหรับ Precut `1.0.1` แบบ manual (Mac Apple Silicon และ Mac Intel) วันที่ 10 ตุลาคม 2026 — Made by t2etech
+ฉบับสำหรับ Precut `2.0.0` ผ่าน GitHub Actions วันที่ 11 ตุลาคม 2026 พร้อมประวัติการปล่อย `1.0.1` แบบ manual — Made by t2etech
+
+## รุ่น 2.0.0 ผ่าน GitHub Actions
+
+`package.json` ต้องเป็น `2.0.0`, มี `releases/2.0.0.md` และ tag `v2.0.0` ต้องชี้ไปยัง commit ที่มีไฟล์ทั้งสองนี้แล้ว การตั้งชื่อ commit หรือสร้าง tag เพียงอย่างเดียวไม่เปลี่ยนเวอร์ชันแอป
+
+workflow เพิ่ม job `validate` เพื่อตรวจ tag, package version และ release notes ก่อนเริ่ม native build ทั้งสามระบบ ส่วนแต่ละ build ยังตรวจ production config, tests และ native binaries แล้วเปิดแอปที่แพ็กจริงก่อนอัปโหลด
+
+หลัง push commit และ tag ให้เปิด Actions → **Hosted release to T2ETECH Store (manual, uses GitHub quota)** → Run workflow แล้วเลือก **`v2.0.0`** ต้องเริ่ม run ใหม่จาก tag ที่ถูกต้อง การ Re-run ของ run ที่ล้มจาก commit เก่าไม่เปลี่ยน source snapshot ของ run นั้น
+
+รอบ `38080643479` ของ `v2.0.0` ล้มที่ `release:check` เนื่องจาก package ยังเป็น `1.0.1`; upload ถูกข้ามและไม่มี installer ถูกส่งจากรอบนั้น การแก้ tag ของรอบที่ยังไม่เผยแพร่ต้องตรวจ SHA เดิมก่อนอัปเดต ห้ามย้าย tag หรือแทนที่ไฟล์ของเวอร์ชันที่เผยแพร่แล้ว
+
+เมื่อ Mac ARM64, Mac Intel และ Windows X64 ผ่านครบ upload job จะส่งทั้งสาม installer เข้า Store ผ่าน OIDC และขอตรวจ SHA-256 ฝั่ง server จากนั้นรอ release เป็น **READY** ใน Store Admin การ Publish ใช้ขั้นตอน Admin เดิม; CI ไม่มีสิทธิ์ Publish
+
+เนื้อหา manual ของ `1.0.1` ด้านล่างเป็นประวัติและทางเลือกสำหรับรอบที่ไม่ต้องการใช้ hosted runners ส่วน release ใหม่ให้ใช้ไฟล์ที่ build และทดสอบจาก source ของเวอร์ชันนั้นเท่านั้น
 
 ## วิธี manual เพื่อไม่ใช้ GitHub-hosted CI
 

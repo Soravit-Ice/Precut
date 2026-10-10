@@ -1,6 +1,6 @@
 # Precut
 
-**Skip the boring first edit.** An offline desktop first-cut editor for Thai, English and mixed speech. The current desktop build is **1.0.0**, with a real media engine and the verified T2ETECH licence SDK. Made by t2etech.
+**Skip the boring first edit.** An offline desktop first-cut editor for Thai, English and mixed speech. The current desktop build is **2.0.0**, with a real media engine and the verified T2ETECH licence SDK. Made by t2etech.
 
 ![Precut workspace](docs/screenshots/workspace.png)
 

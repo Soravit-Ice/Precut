@@ -8,7 +8,7 @@ permissions:
 jobs:
   release:
     # Keep this reusable workflow at main so Store's exact OIDC workflow binding
-    # is stable when the caller moves from v1.0.0 to v1.0.1.
+    # is stable when the caller moves between release tags.
     uses: Soravit-Ice/Precut/.github/workflows/store-release.yml@main
     with:
       targets: ${{ vars.PRECUT_RELEASE_TARGETS || '[{"runner":"xcode-27","platform":"darwin","arch":"arm64","bundle_url":"PRECUT_NATIVE_MAC_ARM64_URL","bundle_sha":"PRECUT_NATIVE_MAC_ARM64_SHA256"},{"runner":"macos-15-intel","platform":"darwin","arch":"x64","build_native":true},{"runner":"windows-2025","platform":"win32","arch":"x64","build_native":true}]' }}
