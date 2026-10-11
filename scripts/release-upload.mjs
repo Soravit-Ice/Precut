@@ -152,6 +152,25 @@ export async function uploadRelease(input, fetcher = globalThis.fetch) {
   });
   if (!/^[a-f0-9-]{36}$/.test(session.sessionId))
     throw new Error("RELEASE_SESSION_INVALID");
+  if (input.githubTag) {
+    await api("/internal/v1/releases/" + session.sessionId + "/github", {
+      tag: input.githubTag,
+      manifest: {
+        productCode: input.productCode,
+        version: input.version,
+        channel: input.channel ?? "STABLE",
+        releaseNotes: input.releaseNotes ?? "",
+        artifacts: files.map((file) => file.metadata),
+      },
+    });
+    await api("/internal/v1/releases/" + session.sessionId + "/complete");
+    return {
+      sessionId: session.sessionId,
+      submittedForVerification: true,
+      published: false,
+      storageProvider: "GITHUB_RELEASES",
+    };
+  }
   const put = async (url, body, headers) => {
     const location = new URL(url);
     if (

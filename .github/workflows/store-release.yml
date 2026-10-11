@@ -1,6 +1,11 @@
 name: Precut verified installer submission
 on:
   workflow_call:
+    secrets:
+      DOWNLOADS_APP_PRIVATE_KEY:
+        required: false
+      DOWNLOADS_RELEASE_TOKEN:
+        required: false
     inputs:
       targets:
         required: true
@@ -116,7 +121,24 @@ jobs:
           ref: main
           path: .store-upload-tools
           persist-credentials: false
+      - name: Create scoped download repository token
+        if: ${{ vars.PRECUT_DOWNLOAD_REPOSITORY != '' && vars.DOWNLOADS_APP_ID != '' }}
+        id: downloads-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.DOWNLOADS_APP_ID }}
+          private-key: ${{ secrets.DOWNLOADS_APP_PRIVATE_KEY }}
+          owner: ${{ vars.DOWNLOADS_REPOSITORY_OWNER || github.repository_owner }}
+          repositories: ${{ vars.DOWNLOADS_REPOSITORY_NAME || 'Precut-releases' }}
+          permission-contents: write
+          permission-administration: read
       - name: Upload files and request server checksum verification
+        # The workflow token only covers the source repository. The separate
+        # downloads credential is scoped to this app's public installer repo.
+        # Prefer a short-lived App token; a fine-grained PAT is the fallback.
         run: node .store-upload-tools/scripts/upload-store-release.mjs
+        env:
+          T2E_DOWNLOAD_REPOSITORY: ${{ vars.PRECUT_DOWNLOAD_REPOSITORY }}
+          T2E_GITHUB_RELEASES_TOKEN: ${{ steps.downloads-token.outputs.token || secrets.DOWNLOADS_RELEASE_TOKEN }}
       - name: Next step
-        run: echo "Submitted for verification. Wait for READY in Store Admin, then publish the release and product there. No automatic publication was performed."
+        run: echo "Submitted for verification. Wait for READY in Store Admin, then publish the release and product there. No automatic Store publication was performed."

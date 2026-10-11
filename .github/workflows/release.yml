@@ -12,6 +12,9 @@ permissions:
   id-token: write
 jobs:
   release:
+    secrets:
+      DOWNLOADS_APP_PRIVATE_KEY: ${{ secrets.DOWNLOADS_APP_PRIVATE_KEY }}
+      DOWNLOADS_RELEASE_TOKEN: ${{ secrets.DOWNLOADS_RELEASE_TOKEN }}
     # Keep this reusable workflow at main so Store's exact OIDC workflow binding
     # is stable when the caller moves between release tags.
     uses: Soravit-Ice/Precut/.github/workflows/store-release.yml@main

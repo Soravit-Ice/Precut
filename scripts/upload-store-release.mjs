@@ -1,11 +1,27 @@
 import { readFile } from "node:fs/promises";
 import { uploadRelease, releaseUploadFailure } from "./release-upload.mjs";
+import {
+  uploadGithubRelease,
+  githubUploadFailure,
+} from "./upload-github-release.mjs";
 try {
   const { version, notes } = JSON.parse(
     await readFile("out/release-metadata.json", "utf8"),
   );
   if (process.env.GITHUB_REF !== `refs/tags/v${version}`)
     throw new Error("Release tag mismatch.");
+  let githubTag;
+  if (process.env.T2E_DOWNLOAD_REPOSITORY) {
+    const release = await uploadGithubRelease({
+      repository: process.env.T2E_DOWNLOAD_REPOSITORY,
+      token: process.env.T2E_GITHUB_RELEASES_TOKEN,
+      sourceRepository: process.env.GITHUB_REPOSITORY,
+      sourceRef: process.env.GITHUB_REF,
+      manifestPath: "out/release-manifest.json",
+      onProgress: (name) => console.log("GitHub asset: " + name),
+    });
+    githubTag = release.tag;
+  }
   console.log(
     JSON.stringify(
       await uploadRelease({
@@ -16,12 +32,17 @@ try {
         commitSha: process.env.GITHUB_SHA,
         manifestPath: "out/artifacts.json",
         releaseNotes: notes,
+        githubTag,
         onProgress: (stage) => console.log("Store upload stage: " + stage),
       }),
     ),
   );
 } catch (error) {
-  const code = releaseUploadFailure(error);
+  const code =
+    githubUploadFailure(error).startsWith("GITHUB_UPLOAD_") &&
+    githubUploadFailure(error) !== "GITHUB_UPLOAD_UNEXPECTED"
+      ? githubUploadFailure(error)
+      : releaseUploadFailure(error);
   console.error(
     "Store upload failed: " + code + ". Credentials are not logged.",
   );

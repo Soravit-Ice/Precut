@@ -36,4 +36,18 @@ await writeFile(
   resolve(folder, "release-metadata.json"),
   JSON.stringify({ version, notes }),
 );
+await writeFile(
+  resolve(folder, "release-manifest.json"),
+  JSON.stringify(
+    {
+      productCode: "PC",
+      version,
+      channel: "STABLE",
+      releaseNotes: notes,
+      artifacts: entries,
+    },
+    null,
+    2,
+  ) + "\n",
+);
 console.log(`Prepared ${entries.length} installer(s) for ${version}.`);
