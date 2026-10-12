@@ -1,6 +1,6 @@
 # Precut
 
-**Skip the boring first edit.** An offline desktop first-cut editor for Thai, English and mixed speech. The current desktop build is **2.0.0**, with a real media engine and the verified T2ETECH licence SDK. Made by t2etech.
+**Skip the boring first edit.** An offline desktop first-cut editor for Thai, English and mixed speech. The current desktop build is **2.1.0**, with a real media engine and the verified T2ETECH licence SDK. Made by t2etech.
 
 ![Precut workspace](docs/screenshots/workspace.png)
 
@@ -8,15 +8,17 @@
 
 Double-click [`scripts/open-preview.command`](scripts/open-preview.command). It uses the included local Node 24 runtime and starts the Electron development app. The development export adapter applies only to unconfigured development sessions. Installed applications always require the real Precut product configuration for export.
 
-The Apple Silicon installer is under `out/precut-1.0.0-mac-arm64.dmg`; the packaged application is `out/mac-arm64/Precut.app`. The installer is unsigned. See the detailed Thai guide [`docs/RELEASE_TO_STORE_TH.md`](docs/RELEASE_TO_STORE_TH.md) for Store setup, native CI inputs, repository binding, first publication and future updates. The actual packaged-app check is recorded in `docs/release-results-1.0.0-darwin-arm64.json`. macOS Intel and Windows x64 workflow targets are supplied; those platforms have not been built or certified on this host.
+The rebuilt Apple Silicon application is `out/mac-arm64/Precut.app`. Build a fresh installer from the current source with `pnpm package`. See the detailed Thai guide [`docs/RELEASE_TO_STORE_TH.md`](docs/RELEASE_TO_STORE_TH.md) for Store setup, native CI inputs, repository binding, first publication and future updates. The caption update’s actual packaged-app check is recorded in `docs/caption-package-qa.json`. macOS Intel and Windows x64 workflow targets are supplied; those platforms have not been built or certified on this host.
 
 Import your own recording, run **Auto Edit**, apply **Clean safe edits**, review remaining suggestions using Before/After, choose a caption preset and export. Every edit is non-destructive and undoable. Use **Edit text** to click a word and correct it, or click the pencil beside a sentence. Press Enter to save; changing the selected word also saves your correction. **Find & replace** previews replacements within individual transcript words and applies them as one Undo step. Word timing is preserved unless you expand **Adjust word timing**. Drag the timeline to make a manual cut. Drag the panel separators to resize the workspace.
+
+Choose **ไทย**, **ไทย + English**, or **English** in **Auto Edit** before processing. When the offline translation model is installed, Auto Edit translates missing selected-language subtitles after speech analysis and silence cuts. Install the optional model once (4.28 GB) from Auto Edit, Transcript or Settings. Without it, the cut and transcript are saved and the app clearly marks translated subtitles as awaiting the model. In **Transcript**, switch between **Review edits** and **Captions** to edit caption text, styles, fonts and layout. Drag captions directly on the video from either tab, choose **Whole clip** or **This caption**, use arrow keys for 1 source pixel (Shift for 10), and Escape to cancel a drag. One drag is one Undo step. The Layout tab includes 44 bundled font families, real supported weights and **Import TTF / OTF**. Imported files are copied into the project. MP4 and SRT use the chosen languages; translated lines use caption timing rather than invented word timing. **Custom words to review** accepts comma-separated literal words or phrases in Auto Edit. Clean safe edits accepts only verified silence/pause cuts; words and retakes remain review decisions. See [caption QA](docs/CAPTION_WORKSPACE_QA.md).
 
 The caption studio has **Styles**, **Colors** and **Layout** tabs, an animated sample, and **Preview on video** to see the actual caption on your footage. Choose from six styles, color palettes, swatches or custom HEX colors. Text and active-word colors carry over between styles and are saved with the project. Remove a recent project using the trash button in the sidebar or Projects table; Undo restores it immediately, and **Removed projects** lets you restore it after restarting the app. Removal preserves source media and saved project data.
 
 For Thai recordings with English terms, choose **Thai + English terms** and **High · Large v3** in Auto Edit, and add known names to **Names & specialist terms**. High uses the installed Large v3 model. **Re-transcribe with fresh analysis** discards the old speech cache; corrected words and existing editing decisions remain protected. Auto Edit applies new high-confidence Silence/Pause cuts as one Undo step by default. **Reassess previously kept pauses** explicitly reevaluates previously kept pauses; otherwise Keep remains unchanged. Review words shows unresolved recognition and timing issues. See [`docs/SPEECH_QA.md`](docs/SPEECH_QA.md) for the measured speech update and its limits.
 
-Auto Edit opens a live progress view with five steps, worker-reported progress, an activity animation and elapsed time. Choose **Continue in background** to keep editing; the banner above the player keeps showing progress and lets you reopen it. Completion offers **Review edits**. Cancellation waits for the worker to stop before offering Retry. The progress reaches 100% after the final job acknowledgement, and overall progress stays monotonic during retries or CPU fallback.
+Auto Edit opens a live progress view with six steps, including subtitle generation, worker-reported progress, an activity animation and elapsed time. Choose **Continue in background** to keep editing; the banner above the player keeps showing progress and lets you reopen it. Completion offers **Review edits**. Cancellation waits for the worker to stop before offering Retry. The progress reaches 100% after the final job acknowledgement, and overall progress stays monotonic during retries or CPU fallback.
 
 ## Development
 
@@ -44,6 +46,8 @@ node scripts/release-smoke.mjs   # actual production-configured packaged app, is
 node scripts/speech-accuracy.mjs # existing High model + prepared Thai/English references
 node scripts/speech-safety.mjs   # generated soft voice/background/offset regressions
 pnpm test:speech-benchmark final 3 # private, pre-change baseline fixture required
+pnpm native:translation # prepare the pinned offline translator before packaging
+pnpm fonts:verify
 pnpm native:verify
 pnpm package:dir
 pnpm package

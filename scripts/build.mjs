@@ -1,6 +1,7 @@
 import { build } from "esbuild";
 import { build as viteBuild } from "vite";
 import { mkdir, copyFile } from "node:fs/promises";
+await import("./verify-fonts.mjs");
 await import("./generate-icons.mjs");
 await mkdir("dist", { recursive: true });
 for (const entry of ["main", "preload", "database", "engine"])

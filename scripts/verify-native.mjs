@@ -44,6 +44,19 @@ for (const name of ["whisper-cli", "whisper-vad-speech-segments"]) {
   )
     throw new Error("Native speech protocol mismatch");
 }
+if (
+  native.translation?.commit !== "d81235049384534c167caea52b85a694f6103d14" ||
+  native.translation?.sourceSha256 !==
+    "6b58785f0a82898f4c3442417ff962e2d4b231b1bee5d033902ad90b27901e14" ||
+  !native.files.some(
+    (f) =>
+      f.path ===
+      `translation/bin/llama-server${process.platform === "win32" ? ".exe" : ""}`,
+  )
+)
+  throw new Error(
+    "Build the pinned offline translation runtime with native:translation before packaging.",
+  );
 for (const tool of [
   "ffmpeg",
   "ffprobe",

@@ -1,0 +1,1676 @@
+[
+  {
+    "id": "Kanit",
+    "name": "Kanit",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "kanit/Kanit-Thin.ttf",
+        "weight": 100,
+        "sha256": "740d8a4d92ddae394d13a3caea845c048b6d62b58f9fb92ed4ac0118ed38c083"
+      },
+      {
+        "file": "kanit/Kanit-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "f90e440b41170f2f75f2930d3273dbe9ed7a5ac49f7dbdc375ba5f8d2e224745"
+      },
+      {
+        "file": "kanit/Kanit-Light.ttf",
+        "weight": 300,
+        "sha256": "7c04b0be6011782fcc4c032f4033ef6f6ba1fef99b135ba1ee68b800c53017ec"
+      },
+      {
+        "file": "kanit/Kanit-Regular.ttf",
+        "weight": 400,
+        "sha256": "27170c049660b2f962d3ed28441fd20f4c743503ca031fec9c2b4542d6c52736"
+      },
+      {
+        "file": "kanit/Kanit-Medium.ttf",
+        "weight": 500,
+        "sha256": "50a237034244026a7c63fe55e24e0b4298babe363cde043e032075b764c545a2"
+      },
+      {
+        "file": "kanit/Kanit-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "67e64baf1a7e6e076435518ff0e6bf25c4d74b98143cd1a2688db906c0abce11"
+      },
+      {
+        "file": "kanit/Kanit-Bold.ttf",
+        "weight": 700,
+        "sha256": "5dec5b080dab13de9d2295437c0ff3ec05c9e75587dfc31358c005eb4efa5e70"
+      },
+      {
+        "file": "kanit/Kanit-ExtraBold.ttf",
+        "weight": 800,
+        "sha256": "70082870d1f5bb6ae9faa708572b2c36de3c076caae187edae753f709d0de984"
+      },
+      {
+        "file": "kanit/Kanit-Black.ttf",
+        "weight": 900,
+        "sha256": "5d290c2cc9926764bd782aa6abc47a8f55bd64641d0afb56e115ee522698ee7e"
+      }
+    ]
+  },
+  {
+    "id": "Prompt",
+    "name": "Prompt",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "prompt/Prompt-Thin.ttf",
+        "weight": 100,
+        "sha256": "a389f077b15b3eae6681d4824ee04bc081dbe0ebdcc160ab65a3282171608b1e"
+      },
+      {
+        "file": "prompt/Prompt-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "5492f48c746a6f725ad21a787bb49ec4e948dbed7a3fa1e357b0efc1eef8d881"
+      },
+      {
+        "file": "prompt/Prompt-Light.ttf",
+        "weight": 300,
+        "sha256": "79412cf5ef7f60d7f1dff4e178707b0bc662dd76608697a7a36b4769454f8b82"
+      },
+      {
+        "file": "prompt/Prompt-Regular.ttf",
+        "weight": 400,
+        "sha256": "dbd497803cec3caffbc6b7f599ca6fed8beea0ed7e0ad1e098130c5ebbc4fd42"
+      },
+      {
+        "file": "prompt/Prompt-Medium.ttf",
+        "weight": 500,
+        "sha256": "6a42451be692eba473c639f4bcdc6c6d9160a3d632319a64287e3ed1fae15d6b"
+      },
+      {
+        "file": "prompt/Prompt-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "3285c9e6a4ebc480a6476a1a26b44d6eb0f9874025fa96e42afd52172b7f02b9"
+      },
+      {
+        "file": "prompt/Prompt-Bold.ttf",
+        "weight": 700,
+        "sha256": "02813ca4f93c1df27e271f10fef3db6e34e66751ae1f4a3ed82ae06cb20150ea"
+      },
+      {
+        "file": "prompt/Prompt-ExtraBold.ttf",
+        "weight": 800,
+        "sha256": "f19ebea740940d6c6eb080d5ede1c78e5e68bd5b1faa34efbac251bb84740100"
+      },
+      {
+        "file": "prompt/Prompt-Black.ttf",
+        "weight": 900,
+        "sha256": "4fbb63f90ce9ea4214461942b521b13f6d2f7194a67de848363d829c3fdf3e66"
+      }
+    ]
+  },
+  {
+    "id": "Sarabun",
+    "name": "Sarabun",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800
+    ],
+    "files": [
+      {
+        "file": "sarabun/Sarabun-Thin.ttf",
+        "weight": 100,
+        "sha256": "fa55eab332e998acb4bb64c43d9bd1cef791d88d5d15d63570f43741688d7057"
+      },
+      {
+        "file": "sarabun/Sarabun-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "8aa9fba8885554545c7bce3f1db5efd914c74c0ce8ae58e9e4cb477b5824fe9d"
+      },
+      {
+        "file": "sarabun/Sarabun-Light.ttf",
+        "weight": 300,
+        "sha256": "9efd75e5ebb6d7755cca3faa5906c77a4bbd39c9aac0ed23bf7f4ba33b02f688"
+      },
+      {
+        "file": "sarabun/Sarabun-Regular.ttf",
+        "weight": 400,
+        "sha256": "226d4f368fbc0457990ddef2692679badfd2c1a4e89e5ac4d43c10ba7743b2f1"
+      },
+      {
+        "file": "sarabun/Sarabun-Medium.ttf",
+        "weight": 500,
+        "sha256": "cc7c3016daab3321674fdf6e2ef59850dc0c07503de1cbdb8b90fe8080ada2b4"
+      },
+      {
+        "file": "sarabun/Sarabun-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "c0bb057d86e4a12097d701ac0953597e315788d47a446f5b63a6604ab21dceba"
+      },
+      {
+        "file": "sarabun/Sarabun-Bold.ttf",
+        "weight": 700,
+        "sha256": "d38308ca27d067b9a1b79006337c1f9a66c29aa016d96a9d88d3801da7fa83b9"
+      },
+      {
+        "file": "sarabun/Sarabun-ExtraBold.ttf",
+        "weight": 800,
+        "sha256": "1f4ba0daad63c802d825885341bd7f1f054306a669ea2b183f2b20ee65a0a043"
+      }
+    ]
+  },
+  {
+    "id": "Noto Sans Thai",
+    "name": "Noto Sans Thai",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "notosansthai/NotoSansThai[wdth,wght].ttf",
+        "weight": 400,
+        "sha256": "5a1c559bb539583c8a1fd99d1c5b9491e5e14478c9cd2bd0970d5c3096cc9ef8"
+      }
+    ]
+  },
+  {
+    "id": "Noto Sans Thai Looped",
+    "name": "Noto Sans Thai Looped",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "notosansthailooped/NotoSansThaiLooped[wdth,wght].ttf",
+        "weight": 400,
+        "sha256": "a6d220ea215bc2c4bfcd5c5efc4103e20302443f87f6dca7a9ce733a11f2cfbd"
+      }
+    ]
+  },
+  {
+    "id": "IBM Plex Sans Thai",
+    "name": "IBM Plex Sans Thai",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700
+    ],
+    "files": [
+      {
+        "file": "ibmplexsansthai/IBMPlexSansThai-Thin.ttf",
+        "weight": 100,
+        "sha256": "65f2cd4ed6f23048622bba1a1062c05c2ff80e603d202fdccf303cf3d5d085e5"
+      },
+      {
+        "file": "ibmplexsansthai/IBMPlexSansThai-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "b1ba0c97d959657832c1a0929c274e4d4d8128ca2c52d24c6835cf87fb4a5a04"
+      },
+      {
+        "file": "ibmplexsansthai/IBMPlexSansThai-Light.ttf",
+        "weight": 300,
+        "sha256": "b8e2da56ec11f1965af59a7119ee0b9b78773a9c9a89ae049b4975c9197b5c8d"
+      },
+      {
+        "file": "ibmplexsansthai/IBMPlexSansThai-Regular.ttf",
+        "weight": 400,
+        "sha256": "eee061d1bac39be40f9bb94498898cd1894f5d3d9a2f0ee6cbd48a6bd03d052b"
+      },
+      {
+        "file": "ibmplexsansthai/IBMPlexSansThai-Medium.ttf",
+        "weight": 500,
+        "sha256": "46ba1b7365cc2c583914f23914cce46e836a72662e34f6e3029b15aaa10b792e"
+      },
+      {
+        "file": "ibmplexsansthai/IBMPlexSansThai-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "9d7526a0c8dfad63c49815d0cce9eea1026f018468b81c579997e953620a67d3"
+      },
+      {
+        "file": "ibmplexsansthai/IBMPlexSansThai-Bold.ttf",
+        "weight": 700,
+        "sha256": "f88fbe0a3717c93deddf4b13e50a05c9adcd38f58d675d9d5d0b869961851667"
+      }
+    ]
+  },
+  {
+    "id": "IBM Plex Sans Thai Looped",
+    "name": "IBM Plex Sans Thai Looped",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700
+    ],
+    "files": [
+      {
+        "file": "ibmplexsansthailooped/IBMPlexSansThaiLooped-Thin.ttf",
+        "weight": 100,
+        "sha256": "3ad5c3c2a6b9107a8105250c450e1b2bbaa539a40da58e305c4b61b853e30126"
+      },
+      {
+        "file": "ibmplexsansthailooped/IBMPlexSansThaiLooped-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "1d8ae33823d3e797b32f5d884ff04879b8d1e266da24e4e9465a50bb209d7a96"
+      },
+      {
+        "file": "ibmplexsansthailooped/IBMPlexSansThaiLooped-Light.ttf",
+        "weight": 300,
+        "sha256": "9827df92fc68774d9e51203b11bb831351bfe7bb11509788aeec8dc85ef78365"
+      },
+      {
+        "file": "ibmplexsansthailooped/IBMPlexSansThaiLooped-Regular.ttf",
+        "weight": 400,
+        "sha256": "6d7910d13a7a9e33872d5501fd81a71f84ee532f729bfb72c6ffa94d1f13009e"
+      },
+      {
+        "file": "ibmplexsansthailooped/IBMPlexSansThaiLooped-Medium.ttf",
+        "weight": 500,
+        "sha256": "0219cd6e21c9bb226378fa60ebd73e2550b1adb245fec821c817e2b1efcb1f04"
+      },
+      {
+        "file": "ibmplexsansthailooped/IBMPlexSansThaiLooped-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "90535e0096a25940788473d2f51ca2dbe4a2404b9fad570b92dc80b792ab22d1"
+      },
+      {
+        "file": "ibmplexsansthailooped/IBMPlexSansThaiLooped-Bold.ttf",
+        "weight": 700,
+        "sha256": "df53c5c794b910f68bb8f3075a6c9bf59261c3ad964bd2be0ddff1bd4c79c7a9"
+      }
+    ]
+  },
+  {
+    "id": "Anuphan",
+    "name": "Anuphan",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700
+    ],
+    "files": [
+      {
+        "file": "anuphan/Anuphan[wght].ttf",
+        "weight": 400,
+        "sha256": "7ec47ebcaa9d6459d974691cbb42fae52e1449478a607b071bfaf3ccdb433ce4"
+      }
+    ]
+  },
+  {
+    "id": "Bai Jamjuree",
+    "name": "Bai Jamjuree",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      200,
+      300,
+      400,
+      500,
+      600,
+      700
+    ],
+    "files": [
+      {
+        "file": "baijamjuree/BaiJamjuree-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "da49f9d1efd6f190ac444af02a25606c0cd38fc78d4fc1e459d8e0171b65af11"
+      },
+      {
+        "file": "baijamjuree/BaiJamjuree-Light.ttf",
+        "weight": 300,
+        "sha256": "8db41d9372b7425e7c717ba7bd3883965bada642412bccc0545102f9024d6acb"
+      },
+      {
+        "file": "baijamjuree/BaiJamjuree-Regular.ttf",
+        "weight": 400,
+        "sha256": "72b5a30cb78966823eb326c09b9004b0d03b4bddcdfcfd1b8cdbffb6c414547d"
+      },
+      {
+        "file": "baijamjuree/BaiJamjuree-Medium.ttf",
+        "weight": 500,
+        "sha256": "95782f3c3e07866749fb28e1d1a356e383e8f2bdcc7b88d4e3a3fc546613137f"
+      },
+      {
+        "file": "baijamjuree/BaiJamjuree-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "daaa68bc721e893861f948f40542b9f1ea8496a3fe4250a0ffc86dab0aee8f3c"
+      },
+      {
+        "file": "baijamjuree/BaiJamjuree-Bold.ttf",
+        "weight": 700,
+        "sha256": "74784411504a295a5255e736e0a8389892af2c8a14e914d3e194329b59279223"
+      }
+    ]
+  },
+  {
+    "id": "Chakra Petch",
+    "name": "Chakra Petch",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      300,
+      400,
+      500,
+      600,
+      700
+    ],
+    "files": [
+      {
+        "file": "chakrapetch/ChakraPetch-Light.ttf",
+        "weight": 300,
+        "sha256": "13a106a367b903fb509ed11e7c921589a0d42c22540510d3ca8f6c7343bef76b"
+      },
+      {
+        "file": "chakrapetch/ChakraPetch-Regular.ttf",
+        "weight": 400,
+        "sha256": "98fcd638baa5c81ff0316b7538ce330ee3b23b1302726de3526d5933a8ecf986"
+      },
+      {
+        "file": "chakrapetch/ChakraPetch-Medium.ttf",
+        "weight": 500,
+        "sha256": "d480f4f97405fac3600652e2e14fd0b14339031c0af4da11582994878f04d919"
+      },
+      {
+        "file": "chakrapetch/ChakraPetch-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "45264de3204ddbd5fb3e14a2402acd5c630d16650ae5fc221d2c52da46a6734b"
+      },
+      {
+        "file": "chakrapetch/ChakraPetch-Bold.ttf",
+        "weight": 700,
+        "sha256": "65fbf76d95651697275e19db4d717c0e95a789ddd3476478b05292104db278a0"
+      }
+    ]
+  },
+  {
+    "id": "Chonburi",
+    "name": "Chonburi",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      400
+    ],
+    "files": [
+      {
+        "file": "chonburi/Chonburi-Regular.ttf",
+        "weight": 400,
+        "sha256": "aa0dac4df08af10785ba1dc10121492227f8e4288f0a23d11dd1d1f5a7f6ebfa"
+      }
+    ]
+  },
+  {
+    "id": "Fahkwang",
+    "name": "Fahkwang",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      200,
+      300,
+      400,
+      500,
+      600,
+      700
+    ],
+    "files": [
+      {
+        "file": "fahkwang/Fahkwang-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "abf6583c1f8f05e9a053e2cf3832e4a2859d28777da0d45232fcec519055d0ca"
+      },
+      {
+        "file": "fahkwang/Fahkwang-Light.ttf",
+        "weight": 300,
+        "sha256": "2ac5586f842987801e5f4a391e6cf0c9d2f26e53b8a3bc2442a7640127fda02b"
+      },
+      {
+        "file": "fahkwang/Fahkwang-Regular.ttf",
+        "weight": 400,
+        "sha256": "ce596ef9da1e40d894a1f6dbaca54aab3c699763e2715a649a8146e6ef32fb2b"
+      },
+      {
+        "file": "fahkwang/Fahkwang-Medium.ttf",
+        "weight": 500,
+        "sha256": "050aba7762b61b85f3392423adbe221b71c854312ccb548709c4bc61e4518741"
+      },
+      {
+        "file": "fahkwang/Fahkwang-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "3c8eaee7f138efe3b2925571f8d9af9275af25662a2a8baddf0dc3af2790fde3"
+      },
+      {
+        "file": "fahkwang/Fahkwang-Bold.ttf",
+        "weight": 700,
+        "sha256": "f44512b78dae665290e0bcbc0b5198462694c894d3300019b69a30d87341f042"
+      }
+    ]
+  },
+  {
+    "id": "Itim",
+    "name": "Itim",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      400
+    ],
+    "files": [
+      {
+        "file": "itim/Itim-Regular.ttf",
+        "weight": 400,
+        "sha256": "9164d7eb92ca717b53b07193e3445c96782222d24215151b8d2851b576b17645"
+      }
+    ]
+  },
+  {
+    "id": "Mali",
+    "name": "Mali",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      200,
+      300,
+      400,
+      500,
+      600,
+      700
+    ],
+    "files": [
+      {
+        "file": "mali/Mali-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "1ee5ea883fde78e4ec8b66ba3606348cd48171cc42072090df8f7500a82e3f33"
+      },
+      {
+        "file": "mali/Mali-Light.ttf",
+        "weight": 300,
+        "sha256": "0cd365c361b4a394583746ae222b136ca627b344a35cf84c6a65c2cf4ba7a97c"
+      },
+      {
+        "file": "mali/Mali-Regular.ttf",
+        "weight": 400,
+        "sha256": "e3212f0f9be130743d32a4f174b7d79628daa5db0d72ca4c63c799ae465597bb"
+      },
+      {
+        "file": "mali/Mali-Medium.ttf",
+        "weight": 500,
+        "sha256": "aa3320845e281de05d7076aed9be5a09df4bf11e6c46165027a0b57a0c8f5dc9"
+      },
+      {
+        "file": "mali/Mali-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "0ba6d92b46369ec5040d119f87a17586be96364fac743fbf510b54a3ead1adcc"
+      },
+      {
+        "file": "mali/Mali-Bold.ttf",
+        "weight": 700,
+        "sha256": "3e2f421036c3f91eb5ef34650a5cd2116c737a542147769437a9856a455d4462"
+      }
+    ]
+  },
+  {
+    "id": "Mitr",
+    "name": "Mitr",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      200,
+      300,
+      400,
+      500,
+      600,
+      700
+    ],
+    "files": [
+      {
+        "file": "mitr/Mitr-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "dc3e6a03603bb0db3dc6833042e218a917d211d52d93bca426aa606f129d4488"
+      },
+      {
+        "file": "mitr/Mitr-Light.ttf",
+        "weight": 300,
+        "sha256": "0ddb2f43bc071cd1546d1abdb0447c4a411e06450e69d97c838c2725fc8064a6"
+      },
+      {
+        "file": "mitr/Mitr-Regular.ttf",
+        "weight": 400,
+        "sha256": "3763923ca8d860f9c06f483f663cd3d8d94e9ed8c2f35a7ce35bb6b13e1219fd"
+      },
+      {
+        "file": "mitr/Mitr-Medium.ttf",
+        "weight": 500,
+        "sha256": "847340933424d473bff6d011bc08543a2a2d2a670985a93e3431e3ac8926068f"
+      },
+      {
+        "file": "mitr/Mitr-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "257e8612923ed13838b2f0a0f9b25527aa83513c657df049a5ee608e6d4a059d"
+      },
+      {
+        "file": "mitr/Mitr-Bold.ttf",
+        "weight": 700,
+        "sha256": "92349c05cd6a35549d0fb3e9b0d7d73059717e212cbda182ee28e5917150bc34"
+      }
+    ]
+  },
+  {
+    "id": "Pridi",
+    "name": "Pridi",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      200,
+      300,
+      400,
+      500,
+      600,
+      700
+    ],
+    "files": [
+      {
+        "file": "pridi/Pridi-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "12f2ed9cd258b585083be1a6faa490c6e41917d95a4fbe045fdb43819eed8a9c"
+      },
+      {
+        "file": "pridi/Pridi-Light.ttf",
+        "weight": 300,
+        "sha256": "3f328cfdface42003202df36d275b0d3498c7484dd384add3fbb066c5829dab0"
+      },
+      {
+        "file": "pridi/Pridi-Regular.ttf",
+        "weight": 400,
+        "sha256": "cc5a2ea9660d78fc64c909c29582ab8bd7195128f81bed825d7cee985369a4da"
+      },
+      {
+        "file": "pridi/Pridi-Medium.ttf",
+        "weight": 500,
+        "sha256": "d38ca6dd91f8ede51cb793dc05c56c2381a4933a8849ddc09281ecb50943294b"
+      },
+      {
+        "file": "pridi/Pridi-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "afb99e891ab2ada5072940193766bffb53a836f7e75cd8ec85213a61edde4ce4"
+      },
+      {
+        "file": "pridi/Pridi-Bold.ttf",
+        "weight": 700,
+        "sha256": "7ed16f946290c59f336c1cb031a80a5fd4ae60e6c261bffa9e06c92df6865ff4"
+      }
+    ]
+  },
+  {
+    "id": "Sriracha",
+    "name": "Sriracha",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      400
+    ],
+    "files": [
+      {
+        "file": "sriracha/Sriracha-Regular.ttf",
+        "weight": 400,
+        "sha256": "c3128c30cb21e8724b792586c87059d1b5eceae10d9957ba2ab26c80bbed3669"
+      }
+    ]
+  },
+  {
+    "id": "Taviraj",
+    "name": "Taviraj",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "taviraj/Taviraj-Thin.ttf",
+        "weight": 100,
+        "sha256": "3bbc37644f9eda2475bd5627798b0d97c765cf668297973a21fe8266c351071e"
+      },
+      {
+        "file": "taviraj/Taviraj-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "79cc55234fc8b85121bb3e4563dd8e35af7c805d438ece34d484f7066da8b00e"
+      },
+      {
+        "file": "taviraj/Taviraj-Light.ttf",
+        "weight": 300,
+        "sha256": "57670abb418f67f90031eb073e7afb69d98e041b7ef824a0d68981104f13beed"
+      },
+      {
+        "file": "taviraj/Taviraj-Regular.ttf",
+        "weight": 400,
+        "sha256": "077e6299711fddca973f9d43455949018459c2d29c6e790666d41017ee1a27d5"
+      },
+      {
+        "file": "taviraj/Taviraj-Medium.ttf",
+        "weight": 500,
+        "sha256": "126a0ed061ff96c499b314bdcdacfa1c2ccd153fcd78e4fbb3575c88e98dae3d"
+      },
+      {
+        "file": "taviraj/Taviraj-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "7f4780e18a823b464421ac2da16b190ce3cf6177e78145a1005228efddbe622c"
+      },
+      {
+        "file": "taviraj/Taviraj-Bold.ttf",
+        "weight": 700,
+        "sha256": "ece5631dc38d8a229148ec87830fa10aa4ba8d8641c719ea25eef2c37474ba21"
+      },
+      {
+        "file": "taviraj/Taviraj-ExtraBold.ttf",
+        "weight": 800,
+        "sha256": "964ba956d8953ac4242471d7f20c898c266c8f2cf7c983a51008be0acfb3ef19"
+      },
+      {
+        "file": "taviraj/Taviraj-Black.ttf",
+        "weight": 900,
+        "sha256": "81f3c81155733a73c4b5914d7d6857832e7dcad5b5e63f7992d797907e327a17"
+      }
+    ]
+  },
+  {
+    "id": "Athiti",
+    "name": "Athiti",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      200,
+      300,
+      400,
+      500,
+      600,
+      700
+    ],
+    "files": [
+      {
+        "file": "athiti/Athiti-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "12737cd3ab743baa423ce14dde806672181c53aeca3fc596966da3a54c9db6e9"
+      },
+      {
+        "file": "athiti/Athiti-Light.ttf",
+        "weight": 300,
+        "sha256": "f0a732e2336296b16c5d52cddd640902bac94a65b48d732e964f6f5a2a9627d6"
+      },
+      {
+        "file": "athiti/Athiti-Regular.ttf",
+        "weight": 400,
+        "sha256": "666f5474258cbffd537b494e2d6a441ee849778e2175a4e222d4d625c6efe0e5"
+      },
+      {
+        "file": "athiti/Athiti-Medium.ttf",
+        "weight": 500,
+        "sha256": "72d2657716b16233c8b093924d584044ab91a9ed997bc72dee152ca23c731bc9"
+      },
+      {
+        "file": "athiti/Athiti-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "2e76cacba59a3e9d39cea52292d2e8a8ad9a6459336ab811bab0f141103544f3"
+      },
+      {
+        "file": "athiti/Athiti-Bold.ttf",
+        "weight": 700,
+        "sha256": "164aaaf1c046e834f418bc79ba5ffe636c79c2a26ec9146e1eaf9487cbeea833"
+      }
+    ]
+  },
+  {
+    "id": "Trirong",
+    "name": "Trirong",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "trirong/Trirong-Thin.ttf",
+        "weight": 100,
+        "sha256": "c45158916cd678d789f27bf956b04aa8f7d185bfcb0e2c644d3efd0bc1bea613"
+      },
+      {
+        "file": "trirong/Trirong-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "b8795c42c38837fcb9b265ea467cc49974c113f64933f34c092e3e19a56ac947"
+      },
+      {
+        "file": "trirong/Trirong-Light.ttf",
+        "weight": 300,
+        "sha256": "4302056ccc54744ae2d9b80f34b6377c6858cb95cd534ce2531fb13a4a780793"
+      },
+      {
+        "file": "trirong/Trirong-Regular.ttf",
+        "weight": 400,
+        "sha256": "3cd19b35a24df5fcf12c1f917324cf821d5aa582f7ea36fb0d2a91ba5e8ccd05"
+      },
+      {
+        "file": "trirong/Trirong-Medium.ttf",
+        "weight": 500,
+        "sha256": "7d9baefbf837849e8767f8649f19dd6eb9ef83d5f63baca0268efdc566e2fe03"
+      },
+      {
+        "file": "trirong/Trirong-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "4e8cb898fb7992db7ec9d5bc2c46f265d76dd61938ecdbcdcddd937384f501b2"
+      },
+      {
+        "file": "trirong/Trirong-Bold.ttf",
+        "weight": 700,
+        "sha256": "5f763f2ab302d0d81f8e0435db073bfb50a447d52dc1a060594f3dc3420ba8ae"
+      },
+      {
+        "file": "trirong/Trirong-ExtraBold.ttf",
+        "weight": 800,
+        "sha256": "f63665b55d81823643de251a242f296c3165de839ae377eaf7b5d1849808fa48"
+      },
+      {
+        "file": "trirong/Trirong-Black.ttf",
+        "weight": 900,
+        "sha256": "56bead49f2bb6975660de599a4a4920a26cd2a3272c52004fa63145eea7e9210"
+      }
+    ]
+  },
+  {
+    "id": "Krub",
+    "name": "Krub",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      200,
+      300,
+      400,
+      500,
+      600,
+      700
+    ],
+    "files": [
+      {
+        "file": "krub/Krub-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "6b5b32c071d7b6656f2a34a58ac78991c5dca5679f300ee59e12a6ee434fde37"
+      },
+      {
+        "file": "krub/Krub-Light.ttf",
+        "weight": 300,
+        "sha256": "bb537914c72d5bbb305d161546dc3ccccfdd7bef69c59e27ce4b740b9ea39bf3"
+      },
+      {
+        "file": "krub/Krub-Regular.ttf",
+        "weight": 400,
+        "sha256": "24e5c4084ee9e878d54e70bfe5fceccf3ae46fd4aae73a794c04df4091f5e69d"
+      },
+      {
+        "file": "krub/Krub-Medium.ttf",
+        "weight": 500,
+        "sha256": "cdf7274a4822c9e0eebc1b503650ab3703bc968082a7ebbaaf69a3bfb605d477"
+      },
+      {
+        "file": "krub/Krub-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "9a3403dad454c45cc4f1fbe0bfc0001c842302ddda514c47285925b7921f5602"
+      },
+      {
+        "file": "krub/Krub-Bold.ttf",
+        "weight": 700,
+        "sha256": "0b8c2684736742e181f48ed7d9b0aed10ac2d4e1e3a02c8346e5300a4a07f100"
+      }
+    ]
+  },
+  {
+    "id": "K2D",
+    "name": "K2D",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800
+    ],
+    "files": [
+      {
+        "file": "k2d/K2D-Thin.ttf",
+        "weight": 100,
+        "sha256": "33ca61459477f91ac726e551eb9ecb4d470af41afc33ddcb5cc1a985e4869adb"
+      },
+      {
+        "file": "k2d/K2D-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "3b3c724b0ae259e1b163e9f4451f6c25903b13f3a2049ea73bea7f635d171dc4"
+      },
+      {
+        "file": "k2d/K2D-Light.ttf",
+        "weight": 300,
+        "sha256": "f69664fb42121ad85555822d821bfd6ccde64f201984d5b688c22f300a1efb3d"
+      },
+      {
+        "file": "k2d/K2D-Regular.ttf",
+        "weight": 400,
+        "sha256": "bfab1193b93b9200455119c968f0ccac24b68d2408d26a8123a4c3c01fb11821"
+      },
+      {
+        "file": "k2d/K2D-Medium.ttf",
+        "weight": 500,
+        "sha256": "0ea9a92a4d005f69a6cf53b1eaed244f70817a477dcd66bc06fef1f4d9821795"
+      },
+      {
+        "file": "k2d/K2D-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "7d6225a49110e9981d24bbccaf06ae5774b641297edef16ffa2b372497840d07"
+      },
+      {
+        "file": "k2d/K2D-Bold.ttf",
+        "weight": 700,
+        "sha256": "0876882908abb4ee3bcf9f73007128dddd52b77fe36414101fb12da0a67edb3d"
+      },
+      {
+        "file": "k2d/K2D-ExtraBold.ttf",
+        "weight": 800,
+        "sha256": "46aa84ed5ffa8f7c1e156ddff85441ebbc1913b8aa3349bf3cd722e7b97df761"
+      }
+    ]
+  },
+  {
+    "id": "Charm",
+    "name": "Charm",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      400,
+      700
+    ],
+    "files": [
+      {
+        "file": "charm/Charm-Regular.ttf",
+        "weight": 400,
+        "sha256": "daae102e411243377016dbeb8cb9d53087d13074064fe79658afa966a9ac330e"
+      },
+      {
+        "file": "charm/Charm-Bold.ttf",
+        "weight": 700,
+        "sha256": "6e1fa92fda7ab74fcce8ed5d7a9de10a0fb43d777590e8ef9f6931da6e932481"
+      }
+    ]
+  },
+  {
+    "id": "Pattaya",
+    "name": "Pattaya",
+    "languages": [
+      "th",
+      "en"
+    ],
+    "weights": [
+      400
+    ],
+    "files": [
+      {
+        "file": "pattaya/Pattaya-Regular.ttf",
+        "weight": 400,
+        "sha256": "02b77f7f5b52e718a91230c8ea153bfe746e1d748dabded4e41d7e6765fa9889"
+      }
+    ]
+  },
+  {
+    "id": "Inter",
+    "name": "Inter",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "inter/Inter[opsz,wght].ttf",
+        "weight": 400,
+        "sha256": "29160a80ff49ddcab2c97711247e08b1fab27a484a329ce8b813d820dc559031"
+      }
+    ]
+  },
+  {
+    "id": "Roboto",
+    "name": "Roboto",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "roboto/Roboto[wdth,wght].ttf",
+        "weight": 400,
+        "sha256": "d7598e12c5dbef095ff8272cfc55da0250bd07fbdecbac8a530b9b277872a134"
+      }
+    ]
+  },
+  {
+    "id": "Montserrat",
+    "name": "Montserrat",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "montserrat/Montserrat[wght].ttf",
+        "weight": 400,
+        "sha256": "0f7b311b2f3279e4eef9b2f968bcdbab6e28f4daeb1f049f4f278a902bcd82f7"
+      }
+    ]
+  },
+  {
+    "id": "Poppins",
+    "name": "Poppins",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "poppins/Poppins-Thin.ttf",
+        "weight": 100,
+        "sha256": "6d8e5d9d29140cc93e321745fa1243c67889e6bc3639ec34db64f3da7a496352"
+      },
+      {
+        "file": "poppins/Poppins-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "55c03314cc754e26f741f97890e5e9cbe3b3278fe3abcecfecafd60111b2643d"
+      },
+      {
+        "file": "poppins/Poppins-Light.ttf",
+        "weight": 300,
+        "sha256": "650ba57fa99d12ec40c31ccfb680be656be4497fbe14164617d67e32ffe9cd46"
+      },
+      {
+        "file": "poppins/Poppins-Regular.ttf",
+        "weight": 400,
+        "sha256": "7e65201e9b79159e2300267cc885e16c8dcef2424cdfa09a29bfb0980a94a7ba"
+      },
+      {
+        "file": "poppins/Poppins-Medium.ttf",
+        "weight": 500,
+        "sha256": "90373e7d838d32468438fc3e152dca0bdb12edcab99ea639f158790b1ba1fd05"
+      },
+      {
+        "file": "poppins/Poppins-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "d3bf1bdaf0550e83da9ac0b1d1d9fe6db086835a83aa28578e609a394b9a0286"
+      },
+      {
+        "file": "poppins/Poppins-Bold.ttf",
+        "weight": 700,
+        "sha256": "983676516167748b74de6f4771fb384c664fd913acb8b471122ecacf5da5ea6c"
+      },
+      {
+        "file": "poppins/Poppins-ExtraBold.ttf",
+        "weight": 800,
+        "sha256": "f2ab17c1a63a0ecc12c2461848fc8a469395e3cd2d641803e889c643d9f958e1"
+      },
+      {
+        "file": "poppins/Poppins-Black.ttf",
+        "weight": 900,
+        "sha256": "d82aaaf98a9283f9a8edd24e51173337d8eaf09e25cd3d98831f8ec8461748a1"
+      }
+    ]
+  },
+  {
+    "id": "Open Sans",
+    "name": "Open Sans",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      300,
+      400,
+      500,
+      600,
+      700,
+      800
+    ],
+    "files": [
+      {
+        "file": "opensans/OpenSans[wdth,wght].ttf",
+        "weight": 400,
+        "sha256": "36643644f318a812aab2d2ed3bb98f8cf0872527f835fe9398d95fe6b9adb878"
+      }
+    ]
+  },
+  {
+    "id": "Lato",
+    "name": "Lato",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "lato/Lato-Thin.ttf",
+        "weight": 100,
+        "sha256": "663c55bfe9a38270fff44da273bf4d792eafc3e7e1201f62c3064cad80c5d5e7"
+      },
+      {
+        "file": "lato/Lato-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "989989b481db5df0827d90c51fd08d024fe7bc4e367046e2584a0d3b0487936d"
+      },
+      {
+        "file": "lato/Lato-Light.ttf",
+        "weight": 300,
+        "sha256": "cf2a774503baf418d584f49967bd160e1e03f087c13b25602f28024ec7788f08"
+      },
+      {
+        "file": "lato/Lato-Regular.ttf",
+        "weight": 400,
+        "sha256": "d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251"
+      },
+      {
+        "file": "lato/Lato-Medium.ttf",
+        "weight": 500,
+        "sha256": "d3ac182a6833e005745dd75679fbad081c0b12535df4e93ad8ed57817a31a338"
+      },
+      {
+        "file": "lato/Lato-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "71b8b7decbe75a881ed267be539d402bd1e9420b799658aada4e0d1bd5af803c"
+      },
+      {
+        "file": "lato/Lato-Bold.ttf",
+        "weight": 700,
+        "sha256": "8a0aace75d33794eece4b28187bfc1df0bbd2888b5d8a56e01788c8d65d16be1"
+      },
+      {
+        "file": "lato/Lato-ExtraBold.ttf",
+        "weight": 800,
+        "sha256": "61018de62bdaf90d4ac80b1d53c5c130756c8e9219aea3d2773fc9bd5869af97"
+      },
+      {
+        "file": "lato/Lato-Black.ttf",
+        "weight": 900,
+        "sha256": "808c62839c62dbce7de689af7603666fc7f8b81e0df537d8a5212c87580d4337"
+      }
+    ]
+  },
+  {
+    "id": "Nunito",
+    "name": "Nunito",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900,
+      1000
+    ],
+    "files": [
+      {
+        "file": "nunito/Nunito[wght].ttf",
+        "weight": 400,
+        "sha256": "bb55a5ca5c2042335b3991af27c4d0705d0ef41cac6164ac737fd8f2a1e85207"
+      }
+    ]
+  },
+  {
+    "id": "Nunito Sans",
+    "name": "Nunito Sans",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900,
+      1000
+    ],
+    "files": [
+      {
+        "file": "nunitosans/NunitoSans[YTLC,opsz,wdth,wght].ttf",
+        "weight": 400,
+        "sha256": "f934d7142fb4784bf828da485b7dcbd90c0c80d514e9d49a5da0ed3a1ae2491d"
+      }
+    ]
+  },
+  {
+    "id": "Oswald",
+    "name": "Oswald",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      200,
+      300,
+      400,
+      500,
+      600,
+      700
+    ],
+    "files": [
+      {
+        "file": "oswald/Oswald[wght].ttf",
+        "weight": 400,
+        "sha256": "5b38c246e255a12f5712d640d56bcced0472466fc68983d2d0410ec0457c2817"
+      }
+    ]
+  },
+  {
+    "id": "Anton",
+    "name": "Anton",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      400
+    ],
+    "files": [
+      {
+        "file": "anton/Anton-Regular.ttf",
+        "weight": 400,
+        "sha256": "a4ba3a92350ebb031da0cb47630ac49eb265082ca1bc0450442f4a83ab947cab"
+      }
+    ]
+  },
+  {
+    "id": "Bebas Neue",
+    "name": "Bebas Neue",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      400
+    ],
+    "files": [
+      {
+        "file": "bebasneue/BebasNeue-Regular.ttf",
+        "weight": 400,
+        "sha256": "08e4623805102d819f58601e46e345648846075e363b2ceb23313c2d1c83ec73"
+      }
+    ]
+  },
+  {
+    "id": "Rubik",
+    "name": "Rubik",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "rubik/Rubik[wght].ttf",
+        "weight": 400,
+        "sha256": "1b3a7437ba2af80e465e773ed60c5036d1ba6ace492d89046dbcf18fb31e4e88"
+      }
+    ]
+  },
+  {
+    "id": "Raleway",
+    "name": "Raleway",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "raleway/Raleway[wght].ttf",
+        "weight": 400,
+        "sha256": "8bbcc3eb8275c388f4bcd998832f8a4b943eadbaf6a595205312774b5951aefb"
+      }
+    ]
+  },
+  {
+    "id": "Barlow",
+    "name": "Barlow",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "barlow/Barlow-Thin.ttf",
+        "weight": 100,
+        "sha256": "103671e5a8daf1c02ac2cb35c61fa30088e055e5ff718d51b4fb20012581d252"
+      },
+      {
+        "file": "barlow/Barlow-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "bd47db14c6305ebb647a3f0c6afc0370ffd4e3368f12405c8cd141683a4c2b05"
+      },
+      {
+        "file": "barlow/Barlow-Light.ttf",
+        "weight": 300,
+        "sha256": "20b1375c0c6606701867bf34c7cc97f44087850567a36587d25abb9510b183cc"
+      },
+      {
+        "file": "barlow/Barlow-Regular.ttf",
+        "weight": 400,
+        "sha256": "95aa02c7c43096e0dd44d787ba6216864a67157e402adab59b35572e0c1577ea"
+      },
+      {
+        "file": "barlow/Barlow-Medium.ttf",
+        "weight": 500,
+        "sha256": "f8906f762cb73dca441da034bc363b2d8e2e68bc10d5c05e58717646c20cc4b4"
+      },
+      {
+        "file": "barlow/Barlow-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "86577cb32f8abe3673db53ca0f4221e6856751a4f6730c867e00f720f8bb1fc5"
+      },
+      {
+        "file": "barlow/Barlow-Bold.ttf",
+        "weight": 700,
+        "sha256": "84e6a4d61e7c3e21f3c50ea6a4f7e5303a3467864c038be6ea3759bab8d547f9"
+      },
+      {
+        "file": "barlow/Barlow-ExtraBold.ttf",
+        "weight": 800,
+        "sha256": "5234d91030e1bb89525cbaccc4386892c3fe005a0582c705264ce3572d96a1a1"
+      },
+      {
+        "file": "barlow/Barlow-Black.ttf",
+        "weight": 900,
+        "sha256": "fc4f74e8475b181003f7597450c62d630622b417e367a6842972b286c49f9440"
+      }
+    ]
+  },
+  {
+    "id": "Barlow Condensed",
+    "name": "Barlow Condensed",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "barlowcondensed/BarlowCondensed-Thin.ttf",
+        "weight": 100,
+        "sha256": "68afe339b8503a9d74b2c3b5b0c521ea5333461f29aeaf7c680141482114d85a"
+      },
+      {
+        "file": "barlowcondensed/BarlowCondensed-ExtraLight.ttf",
+        "weight": 200,
+        "sha256": "19e3c4a81dc7fcee8c38ab6be3819fcc45d3f3822f011ac7b4bd550e6502b80f"
+      },
+      {
+        "file": "barlowcondensed/BarlowCondensed-Light.ttf",
+        "weight": 300,
+        "sha256": "2c37e1e6b5feb71d38a42e6180d2e2f4ca1aad22cfecbd017430f3863deba67d"
+      },
+      {
+        "file": "barlowcondensed/BarlowCondensed-Regular.ttf",
+        "weight": 400,
+        "sha256": "583cec5da3b84bc4dc7c9c72e2a565c94d34e431518b19d7e250b7830ad5f996"
+      },
+      {
+        "file": "barlowcondensed/BarlowCondensed-Medium.ttf",
+        "weight": 500,
+        "sha256": "262bd143292ce479ee0cd09a42b47ab173fca8e9c6eb5ed0b5c8a845bc371d17"
+      },
+      {
+        "file": "barlowcondensed/BarlowCondensed-SemiBold.ttf",
+        "weight": 600,
+        "sha256": "7b619d14bc2327509a9ef32b0890f709626f7ecc9ff61191c2a4314c5499d2d9"
+      },
+      {
+        "file": "barlowcondensed/BarlowCondensed-Bold.ttf",
+        "weight": 700,
+        "sha256": "e476562ec9c1e16cf16475895b511f08c804f438cc9a9f80a44ea50a0eeb5b65"
+      },
+      {
+        "file": "barlowcondensed/BarlowCondensed-ExtraBold.ttf",
+        "weight": 800,
+        "sha256": "724c9c25952d5f4a2d87185d9767aa006144c5f0d944dc05bf7d5d603551c260"
+      },
+      {
+        "file": "barlowcondensed/BarlowCondensed-Black.ttf",
+        "weight": 900,
+        "sha256": "e74b750df582c608f35db467b711b2b60d2217618e85e60b72b42dfd00446cab"
+      }
+    ]
+  },
+  {
+    "id": "Work Sans",
+    "name": "Work Sans",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "worksans/WorkSans[wght].ttf",
+        "weight": 400,
+        "sha256": "f50f61f2ba738e239442d40bf1069adb195c224b6a5a73a581fc2f3ed62a9f63"
+      }
+    ]
+  },
+  {
+    "id": "DM Sans",
+    "name": "DM Sans",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900,
+      1000
+    ],
+    "files": [
+      {
+        "file": "dmsans/DMSans[opsz,wght].ttf",
+        "weight": 400,
+        "sha256": "8cd08d97e89c24d0aa92edd2f0f4c8ee6195eee9b7c9f154865a58b02f0c1c0d"
+      }
+    ]
+  },
+  {
+    "id": "Outfit",
+    "name": "Outfit",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "outfit/Outfit[wght].ttf",
+        "weight": 400,
+        "sha256": "fc7287273e66929776e2ba54f144fe699080bec29f61bf649d70d871468aeade"
+      }
+    ]
+  },
+  {
+    "id": "Playfair Display",
+    "name": "Playfair Display",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "playfairdisplay/PlayfairDisplay[wght].ttf",
+        "weight": 400,
+        "sha256": "c40f2293766a503bc70cce9e512ef844a4ccb7cbcde792fe2ea31d191917d8d6"
+      }
+    ]
+  },
+  {
+    "id": "Merriweather",
+    "name": "Merriweather",
+    "languages": [
+      "en"
+    ],
+    "weights": [
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900
+    ],
+    "files": [
+      {
+        "file": "merriweather/Merriweather[opsz,wdth,wght].ttf",
+        "weight": 400,
+        "sha256": "d0ed0e359e396af7ad05e73dffd11a3a4c326ea0d0283c56bd9361cb2cc86a96"
+      }
+    ]
+  }
+]

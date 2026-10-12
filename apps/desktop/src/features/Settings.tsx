@@ -219,9 +219,11 @@ export function Settings() {
                       ? "Multilingual Whisper base"
                       : model.id === "vad"
                         ? "Silero voice activity detection"
-                        : model.id === "semantic"
-                          ? "Multilingual E5 · review assistance"
-                          : "Multilingual Whisper"}
+                        : model.id === "translation"
+                          ? "Qwen3 4B · Thai / English · offline"
+                          : model.id === "semantic"
+                            ? "Multilingual E5 · review assistance"
+                            : "Multilingual Whisper"}
                   </p>
                 </div>
                 {model.installed ? (

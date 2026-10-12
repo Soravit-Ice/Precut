@@ -174,8 +174,9 @@ test("word correction, atomic replacement, caption preview, colours and reversib
   await page.getByRole("button", { name: "Clear search", exact: true }).click();
   await page
     .locator(".main-navigation")
-    .getByRole("button", { name: "Captions", exact: true })
+    .getByRole("button", { name: "Transcript", exact: true })
     .click();
+  await page.getByRole("tab", { name: "Captions", exact: true }).click();
   await expect(
     page.getByText("Live style preview", { exact: true }),
   ).toBeVisible();
@@ -213,8 +214,9 @@ test("word correction, atomic replacement, caption preview, colours and reversib
   });
   await page
     .locator(".main-navigation")
-    .getByRole("button", { name: "Captions", exact: true })
+    .getByRole("button", { name: "Transcript", exact: true })
     .click();
+  await page.getByRole("tab", { name: "Captions", exact: true }).click();
   await page
     .getByRole("button", { name: "Preview on video", exact: true })
     .click();
@@ -308,8 +310,9 @@ test("word correction, atomic replacement, caption preview, colours and reversib
   await page.getByRole("option", { name: "ภาษาไทย", exact: true }).click();
   await page
     .locator(".main-navigation")
-    .getByRole("button", { name: "คำบรรยาย", exact: true })
+    .getByRole("button", { name: "บทพูด", exact: true })
     .click();
+  await page.getByRole("tab", { name: "คำบรรยาย", exact: true }).click();
   await expect(page.getByText("ตัวอย่างสไตล์", { exact: true })).toBeVisible();
   await expect(page.locator(".caption-preset-grid .preset-card")).toHaveCount(
     6,

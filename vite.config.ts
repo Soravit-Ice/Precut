@@ -17,8 +17,8 @@ export default defineConfig({
         return html
           .replace("script-src 'self';", "script-src 'self' 'unsafe-inline';")
           .replace(
-            "connect-src 'self';",
-            `connect-src 'self' ws://127.0.0.1:${port};`,
+            "connect-src 'self' precut-media:;",
+            `connect-src 'self' precut-media: ws://127.0.0.1:${port};`,
           );
       },
     },

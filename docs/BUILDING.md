@@ -20,6 +20,8 @@ cmake --build whisper-build --config Release \
   --target whisper-cli whisper-vad-speech-segments -j 6
 PRECUT_WHISPER_BUILD_BIN=/absolute/path/whisper-build/bin pnpm native:prepare
 pnpm models:prepare
+pnpm native:translation
+pnpm fonts:verify
 pnpm native:verify
 pnpm notices:prepare
 pnpm icons:prepare
@@ -44,6 +46,10 @@ The media archive URLs and hashes are checked into `scripts/bootstrap-native.mjs
 From 2.1.0, pushing `v*` tags starts `release.yml` automatically; manual dispatch on the same tag remains available for retries. Set `package.json` to the stable version and add `releases/<version>.md` before creating the immutable `v<version>` tag from `main`. Preflight rejects tag/version mismatches and missing notes before native builds. Runs for the same tag are serialized. The reusable Store workflow stays bound to `store-release.yml@main` for the existing OIDC trust binding. Windows release builds also run CPU language/transcription/DTW smoke checks and retain the timing evidence. Branch pushes do not start this release pipeline.
 
 The signed SDK manifest is byte-preserved with `.gitattributes`, including Windows checkouts; line-ending conversion must never be worked around by skipping signature verification.
+
+The offline subtitle translator is a separate pinned llama.cpp v0.6.0 process (source commit `d81235049384534c167caea52b85a694f6103d14`, archive SHA256 `6b58785f0a82898f4c3442417ff962e2d4b231b1bee5d033902ad90b27901e14`). Run `pnpm native:translation` after preparing/restoring the native speech/media bundle; installer CI does this on each target. macOS uses static libraries and embedded Metal, Windows uses isolated runtime CPU DLL variants with a static MSVC runtime. The Web UI and build-time Web UI downloads are disabled. `native:verify` requires translator provenance and all file hashes. Optional Qwen weights are downloaded by the installed application with a pinned revision/size/SHA256; do not place them in `native/models`, which would add 4.28 GB to every installer.
+
+44 font families and their licences are checked in. `pnpm fonts:prepare` restores the Google Fonts revision in `fonts/manifest.json`; `pnpm fonts:verify` checks every face SHA256, catalogue sync and OFL. The build fails when this inventory is incomplete.
 
 Bundled Fast and VAD models have fixed upstream SHA256 pins. Fonts live in `apps/desktop/public/fonts`. Platform resources, models, fonts and notices are copied into the installer; no system Node, Python or FFmpeg is required afterwards.
 

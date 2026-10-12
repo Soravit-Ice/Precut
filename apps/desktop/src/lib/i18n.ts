@@ -1,5 +1,55 @@
 import { useStore } from "./store";
 const th: Record<string, string> = {
+  "Awaiting translation model": "รอโมเดลแปล",
+  "Transcript tools": "เครื่องมือในบทถอดเสียง",
+  "Auto Edit creates your chosen subtitles. Edit text, fonts and position in Transcript.":
+    "Auto Edit สร้างซับตามภาษาที่เลือก แก้ข้อความ ฟอนต์ และลากตำแหน่งได้ในบทถอดเสียง",
+  "Translation runs offline after speech analysis when needed.":
+    "แปลซับออฟไลน์ต่อจากการถอดเสียงโดยอัตโนมัติเมื่อจำเป็น",
+  "Speech analysis can continue. Translated subtitles need the offline model, installed once.":
+    "ถอดเสียงและตัดต่อได้เลย ซับฉบับแปลต้องติดตั้งโมเดลออฟไลน์ครั้งแรก",
+  "Download translation model · 4.28 GB": "ดาวน์โหลดโมเดลแปล · 4.28 GB",
+  "Downloading translation model…": "กำลังดาวน์โหลดโมเดลแปล…",
+  "Install the offline translation model once to generate missing subtitles.":
+    "ติดตั้งโมเดลแปลออฟไลน์ครั้งแรกเพื่อสร้างซับฉบับแปลที่ยังขาด",
+  "Create subtitles": "สร้างคำบรรยาย",
+  "Translating captions": "กำลังแปลคำบรรยาย",
+  "Verifying translation model": "กำลังตรวจสอบโมเดลแปล",
+  "Loading offline translator": "กำลังโหลดตัวแปลออฟไลน์",
+  "Captions translated": "แปลคำบรรยายแล้ว",
+  "Saving subtitles": "กำลังบันทึกคำบรรยาย",
+  "First cut saved · subtitles await translation model":
+    "บันทึกงานตัดแล้ว · ซับรอติดตั้งโมเดลแปล",
+  "English font": "ฟอนต์อังกฤษ",
+  "English weight": "น้ำหนักฟอนต์อังกฤษ",
+  "English size": "ขนาดตัวอักษรอังกฤษ",
+  "Font imported. Choose English captions to use this font.":
+    "นำเข้าฟอนต์แล้ว เลือกซับอังกฤษเพื่อใช้ฟอนต์นี้",
+  "Drag to position. Arrow keys move 1 pixel; Shift moves 10 pixels.":
+    "ลากเพื่อจัดตำแหน่ง ปุ่มลูกศรขยับ 1 พิกเซล กด Shift เพื่อขยับ 10 พิกเซล",
+  "Caption language": "ภาษาคำบรรยาย",
+  "Original captions. Choose a language to translate.":
+    "ซับต้นฉบับ เลือกภาษาเพื่อสร้างฉบับแปล",
+  "Translation terminology": "ชื่อเฉพาะและคำแปลที่ต้องการ",
+  "Download the offline translation model in Settings once.":
+    "ดาวน์โหลดโมเดลแปลออฟไลน์ครั้งแรกในตั้งค่า",
+  "Translate captions": "แปลคำบรรยาย",
+  "Open model settings": "เปิดตั้งค่าโมเดล",
+  "Edit caption text": "แก้ข้อความคำบรรยาย",
+  "Caption segment": "ช่วงคำบรรยาย",
+  "Awaiting translation": "รอการแปล",
+  "Search fonts": "ค้นหาฟอนต์",
+  "Import TTF / OTF": "นำเข้าฟอนต์ TTF / OTF",
+  "Font weight": "น้ำหนักฟอนต์",
+  "Drag captions on video": "ลากซับบนวิดีโอ",
+  "Caption position scope": "ปรับตำแหน่งซับ",
+  "Whole clip": "ทั้งคลิป",
+  "This caption": "เฉพาะช่วงนี้",
+  "Reset position": "คืนตำแหน่ง",
+  "Move caption": "ย้ายตำแหน่งซับ",
+  "Custom words to review": "คำหรือวลีที่ต้องการตรวจเพื่อตัด",
+  "Offline Thai / English translation": "แปลไทย / English ออฟไลน์",
+
   "Windows uses CPU acceleration selected for your processor.":
     "Windows ใช้ชุดคำสั่งเร่งความเร็วที่ CPU ของคุณรองรับ",
   "Buy to unlock export": "ซื้อไลเซนส์เพื่อส่งออก",

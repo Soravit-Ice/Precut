@@ -111,11 +111,38 @@ export type AnalysisSummary = {
   nonSpeechSeconds: number;
 };
 export type Region = { startUs: number; endUs: number; outputStartUs: number };
+export const CaptionAnchorSchema = z
+  .object({ x: z.number().min(0).max(1), y: z.number().min(0).max(1) })
+  .strict();
+export type CaptionAnchor = z.infer<typeof CaptionAnchorSchema>;
+const FontNameSchema = z
+  .string()
+  .min(1)
+  .max(120)
+  .regex(/^[\p{L}\p{N} ._-]+$/u);
+export type CaptionPlacement = {
+  id: string;
+  startUs: number;
+  endUs: number;
+  anchor: CaptionAnchor;
+};
+export type CaptionTranslation = {
+  id: string;
+  language: "th" | "en";
+  text: string;
+  sourceHash: string;
+  manual?: boolean;
+};
 export const CaptionStyleSchema = z
   .object({
     preset: PresetId,
-    font: z.enum(["Inter", "Noto Sans Thai"]),
-    weight: z.number().int().min(400).max(900),
+    font: FontNameSchema,
+    weight: z.number().int().min(100).max(1000),
+    languageMode: z.enum(["th", "th-en", "en"]).optional(),
+    englishFont: FontNameSchema.optional(),
+    englishWeight: z.number().int().min(100).max(1000).optional(),
+    englishSize: z.number().min(18).max(120).optional(),
+    anchor: CaptionAnchorSchema.optional(),
     size: z.number().min(18).max(120),
     color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
     activeColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
@@ -140,6 +167,17 @@ export type CaptionScene = {
   endUs: number;
   words: Word[];
   presetId: CaptionStyle["preset"];
+  sourceStartUs?: number;
+  sourceEndUs?: number;
+  sourceHash?: string;
+  anchor?: CaptionAnchor;
+  lines?: {
+    language: "th" | "en";
+    text: string;
+    words?: Word[];
+    missing?: boolean;
+    needsReview?: boolean;
+  }[];
 };
 export const CleanupSchema = z
   .object({
@@ -149,6 +187,7 @@ export const CleanupSchema = z
     retakes: z.boolean(),
     falseStarts: z.boolean(),
     repetitions: z.boolean(),
+    customWords: z.array(z.string().trim().min(1).max(200)).max(100).optional(),
     preset: PresetId,
   })
   .strict();
@@ -181,6 +220,10 @@ export type Snapshot = {
   segments: TranscriptSegment[];
   suggestions: Suggestion[];
   captionStyle: CaptionStyle;
+  captionPlacements?: CaptionPlacement[];
+  captionTranslations?: CaptionTranslation[];
+  captionFonts?: import("./fonts").CaptionFont[];
+  translationGlossary?: string;
   waveform: number[];
   waveformLevels: number[][];
   undoAvailable: boolean;
@@ -192,7 +235,7 @@ export type Snapshot = {
 export type Job = {
   id: string;
   projectId: string;
-  type: "import" | "analyze" | "proxy" | "export" | "model";
+  type: "import" | "analyze" | "proxy" | "export" | "model" | "translate";
   state: "queued" | "running" | "completed" | "failed" | "cancelled";
   stage: string;
   progress: number;
@@ -203,7 +246,7 @@ export type Job = {
   stageDurationsMs?: Record<string, number>;
 };
 export type Model = {
-  id: "fast" | "balanced" | "quality" | "vad" | "semantic";
+  id: "fast" | "balanced" | "quality" | "vad" | "semantic" | "translation";
   name: string;
   file: string;
   size: number;
@@ -312,6 +355,7 @@ export const schemas = {
       projectId: Id,
       options: CleanupSchema,
       speech: SpeechSchema.optional(),
+      captionLanguage: z.enum(["th", "th-en", "en"]).optional(),
       force: z.boolean().default(false),
       autoApplySilence: z.boolean().default(false),
       reassessKeptSilence: z.boolean().default(false),
@@ -349,6 +393,40 @@ export const schemas = {
   "captions.style": z
     .object({ projectId: Id, style: CaptionStyleSchema })
     .strict(),
+  "captions.position": z
+    .object({
+      projectId: Id,
+      scope: z.enum(["project", "cue"]),
+      startUs: z.number().int().nonnegative().optional(),
+      endUs: z.number().int().positive().optional(),
+      anchor: CaptionAnchorSchema.nullable(),
+      fromAnchor: CaptionAnchorSchema.optional(),
+    })
+    .strict()
+    .refine(
+      (x) =>
+        x.scope === "project" ||
+        (x.startUs !== undefined &&
+          x.endUs !== undefined &&
+          x.endUs > x.startUs),
+    ),
+  "captions.translate": z
+    .object({
+      projectId: Id,
+      glossary: z.string().trim().max(4000).default(""),
+    })
+    .strict(),
+  "captions.translation": z
+    .object({
+      projectId: Id,
+      cueId: z.string().min(1).max(600),
+      language: z.enum(["th", "en"]),
+      text: z.string().trim().min(1).max(4000),
+      sourceHash: z.string().min(1).max(100),
+    })
+    .strict(),
+  "fonts.list": z.object({ projectId: Id }).strict(),
+  "fonts.import": z.object({ projectId: Id }).strict(),
   "captions.correct": z
     .object({
       projectId: Id,
@@ -405,10 +483,10 @@ export const schemas = {
   "settings.update": SettingsSchema,
   "models.list": z.object({}).strict(),
   "models.download": z
-    .object({ id: z.enum(["balanced", "quality", "semantic"]) })
+    .object({ id: z.enum(["balanced", "quality", "semantic", "translation"]) })
     .strict(),
   "models.delete": z
-    .object({ id: z.enum(["balanced", "quality", "semantic"]) })
+    .object({ id: z.enum(["balanced", "quality", "semantic", "translation"]) })
     .strict(),
   "storage.info": z.object({}).strict(),
   "storage.clear": z.object({ projectId: Id }).strict(),

@@ -113,8 +113,17 @@ test("real import → speech → safe review → captions → all exports → re
   await call("edits.redo", { projectId: id });
   await page
     .locator(".main-navigation")
-    .getByRole("button", { name: "Captions", exact: true })
+    .getByRole("button", { name: "Transcript", exact: true })
     .click();
+  await page.getByRole("tab", { name: "Captions", exact: true }).click();
+  await page.getByRole("button", { name: "English", exact: true }).click();
+  await expect
+    .poll(
+      async () =>
+        (await call<Snapshot>("projects.open", { id })).captionStyle
+          .languageMode,
+    )
+    .toBe("en");
   await page
     .getByRole("button", { name: "Caption preset Karaoke", exact: true })
     .click();
@@ -163,8 +172,9 @@ test("real import → speech → safe review → captions → all exports → re
   expect((await readFile(immediateOutput)).length).toBeGreaterThan(100);
   await page
     .locator(".main-navigation")
-    .getByRole("button", { name: "Captions", exact: true })
+    .getByRole("button", { name: "Transcript", exact: true })
     .click();
+  await page.getByRole("tab", { name: "Captions", exact: true }).click();
   await page
     .getByRole("button", { name: "Caption preset Karaoke", exact: true })
     .click();

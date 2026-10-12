@@ -65,6 +65,8 @@ jobs:
       - name: Build pinned native tools for this platform
         if: ${{ matrix.build_native }}
         run: node scripts/bootstrap-native.mjs
+      - name: Build pinned offline translation runtime
+        run: pnpm native:translation
       - run: pnpm models:prepare
       - name: Test Windows native CPU speech before packaging
         if: ${{ matrix.platform == 'win32' }}

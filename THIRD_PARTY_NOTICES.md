@@ -9,9 +9,11 @@ Precut application code and branding belong to T2ETECH. Third-party components r
 | whisper.cpp | 1.9.5 | MIT, https://github.com/ggml-org/whisper.cpp/tree/v1.9.5 |
 | Whisper base multilingual weights | ggml-base | MIT, https://github.com/openai/whisper, distributed by https://huggingface.co/ggerganov/whisper.cpp |
 | Silero VAD | 6.2.0 | MIT, https://github.com/snakers4/silero-vad |
+| llama.cpp | v0.6.0, commit d81235049384534c167caea52b85a694f6103d14 | MIT; isolated local translator process. See `licenses/LlamaCpp-MIT.txt`. |
+| Optional Qwen3-4B-Instruct-2507 Q8_0 | pinned GGUF, downloaded once | Apache 2.0; https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507 and `licenses/Qwen3-Apache-2.0.txt`. |
 | ONNX Runtime | 1.30.0 | MIT, https://github.com/microsoft/onnxruntime |
 | Optional multilingual E5 | small quantized | MIT, https://github.com/microsoft/unilm/tree/master/e5 and https://huggingface.co/Xenova/multilingual-e5-small |
-| Inter / Noto Sans Thai | bundled TTF | SIL Open Font Licence 1.1, https://github.com/google/fonts |
+| 44 Google Fonts families | pinned TTF collection; inventory and revision in `fonts/manifest.json` | SIL Open Font Licence 1.1, https://github.com/google/fonts |
 | React, Radix UI, Zustand, Zod, Tailwind, Lucide, TanStack Virtual, better-sqlite3, Skia Canvas and tokenizers | pinned in pnpm-lock.yaml | See installed package notices copied to `licenses/`. |
 | T2ETECH Licence SDK | 1.0.0-rc.1 | Signed vendor distribution; see `vendor/manifest.json` and vendor archive. |
 

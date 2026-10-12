@@ -1,3 +1,5 @@
+import { CaptionPosition } from "./CaptionPosition";
+import { loadCaptionFonts } from "../lib/caption-fonts";
 import { useEffect, useRef, useState, useMemo } from "react";
 import {
   Play,
@@ -9,7 +11,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { Button, Tooltip, Select } from "../components/ui/primitives";
-import { clock, useStore } from "../lib/store";
+import { clock, useStore, safe } from "../lib/store";
 import { useT } from "../lib/i18n";
 import {
   keepRegions,
@@ -18,11 +20,26 @@ import {
   formatTime,
 } from "../../../../packages/core/src/timeline";
 import {
-  segmentCaptions,
+  buildCaptionScenes,
+  type CaptionBounds,
   renderCaption,
 } from "../../../../packages/core/src/captions";
 export function Player() {
   const snap = useStore((s) => s.snapshot)!;
+  const captionEditing = useStore((s) => s.view) === "transcript";
+  const [activeCaption, setActiveCaption] = useState<{
+    scene: import("../../../../packages/shared/src/contracts").CaptionScene;
+    bounds: CaptionBounds;
+  }>();
+  const positionDraft = useRef<
+    | {
+        anchor: import("../../../../packages/shared/src/contracts").CaptionAnchor;
+        scope: "project" | "cue";
+        id: string;
+      }
+    | undefined
+  >(undefined);
+  const redraw = useRef<() => void>(() => {});
   const asset = snap.assets[0],
     t = useT();
   const video = useRef<HTMLVideoElement>(null),
@@ -42,8 +59,15 @@ export function Player() {
     [asset?.durationUs, snap.suggestions],
   );
   const scenes = useMemo(
-    () => segmentCaptions(snap.words, snap.captionStyle, asset.durationUs),
-    [snap.words, snap.captionStyle],
+    () => buildCaptionScenes(snap, false),
+    [
+      snap.words,
+      snap.captionStyle,
+      snap.suggestions,
+      snap.captionTranslations,
+      snap.captionPlacements,
+      snap.translationGlossary,
+    ],
   );
   const mediaURL = asset
     ? `precut-media://asset/${asset.id}${proxy && asset.proxyPath ? "?kind=proxy" : ""}`
@@ -155,20 +179,40 @@ export function Player() {
       const us = clock.currentUs;
       const removed =
         !original && !regions.some((r) => us >= r.startUs && us < r.endUs);
-      if (captions && !removed)
-        renderCaption(
-          ctx,
-          w,
-          h,
-          scenes.find((s) => us >= s.startUs && us < s.endUs),
-          us,
-          snap.captionStyle,
-        );
+      const scene = scenes.find((s) => us >= s.startUs && us < s.endUs);
+      const draft = positionDraft.current;
+      const displayScene =
+        scene && draft && (draft.scope === "project" || draft.id === scene.id)
+          ? { ...scene, anchor: draft.anchor }
+          : scene;
+      const bounds =
+        captions && !removed
+          ? renderCaption(ctx, w, h, displayScene, us, snap.captionStyle)
+          : undefined;
+      if (captionEditing)
+        setActiveCaption((previous) => {
+          if (!scene || !bounds) return previous ? undefined : previous;
+          if (
+            previous?.scene === scene &&
+            JSON.stringify(previous.bounds) === JSON.stringify(bounds)
+          )
+            return previous;
+          return { scene, bounds };
+        });
     };
+    redraw.current = draw;
     const unsub = clock.subscribe(draw);
-    void document.fonts.load('700 48px "Noto Sans Thai"').then(draw);
+    let disposed = false;
+    void loadCaptionFonts(snap.captionStyle, snap.captionFonts, snap.project.id)
+      .then(() => {
+        if (!disposed) draw();
+      })
+      .catch((error) => useStore.getState().set({ error: String(error) }));
     draw();
-    return unsub;
+    return () => {
+      disposed = true;
+      unsub();
+    };
   }, [
     asset?.width,
     asset?.height,
@@ -177,6 +221,7 @@ export function Player() {
     snap.captionStyle,
     regions,
     original,
+    captionEditing,
   ]);
   useEffect(() => {
     if (video.current) video.current.playbackRate = Number(speed);
@@ -267,7 +312,22 @@ export function Player() {
           className="caption-canvas"
           aria-label={t("Caption preview")}
         />
-        {!playing && (
+        {captionEditing && (
+          <CaptionPosition
+            stage={container}
+            width={asset?.width || 1920}
+            height={asset?.height || 1080}
+            active={activeCaption}
+            pause={() => video.current?.pause()}
+            onDraft={(anchor, scope, id) => {
+              positionDraft.current = anchor
+                ? { anchor, scope, id }
+                : undefined;
+              redraw.current();
+            }}
+          />
+        )}
+        {!playing && !captionEditing && (
           <button
             className="center-play"
             aria-label={t("Press Space to play")}
@@ -335,7 +395,11 @@ export function Player() {
             variant="ghost"
             size="icon"
             aria-label="Fullscreen"
-            onClick={() => void container.current?.requestFullscreen()}
+            onClick={() =>
+              safe(async () => {
+                await container.current?.requestFullscreen();
+              })
+            }
           >
             <Maximize size={16} />
           </Button>

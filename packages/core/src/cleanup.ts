@@ -3,6 +3,7 @@ import type {
   Suggestion,
   CleanupOptions,
   Confidence,
+  Rational,
 } from "../../shared/src/contracts";
 import { retainedPause, type QuietInterval } from "../../speech/src/analysis";
 const normalize = (s: string) =>
@@ -21,6 +22,35 @@ const contextual = new Set([
 ]);
 export function level(score: number): Confidence {
   return score >= 0.9 ? "high" : score >= 0.65 ? "medium" : "low";
+}
+// The final frame-rounded cut must remain within quiet audio and outside words.
+export function eligibleSilenceCut(
+  s: Suggestion,
+  words: Word[],
+  fps?: Rational,
+) {
+  if (
+    !["silence", "pause"].includes(s.category) ||
+    s.level !== "high" ||
+    !s.evidence ||
+    s.evidence.uncertain
+  )
+    return false;
+  const round = (us: number) =>
+    fps
+      ? Math.round(
+          (Math.round((us * fps.numerator) / (1e6 * fps.denominator)) *
+            1e6 *
+            fps.denominator) /
+            fps.numerator,
+        )
+      : us;
+  const start = round(s.startUs),
+    end = round(s.endUs);
+  return (
+    end > start &&
+    !words.some((w) => w.startUs - 80000 < end && w.endUs + 80000 > start)
+  );
 }
 export function analyzeCleanup(
   words: Word[],
@@ -115,6 +145,49 @@ export function analyzeCleanup(
         );
       }
     }
+  const customText = (text: string) =>
+    text
+      .normalize("NFC")
+      .toLocaleLowerCase()
+      .replace(/[.!?。！？,;:"'“”‘’]+$/gu, "")
+      .replace(/\s+/gu, "");
+  for (const wanted of new Set((options.customWords ?? []).map(customText))) {
+    if (!wanted) continue;
+    for (let i = 0; i < words.length; i++) {
+      let text = "";
+      for (let j = i; j < Math.min(words.length, i + 30); j++) {
+        if (j > i && words[j].startUs - words[j - 1].endUs > 550000) break;
+        text += customText(words[j].text);
+        if (text === wanted) {
+          if (
+            output.some(
+              (s) =>
+                s.category === "filler" &&
+                s.wordIds.join("|") ===
+                  words
+                    .slice(i, j + 1)
+                    .map((w) => w.id)
+                    .join("|"),
+            )
+          )
+            break;
+          add(
+            "filler",
+            Math.max(words[i - 1]?.endUs ?? 0, words[i].startUs - 25000),
+            Math.min(
+              words[j + 1]?.startUs ?? durationUs,
+              words[j].endUs + 25000,
+            ),
+            0.76,
+            "Matches your custom word list. Listen before removing this phrase.",
+            words.slice(i, j + 1).map((w) => w.id),
+          );
+          break;
+        }
+        if (!wanted.startsWith(text)) break;
+      }
+    }
+  }
   if (options.falseStarts || options.retakes || options.repetitions) {
     const groups: Word[][] = [];
     let group: Word[] = [];

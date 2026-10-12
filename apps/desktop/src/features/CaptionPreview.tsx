@@ -1,3 +1,5 @@
+import { loadCaptionFonts } from "../lib/caption-fonts";
+import { useStore } from "../lib/store";
 import { useEffect, useRef } from "react";
 import { renderCaption } from "../../../../packages/core/src/captions";
 import type {
@@ -17,6 +19,7 @@ export function CaptionPreview({
   animated?: boolean;
   compact?: boolean;
 }) {
+  const snapshot = useStore((s) => s.snapshot);
   const canvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const surface = canvas.current;
@@ -59,24 +62,42 @@ export function CaptionPreview({
           endUs,
           words,
           presetId: style.preset,
+          lines:
+            style.languageMode === "th-en"
+              ? [
+                  /[\p{Script=Thai}]/u.test(text)
+                    ? { language: "th", text, words }
+                    : { language: "th", text: "ทุกคำ มีความหมาย" },
+                  /[\p{Script=Thai}]/u.test(text)
+                    ? { language: "en", text: "Every word matters." }
+                    : { language: "en", text, words },
+                ]
+              : style.languageMode === "en"
+                ? [{ language: "en", text, words }]
+                : undefined,
         },
         timeUs,
         {
           ...style,
           // Legible comparison samples; the video player shows output sizing.
           size: style.size * (compact ? 4.2 : 1.65),
+          englishSize:
+            (style.englishSize ?? style.size * 0.8) * (compact ? 4.2 : 1.65),
+          anchor: undefined,
           position: compact ? "middle" : style.position,
           maxWidth: compact ? 0.9 : style.maxWidth,
         },
       );
       if (animated && !motion.matches) frame = requestAnimationFrame(draw);
     };
-    void document.fonts.ready.then(() => {
-      if (!disposed) {
-        cancelAnimationFrame(frame);
-        draw();
-      }
-    });
+    void loadCaptionFonts(style, snapshot?.captionFonts, snapshot?.project.id)
+      .then(() => {
+        if (!disposed) {
+          cancelAnimationFrame(frame);
+          draw();
+        }
+      })
+      .catch(() => {});
     draw();
     return () => {
       disposed = true;

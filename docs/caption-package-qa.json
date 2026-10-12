@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-11T17:57:23.714Z",
+  "platform": "darwin",
+  "arch": "arm64",
+  "packaged": true,
+  "version": "2.1.0",
+  "fonts": 44,
+  "autoEditMs": 22571,
+  "subtitleSelection": "Thai + English chosen in Auto Edit; automatic translation completed in the analysis job",
+  "translatedCaptions": 6,
+  "translations": [
+    "ดังนั้นเพื่อนร่วมชาติของฉัน,",
+    "อย่าถาม",
+    "สิ่งที่ประเทศของคุณสามารถทำได้",
+    "สำหรับคุณ,",
+    "ถามว่าคุณสามารถทำอะไรได้บ้าง",
+    "สำหรับประเทศของคุณ"
+  ],
+  "fontImport": "passed",
+  "dragUndo": "passed",
+  "network": "No cloud translation; model preseeded locally. PATH excludes developer tools.",
+  "scope": "Production packaged app in isolated user data; no purchase, export quota or installed user project changes."
+}

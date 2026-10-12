@@ -7,8 +7,7 @@ import type {
   LicenseStatus,
 } from "../../../../packages/shared/src/contracts";
 import { defaultSettings } from "../../../../packages/shared/src/contracts";
-type View =
-  "projects" | "media" | "transcript" | "captions" | "export" | "settings";
+type View = "projects" | "media" | "transcript" | "export" | "settings";
 type State = {
   view: View;
   snapshot?: Snapshot;
@@ -20,10 +19,14 @@ type State = {
   saving: boolean;
   signinOpen: boolean;
   reviewId?: string;
+  transcriptTool: "cleanup" | "captions";
+  captionCueId?: string;
+  captionScope?: "project" | "cue";
   set: (patch: Partial<Omit<State, "set">>) => void;
 };
 export const useStore = create<State>((set) => ({
   view: "projects",
+  transcriptTool: "cleanup",
   projects: [],
   jobs: [],
   settings: defaultSettings,

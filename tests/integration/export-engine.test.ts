@@ -9,7 +9,7 @@ import { binary, run } from "../../packages/media/src/process";
 import { probe } from "../../packages/media/src/probe";
 import { execute, type EngineTask } from "../../apps/desktop/electron/engine";
 import { recoverExport } from "../../packages/core/src/receipts";
-import { presets } from "../../packages/core/src/captions";
+import { presets, buildCaptionScenes } from "../../packages/core/src/captions";
 import { SettingsSchema } from "../../packages/shared/src/contracts";
 
 const fault = vi.hoisted(() => ({ failReceiptSync: false }));
@@ -184,7 +184,7 @@ const nativeRoot = join(
   `${process.platform}-${process.arch}`,
 );
 it.skipIf(!existsSync(binary(nativeRoot, "ffmpeg")))(
-  "renders and verifies MP4 with Thai captions and its SRT sidecar using bundled tools",
+  "renders positioned bilingual MP4 and its SRT sidecar using bundled tools",
   async () => {
     const { root, task, ctx } = await fixture();
     task.nativeRoot = nativeRoot;
@@ -195,6 +195,23 @@ it.skipIf(!existsSync(binary(nativeRoot, "ffmpeg")))(
       format: "mp4",
       sidecar: true,
     };
+    task.snapshot!.captionStyle = {
+      ...task.snapshot!.captionStyle,
+      languageMode: "th-en",
+      englishFont: "Inter",
+      englishWeight: 600,
+      englishSize: 44,
+      anchor: { x: 0.3, y: 0.3 },
+    };
+    const scene = buildCaptionScenes(task.snapshot!)[0];
+    task.snapshot!.captionTranslations = [
+      {
+        id: scene.id,
+        language: "en",
+        text: "Hello",
+        sourceHash: scene.sourceHash!,
+      },
+    ];
     const asset = task.snapshot!.assets[0];
     asset.width = 320;
     asset.height = 180;
@@ -241,6 +258,28 @@ it.skipIf(!existsSync(binary(nativeRoot, "ffmpeg")))(
     expect(
       await readFile(task.output.replace(/\.mp4$/, ".srt"), "utf8"),
     ).toContain("สวัสดี");
+    expect(
+      await readFile(task.output.replace(/\.mp4$/, ".srt"), "utf8"),
+    ).toContain("Hello");
+    const frame = join(root, "frame.png");
+    await run(
+      binary(nativeRoot, "ffmpeg"),
+      ["-v", "error", "-i", task.output, "-ss", "0.4", "-frames:v", "1", frame],
+      { signal: ctx.signal },
+    );
+    const { Canvas, loadImage } = await import("skia-canvas");
+    const canvas = new Canvas(320, 180),
+      ctx2 = canvas.getContext("2d");
+    ctx2.drawImage(await loadImage(frame), 0, 0);
+    const lit = (x: number, y: number, w: number, h: number) => {
+      const data = ctx2.getImageData(x, y, w, h).data;
+      let n = 0;
+      for (let i = 0; i < data.length; i += 4)
+        if (data[i] > 80 && data[i + 1] > 80) n++;
+      return n;
+    };
+    expect(lit(45, 25, 100, 70)).toBeGreaterThan(10);
+    expect(lit(0, 140, 320, 40)).toBe(0);
     expect(
       JSON.parse(await readFile(result.receipt, "utf8")).artifacts,
     ).toHaveLength(2);

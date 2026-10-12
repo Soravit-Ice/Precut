@@ -1,3 +1,6 @@
+import { runTranslation, TRANSLATION_MODEL } from "./translation";
+import { finishAutoEditCaptions } from "./auto-edit-captions";
+import { registerCaptionFonts, importCaptionFont } from "./fonts";
 import {
   mkdir,
   readFile,
@@ -26,13 +29,13 @@ import { runSpeech } from "./speech";
 import { analyzeCleanup } from "../../../packages/core/src/cleanup";
 import {
   keepRegions,
-  mapWords,
   outputDuration,
   seconds,
   frames as frameCount,
 } from "../../../packages/core/src/timeline";
 import {
-  segmentCaptions,
+  buildCaptionScenes,
+  missingCaptionTranslations,
   srt,
   renderCaption,
 } from "../../../packages/core/src/captions";
@@ -51,7 +54,7 @@ import type {
 export type EngineTask = {
   id: string;
   projectId: string;
-  type: "import" | "analyze" | "proxy" | "export" | "model";
+  type: "import" | "analyze" | "proxy" | "export" | "model" | "translate";
   nativeRoot: string;
   modelsRoot: string;
   fontsRoot: string;
@@ -65,9 +68,11 @@ export type EngineTask = {
   force?: boolean;
   autoApplySilence?: boolean;
   reassessKeptSilence?: boolean;
+  captionLanguage?: Snapshot["captionStyle"]["languageMode"];
   exportOptions?: ExportOptions;
   output?: string;
   modelId?: Model["id"];
+  fontImport?: boolean;
 };
 export type Context = {
   signal: AbortSignal;
@@ -82,6 +87,13 @@ const models = {
   vad: "ggml-silero-v6.2.0.bin",
 };
 export const modelDefinitions: Omit<Model, "installed">[] = [
+  {
+    id: "translation",
+    name: "Offline Thai / English translation",
+    file: TRANSLATION_MODEL.file,
+    size: TRANSLATION_MODEL.size,
+    sha256: TRANSLATION_MODEL.sha256,
+  },
   { id: "fast", name: "Fast", file: models.fast, size: 147951465 },
   { id: "balanced", name: "Balanced", file: models.balanced, size: 574041195 },
   {
@@ -356,10 +368,8 @@ async function analyze(task: EngineTask, ctx: Context) {
     speech: result.speech,
     autoApplySilence: task.autoApplySilence,
     reassessKeptSilence: task.reassessKeptSilence,
-    captionStyle: { ...snap.captionStyle, preset: task.options!.preset },
   });
   await rm(result.pendingPath, { force: true });
-  ctx.stage("Ready to review", 1);
   return {
     words: words.length,
     suggestions: suggestions.length,
@@ -474,24 +484,26 @@ async function semanticSuggestions(
 async function downloadModel(task: EngineTask, ctx: Context) {
   const id = task.modelId!;
   const entries =
-    id === "semantic"
-      ? [
-          {
-            repo: "Xenova/multilingual-e5-small",
-            file: "onnx/model_quantized.onnx",
-          },
-          { repo: "Xenova/multilingual-e5-small", file: "tokenizer.json" },
-          {
-            repo: "Xenova/multilingual-e5-small",
-            file: "tokenizer_config.json",
-          },
-        ]
-      : [
-          {
-            repo: "ggerganov/whisper.cpp",
-            file: models[id as "balanced" | "quality"],
-          },
-        ];
+    id === "translation"
+      ? [TRANSLATION_MODEL]
+      : id === "semantic"
+        ? [
+            {
+              repo: "Xenova/multilingual-e5-small",
+              file: "onnx/model_quantized.onnx",
+            },
+            { repo: "Xenova/multilingual-e5-small", file: "tokenizer.json" },
+            {
+              repo: "Xenova/multilingual-e5-small",
+              file: "tokenizer_config.json",
+            },
+          ]
+        : [
+            {
+              repo: "ggerganov/whisper.cpp",
+              file: models[id as "balanced" | "quality"],
+            },
+          ];
   let manifest: Record<string, unknown>[] = [];
   try {
     manifest = JSON.parse(
@@ -500,15 +512,25 @@ async function downloadModel(task: EngineTask, ctx: Context) {
   } catch {}
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i];
+    const revision = "revision" in entry ? entry.revision : "main";
     const folder = entry.file.includes("/")
       ? entry.file.slice(0, entry.file.lastIndexOf("/"))
       : "";
-    const metadata = (await (
-      await fetch(
-        `https://huggingface.co/api/models/${entry.repo}/tree/main/${folder}?expand=true`,
-        { signal: ctx.signal },
-      )
-    ).json()) as { path: string; size: number; lfs?: { oid: string } }[];
+    const metadata =
+      id === "translation"
+        ? [
+            {
+              path: TRANSLATION_MODEL.file,
+              size: TRANSLATION_MODEL.size,
+              lfs: { oid: TRANSLATION_MODEL.sha256 },
+            },
+          ]
+        : ((await (
+            await fetch(
+              `https://huggingface.co/api/models/${entry.repo}/tree/${revision}/${folder}?expand=true`,
+              { signal: ctx.signal },
+            )
+          ).json()) as { path: string; size: number; lfs?: { oid: string } }[]);
     const meta = metadata.find((m) => m.path === entry.file);
     const path = join(
       task.modelsRoot,
@@ -516,37 +538,55 @@ async function downloadModel(task: EngineTask, ctx: Context) {
       entry.file,
     );
     await mkdir(dirname(path), { recursive: true });
-    const previous = await stat(path + ".part")
+    let previous = await stat(path + ".part")
       .then((s) => s.size)
       .catch(() => 0);
-    const response = await fetch(
-      `https://huggingface.co/${entry.repo}/resolve/main/${entry.file}`,
-      {
-        signal: ctx.signal,
-        headers: previous ? { Range: `bytes=${previous}-` } : undefined,
-      },
-    );
-    if (!response.ok || !response.body)
-      throw new Error("Model download failed. Please retry.");
-    const append = previous > 0 && response.status === 206;
-    const file = await open(path + ".part", append ? "a" : "w");
-    let done = append ? previous : 0;
-    try {
-      for await (const data of response.body) {
-        ctx.signal.throwIfAborted();
-        await file.write(data);
-        done += data.length;
-        ctx.stage(
-          `Downloading ${id}`,
-          (i + done / (meta?.size ?? done)) / entries.length,
-        );
+    let digest: string | undefined;
+    if (meta?.size && previous >= meta.size) {
+      const candidate = await sha256(path + ".part");
+      if (previous === meta.size && candidate === meta.lfs?.oid)
+        digest = candidate;
+      else {
+        await rm(path + ".part", { force: true });
+        previous = 0;
       }
-    } finally {
-      await file.close();
     }
-    const digest = await sha256(path + ".part");
-    if (meta?.lfs?.oid && digest !== meta.lfs.oid)
-      throw new Error("Model checksum does not match. Please retry.");
+    let done = previous;
+    if (!digest) {
+      const response = await fetch(
+        `https://huggingface.co/${entry.repo}/resolve/${revision}/${entry.file}`,
+        {
+          signal: ctx.signal,
+          headers: previous ? { Range: `bytes=${previous}-` } : undefined,
+        },
+      );
+      if (!response.ok || !response.body)
+        throw new Error("Model download failed. Please retry.");
+      const append = previous > 0 && response.status === 206;
+      const file = await open(path + ".part", append ? "a" : "w");
+      done = append ? previous : 0;
+      try {
+        for await (const data of response.body) {
+          ctx.signal.throwIfAborted();
+          await file.write(data);
+          done += data.length;
+          ctx.stage(
+            `Downloading ${id}`,
+            (i + done / (meta?.size ?? done)) / entries.length,
+          );
+        }
+      } finally {
+        await file.close();
+      }
+      digest = await sha256(path + ".part");
+      if (
+        (id === "translation" && digest !== TRANSLATION_MODEL.sha256) ||
+        (meta?.lfs?.oid && digest !== meta.lfs.oid)
+      ) {
+        await rm(path + ".part", { force: true });
+        throw new Error("Model checksum does not match. Please retry.");
+      }
+    }
     await rename(path + ".part", path);
     manifest = manifest.filter((m) => m.file !== entry.file);
     manifest.push({
@@ -583,11 +623,15 @@ async function exportMedia(task: EngineTask, ctx: Context) {
     throw new Error(
       "The whole source is removed. Restore a region before exporting.",
     );
-  const scenes = segmentCaptions(
-    mapWords(snap.words, regions),
-    snap.captionStyle,
-    outputDuration(regions),
-  );
+  const scenes = buildCaptionScenes(snap);
+  if (
+    (options.format === "srt" ||
+      (options.format === "mp4" && (options.captions || options.sidecar))) &&
+    missingCaptionTranslations(snap).length
+  )
+    throw new Error(
+      "Translate the selected caption language before exporting.",
+    );
   const output = task.output!,
     receiptPath = join(
       task.projectRoot,
@@ -670,11 +714,9 @@ async function exportMedia(task: EngineTask, ctx: Context) {
         "utf8",
       );
     } else {
-      const { Canvas, FontLibrary } = await import("skia-canvas");
-      FontLibrary.use("Inter", [join(task.fontsRoot, "Inter.ttf")]);
-      FontLibrary.use("Noto Sans Thai", [
-        join(task.fontsRoot, "NotoSansThai.ttf"),
-      ]);
+      const { Canvas } = await import("skia-canvas");
+      if (options.captions && scenes.length)
+        await registerCaptionFonts(snap, task.fontsRoot, task.projectRoot);
       const duration = outputDuration(regions),
         fps = asset.fps.numerator / asset.fps.denominator;
       const originalW = asset.width || 1920,
@@ -910,15 +952,28 @@ export async function execute(task: EngineTask, ctx: Context) {
     await mkdir(join(task.projectRoot, folder), { recursive: true });
   switch (task.type) {
     case "import":
+      if (task.fontImport) {
+        const font = await importCaptionFont(task.path!, task.projectRoot);
+        await ctx.db("fonts.add", { projectId: task.projectId, font });
+        return { font };
+      }
       return importMedia(task, ctx);
     case "proxy":
       return proxy(task, ctx);
-    case "analyze":
-      return analyze(task, ctx);
+    case "analyze": {
+      const result = await analyze(task, {
+        ...ctx,
+        stage: (stage, progress) => ctx.stage(stage, progress * 0.7),
+      });
+      await finishAutoEditCaptions(task, ctx);
+      return result;
+    }
     case "export":
       return exportMedia(task, ctx);
     case "model":
       return downloadModel(task, ctx);
+    case "translate":
+      return runTranslation(task, ctx);
   }
 }
 const callbacks = new Map<

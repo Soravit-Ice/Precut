@@ -17,6 +17,10 @@ for (const name of Object.keys(pkg.dependencies)) {
 }
 for (const [name, url] of [
   [
+    "Qwen3-Apache-2.0.txt",
+    "https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507/resolve/1b4199c/LICENSE",
+  ],
+  [
     "Inter-OFL.txt",
     "https://raw.githubusercontent.com/google/fonts/main/ofl/inter/OFL.txt",
   ],

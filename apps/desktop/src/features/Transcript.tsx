@@ -196,7 +196,10 @@ export function Transcript() {
     const suggestion = snap.suggestions.find(
       (s) => w.startUs < s.endUs && w.endUs > s.startUs,
     );
-    if (suggestion) useStore.getState().set({ reviewId: suggestion.id });
+    if (suggestion)
+      useStore
+        .getState()
+        .set({ reviewId: suggestion.id, transcriptTool: "cleanup" });
   };
   return (
     <section className="transcript-section">
@@ -388,7 +391,12 @@ export function Transcript() {
                             key={s.id}
                             className={`transcript-category ${s.status === "accepted" ? "applied" : ""}`}
                             onClick={() => {
-                              useStore.getState().set({ reviewId: s.id });
+                              useStore
+                                .getState()
+                                .set({
+                                  reviewId: s.id,
+                                  transcriptTool: "cleanup",
+                                });
                               clock.seek?.(s.startUs);
                             }}
                           >

@@ -1,3 +1,6 @@
+import { projectFonts, validateCaptionFonts } from "./fonts";
+import { captionLanguageStyle } from "../../../packages/shared/src/fonts";
+import { missingCaptionTranslations } from "../../../packages/core/src/captions";
 import {
   app,
   BrowserWindow,
@@ -54,6 +57,7 @@ protocol.registerSchemesAsPrivileged([
       secure: true,
       stream: true,
       supportFetchAPI: true,
+      corsEnabled: true,
     },
   },
 ]);
@@ -99,7 +103,8 @@ const active = new Map<
 const cancelledJobs = new Set<string>();
 const exportRequests = new Set<string>();
 let window: BrowserWindow | undefined,
-  quitting = false;
+  quitting = false,
+  speechRequest = false;
 function emit(event: AppEvent) {
   if (window && !window.isDestroyed())
     window.webContents.send("precut:event", event);
@@ -242,19 +247,23 @@ async function launch(job: Job, task: EngineTask) {
             }
             // Cached chunks and CPU recovery can revisit an earlier stage.
             // Keep the overall analysis bar moving forwards through those retries.
-            job.progress =
-              job.type === "analyze"
-                ? Math.max(
-                    job.progress,
-                    Math.min(1, Math.max(0, message.progress!)),
-                  )
-                : message.progress!;
+            job.progress = ["analyze", "translate"].includes(job.type)
+              ? Math.max(
+                  job.progress,
+                  Math.min(1, Math.max(0, message.progress!)),
+                )
+              : message.progress!;
             if (Date.now() - lastProgress > 200) {
               lastProgress = Date.now();
               await record(job);
             }
           } else if (message.type === "db") {
             try {
+              if (
+                job.state === "cancelled" &&
+                message.method === "captions.finishTranslation"
+              )
+                throw new Error("Cancelled");
               const result =
                 message.method === "waveform.ready"
                   ? true
@@ -469,33 +478,127 @@ async function handle(
     case "edits.trim":
     case "edits.undo":
     case "edits.redo":
+    case "captions.position":
+    case "captions.translation":
     case "captions.style":
     case "captions.correct":
     case "captions.correctMany": {
+      if (method === "captions.style")
+        validateCaptionFonts(
+          input.style as Snapshot["captionStyle"],
+          await snapshot(input.projectId as string),
+        );
       const result = await db.call(method, input);
       emit({ type: "project", projectId: input.projectId as string });
       return result;
     }
-    case "jobs.analyze": {
+    case "fonts.list":
+      return projectFonts(await snapshot(input.projectId as string));
+    case "fonts.import": {
       const id = input.projectId as string;
       if (processing(id))
+        throw new Error("Wait for processing before importing a font.");
+      const selection = await dialog.showOpenDialog(window!, {
+        title: "Import caption font",
+        properties: ["openFile"],
+        filters: [{ name: "Font files", extensions: ["ttf", "otf"] }],
+      });
+      if (selection.canceled) return null;
+      const job = newJob(id, "import");
+      const result = await launch(
+        job,
+        await taskFor(job, {
+          snapshot: await snapshot(id),
+          path: selection.filePaths[0],
+          fontImport: true,
+        }),
+      );
+      return result.font;
+    }
+    case "captions.translate": {
+      const id = input.projectId as string;
+      if (
+        speechRequest ||
+        [...jobs.values()].some(
+          (j) =>
+            ["analyze", "translate"].includes(j.type) &&
+            (j.state === "running" || active.has(j.id)),
+        ) ||
+        processing(id)
+      )
+        throw new Error(
+          "Wait for the current speech or translation operation before translating.",
+        );
+      speechRequest = true;
+      try {
+        await db.call("captions.glossary", {
+          projectId: id,
+          glossary: input.glossary,
+        });
+        const snap = await snapshot(id);
+        if (!snap.captionStyle.languageMode)
+          throw new Error("Choose a caption language first.");
+        const job = newJob(id, "translate");
+        void launch(job, await taskFor(job, { snapshot: snap })).catch(
+          () => {},
+        );
+        return job;
+      } finally {
+        speechRequest = false;
+      }
+    }
+    case "jobs.analyze": {
+      const id = input.projectId as string;
+      if (
+        speechRequest ||
+        processing(id) ||
+        [...jobs.values()].some(
+          (j) =>
+            ["analyze", "translate"].includes(j.type) &&
+            (j.state === "running" || active.has(j.id)),
+        )
+      )
         throw new Error(
           "An operation is already running. Cancel it before starting another.",
         );
-      const snap = await snapshot(id),
-        job = newJob(id, "analyze");
-      void launch(
-        job,
-        await taskFor(job, {
-          snapshot: snap,
-          options: input.options as CleanupOptions,
-          speech: input.speech as EngineTask["speech"],
-          force: input.force as boolean,
-          autoApplySilence: input.autoApplySilence as boolean,
-          reassessKeptSilence: input.reassessKeptSilence as boolean,
-        }),
-      ).catch(() => {});
-      return job;
+      speechRequest = true;
+      try {
+        let snap = await snapshot(id);
+        const captionLanguage =
+          input.captionLanguage as EngineTask["captionLanguage"];
+        const style = {
+          ...(captionLanguage
+            ? captionLanguageStyle(
+                snap.captionStyle,
+                captionLanguage,
+                snap.captionFonts,
+              )
+            : snap.captionStyle),
+          preset: (input.options as CleanupOptions).preset,
+        };
+        if (JSON.stringify(style) !== JSON.stringify(snap.captionStyle)) {
+          validateCaptionFonts(style, snap);
+          await db.call("captions.style", { projectId: id, style });
+          snap = await snapshot(id);
+          emit({ type: "project", projectId: id });
+        }
+        const job = newJob(id, "analyze");
+        void launch(
+          job,
+          await taskFor(job, {
+            snapshot: snap,
+            options: input.options as CleanupOptions,
+            speech: input.speech as EngineTask["speech"],
+            force: input.force as boolean,
+            autoApplySilence: input.autoApplySilence as boolean,
+            reassessKeptSilence: input.reassessKeptSilence as boolean,
+            captionLanguage,
+          }),
+        ).catch(() => {});
+        return job;
+      } finally {
+        speechRequest = false;
+      }
     }
     case "jobs.list":
       return [...jobs.values()];
@@ -525,6 +628,15 @@ async function handle(
           throw new Error("Locate the original source before exporting.");
         if (options.format === "srt" && !snap.words.length)
           throw new Error("Analyze speech before exporting subtitles.");
+        if (
+          (options.format === "srt" ||
+            (options.format === "mp4" &&
+              (options.captions || options.sidecar))) &&
+          missingCaptionTranslations(snap).length
+        )
+          throw new Error(
+            "Translate the selected caption language before exporting.",
+          );
         if (processing(options.projectId))
           throw new Error("Wait for the current operation or cancel it first.");
         const extension =
@@ -728,10 +840,14 @@ async function createWindow() {
   });
   window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   window.webContents.on("will-navigate", (event) => event.preventDefault());
-  window.webContents.session.setPermissionRequestHandler((_c, _p, callback) =>
-    callback(false),
+  window.webContents.session.setPermissionRequestHandler(
+    (contents, permission, callback) =>
+      callback(contents === window?.webContents && permission === "fullscreen"),
   );
-  window.webContents.session.setPermissionCheckHandler(() => false);
+  window.webContents.session.setPermissionCheckHandler(
+    (contents, permission) =>
+      contents === window?.webContents && permission === "fullscreen",
+  );
   window.once("ready-to-show", () => window?.show());
   let refreshing = false;
   let refreshedAt = 0;
@@ -772,8 +888,35 @@ if (primary) {
         jobs.set(job.id, job);
       protocol.handle("precut-media", async (request) => {
         try {
-          const url = new URL(request.url),
-            asset = assets.get(url.pathname.slice(1));
+          const url = new URL(request.url);
+          if (url.hostname === "font") {
+            const [projectId, fontId, file] = url.pathname
+              .slice(1)
+              .split("/")
+              .map(decodeURIComponent);
+            if (!z.string().uuid().safeParse(projectId).success)
+              return new Response(null, { status: 404 });
+            const snap = await snapshot(projectId);
+            const font = snap.captionFonts?.find((f) => f.id === fontId);
+            if (
+              !font?.custom ||
+              !font.files.some((f) => f.file === file) ||
+              !/^[-a-f0-9]+\.(ttf|otf)$/.test(file)
+            )
+              return new Response(null, { status: 404 });
+            return new Response(
+              await readFile(join(projectsRoot, projectId, "fonts", file)),
+              {
+                headers: {
+                  "Content-Type": file.endsWith(".otf")
+                    ? "font/otf"
+                    : "font/ttf",
+                  "Access-Control-Allow-Origin": "*",
+                },
+              },
+            );
+          }
+          const asset = assets.get(url.pathname.slice(1));
           if (!asset) return new Response("Not found", { status: 404 });
           const kind = url.searchParams.get("kind");
           const path =

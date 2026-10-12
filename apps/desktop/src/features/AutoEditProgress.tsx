@@ -16,6 +16,7 @@ import {
   analysisProgress,
   analysisStage,
   analysisSteps,
+  subtitlesAwaitingModel,
 } from "../lib/analysis-progress";
 
 function useElapsed(job: Job) {
@@ -91,9 +92,7 @@ export function AutoEditProgress({
                   : "Auto Edit could not finish",
             )}
           </strong>
-          <span>
-            {completed ? t("Ready to review") : analysisStage(job.stage, t)}
-          </span>
+          <span>{analysisStage(job.stage, t)}</span>
         </div>
         <ProgressTrack job={job} />
       </div>
@@ -135,6 +134,7 @@ export function AutoEditProgressDialog({
   const t = useT(),
     elapsed = useElapsed(job);
   const { percent, step, running } = analysisProgress(job);
+  const subtitlePending = subtitlesAwaitingModel(job);
   const [cancelling, setCancelling] = useState(false);
   useEffect(() => setCancelling(false), [job.id, running]);
   const completed = job.state === "completed";
@@ -149,7 +149,7 @@ export function AutoEditProgressDialog({
   const current = cancelling
     ? t("Stopping…")
     : completed
-      ? t("Ready to review")
+      ? analysisStage(job.stage, t)
       : running
         ? analysisStage(job.stage, t)
         : t(title);
@@ -248,16 +248,27 @@ export function AutoEditProgressDialog({
       {failed && <p className="analysis-failure">{job.error}</p>}
       <ol className="analysis-steps" aria-label={t("Auto Edit steps")}>
         {analysisSteps.map((label, index) => {
-          const done = index < step;
+          const pending = subtitlePending && label === "Create subtitles";
+          const done = index < step && !pending;
           const active = index === step && running;
           return (
             <li
               key={label}
-              className={done ? "is-done" : active ? "is-active" : ""}
+              className={
+                pending
+                  ? "is-pending"
+                  : done
+                    ? "is-done"
+                    : active
+                      ? "is-active"
+                      : ""
+              }
               aria-current={active ? "step" : undefined}
             >
               <span className="analysis-step-icon" aria-hidden="true">
-                {done ? (
+                {pending ? (
+                  <Clock3 size={13} />
+                ) : done ? (
                   <Check size={13} />
                 ) : active ? (
                   <LoaderCircle size={14} className="analysis-spinner" />
@@ -267,7 +278,15 @@ export function AutoEditProgressDialog({
               </span>
               <span>{t(label)}</span>
               <small>
-                {t(done ? "Done" : active ? "In progress" : "Waiting")}
+                {t(
+                  pending
+                    ? "Awaiting translation model"
+                    : done
+                      ? "Done"
+                      : active
+                        ? "In progress"
+                        : "Waiting",
+                )}
               </small>
             </li>
           );

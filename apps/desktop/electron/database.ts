@@ -1,3 +1,5 @@
+import { buildCaptionScenes } from "../../../packages/core/src/captions";
+import { eligibleSilenceCut } from "../../../packages/core/src/cleanup";
 import Database from "better-sqlite3";
 import { mkdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -77,6 +79,7 @@ function db(id: string) {
  CREATE TABLE IF NOT EXISTS cut_suggestions(id TEXT PRIMARY KEY,category TEXT NOT NULL,startUs INTEGER NOT NULL,endUs INTEGER NOT NULL,confidence REAL NOT NULL,level TEXT NOT NULL,reason TEXT NOT NULL,status TEXT NOT NULL,wordIds TEXT NOT NULL,relatedId TEXT);
  CREATE TABLE IF NOT EXISTS timeline_regions(id TEXT PRIMARY KEY,startUs INTEGER NOT NULL,endUs INTEGER NOT NULL,kind TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS caption_segments(id TEXT PRIMARY KEY,startUs INTEGER NOT NULL,endUs INTEGER NOT NULL,data TEXT NOT NULL);
+ CREATE TABLE IF NOT EXISTS caption_workspace(id INTEGER PRIMARY KEY CHECK(id=1),data TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS caption_settings(id INTEGER PRIMARY KEY CHECK(id=1),data TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS commands(seq INTEGER PRIMARY KEY AUTOINCREMENT,kind TEXT NOT NULL,beforeData TEXT NOT NULL,afterData TEXT NOT NULL,applied INTEGER NOT NULL DEFAULT 1);
  CREATE TABLE IF NOT EXISTS export_jobs(id TEXT PRIMARY KEY,operationId TEXT NOT NULL,state TEXT NOT NULL,data TEXT NOT NULL);
@@ -121,6 +124,16 @@ function db(id: string) {
       .prepare("INSERT OR IGNORE INTO migrations VALUES(3,datetime('now'))")
       .run();
   })();
+  database
+    .prepare("INSERT OR IGNORE INTO caption_workspace VALUES(1,?)")
+    .run(
+      JSON.stringify({
+        captionPlacements: [],
+        captionTranslations: [],
+        captionFonts: [],
+        translationGlossary: "",
+      }),
+    );
   database
     .prepare("INSERT OR IGNORE INTO caption_settings VALUES(1,?)")
     .run(JSON.stringify(presets[1].style));
@@ -198,6 +211,13 @@ function snapshot(id: string): Snapshot {
     words,
     segments,
     suggestions,
+    ...JSON.parse(
+      (
+        database
+          .prepare("SELECT data FROM caption_workspace WHERE id=1")
+          .get() as { data: string }
+      ).data,
+    ),
     captionStyle: JSON.parse(
       (
         database
@@ -245,6 +265,27 @@ function snapshot(id: string): Snapshot {
     ),
   };
 }
+type CaptionWorkspace = Pick<
+  Snapshot,
+  | "captionPlacements"
+  | "captionTranslations"
+  | "captionFonts"
+  | "translationGlossary"
+> & {
+  captionPlacements: import("../../../packages/shared/src/contracts").CaptionPlacement[];
+  captionTranslations: import("../../../packages/shared/src/contracts").CaptionTranslation[];
+  captionFonts: import("../../../packages/shared/src/fonts").CaptionFont[];
+  translationGlossary: string;
+};
+function workspace(id: string): CaptionWorkspace {
+  return JSON.parse(
+    (
+      db(id).prepare("SELECT data FROM caption_workspace WHERE id=1").get() as {
+        data: string;
+      }
+    ).data,
+  );
+}
 type Change = {
   id: string;
   status?: Suggestion["status"];
@@ -257,11 +298,22 @@ type Change = {
     "corrected" | "timingSource" | "alignmentConfidence" | "reviewReason"
   >;
 };
-function apply(
-  database: Database.Database,
-  kind: string,
-  changes: Change[] | CaptionStyle,
-) {
+function apply(database: Database.Database, kind: string, changes: unknown) {
+  if (kind === "caption-layout") {
+    const layout = changes as {
+      style: CaptionStyle;
+      workspace: CaptionWorkspace;
+    };
+    apply(database, "style", layout.style);
+    apply(database, "caption-workspace", layout.workspace);
+    return;
+  }
+  if (kind === "caption-workspace") {
+    database
+      .prepare("UPDATE caption_workspace SET data=? WHERE id=1")
+      .run(JSON.stringify(changes));
+    return;
+  }
   if (kind === "style") {
     database
       .prepare("UPDATE caption_settings SET data=? WHERE id=1")
@@ -344,7 +396,19 @@ export async function dispatch(
           "INSERT INTO projects(id,name,createdAt,updatedAt) VALUES(?,?,?,?)",
         )
         .run(projectId, args.name, now, now);
-      db(projectId);
+      const database = db(projectId);
+      const style = snapshot(projectId).captionStyle;
+      database
+        .prepare("UPDATE caption_settings SET data=? WHERE id=1")
+        .run(
+          JSON.stringify({
+            ...style,
+            languageMode: "th",
+            englishFont: "Inter",
+            englishWeight: 600,
+            englishSize: 38,
+          }),
+        );
       return snapshot(projectId);
     }
     case "projects.open":
@@ -722,8 +786,20 @@ export async function dispatch(
               "SELECT * FROM cut_suggestions WHERE status='pending' AND level='high' AND category IN ('silence','pause')",
             )
             .all() as Suggestion[];
+          const current = snapshot(id);
           for (const suggestion of safe) {
             if (!freshIds.has(suggestion.id)) continue;
+            const raw = database
+              .prepare("SELECT extra FROM cut_suggestions WHERE id=?")
+              .get(suggestion.id) as { extra: string };
+            if (
+              !eligibleSilenceCut(
+                { ...suggestion, ...JSON.parse(raw.extra) },
+                current.words,
+                current.assets[0]?.fps,
+              )
+            )
+              continue;
             if (
               preserved.some(
                 (old) =>
@@ -788,8 +864,11 @@ export async function dispatch(
       return snapshot(id);
     }
     case "edits.safe": {
-      const suggestions = snapshot(id).suggestions.filter(
-        (s) => s.level === "high" && s.status === "pending",
+      const snap = snapshot(id);
+      const suggestions = snap.suggestions.filter(
+        (s) =>
+          eligibleSilenceCut(s, snap.words, snap.assets[0]?.fps) &&
+          s.status === "pending",
       );
       command(
         id,
@@ -883,6 +962,138 @@ export async function dispatch(
         })();
         touch(id);
       }
+      return snapshot(id);
+    }
+    case "captions.position": {
+      const snap = snapshot(id);
+      if (args.scope === "project") {
+        const style = { ...snap.captionStyle };
+        const before = workspace(id);
+        let after = before;
+        if (args.anchor) {
+          const next =
+            args.anchor as import("../../../packages/shared/src/contracts").CaptionAnchor;
+          const from = args.fromAnchor as
+            | import("../../../packages/shared/src/contracts").CaptionAnchor
+            | undefined;
+          const dx = from ? next.x - from.x : 0,
+            dy = from ? next.y - from.y : 0;
+          const shifted = (
+            a: import("../../../packages/shared/src/contracts").CaptionAnchor,
+          ) => ({
+            x: Math.max(0, Math.min(1, a.x + dx)),
+            y: Math.max(0, Math.min(1, a.y + dy)),
+          });
+          style.anchor = from && style.anchor ? shifted(style.anchor) : next;
+          after = {
+            ...before,
+            captionPlacements: before.captionPlacements.map((p) => ({
+              ...p,
+              anchor: shifted(p.anchor),
+            })),
+          };
+        } else delete style.anchor;
+        command(
+          id,
+          "caption-layout",
+          { style: snap.captionStyle, workspace: before },
+          { style, workspace: after },
+        );
+      } else {
+        const startUs = args.startUs as number,
+          endUs = args.endUs as number;
+        if (endUs > snap.project.durationUs)
+          throw new Error("Invalid caption range");
+        const before = workspace(id);
+        const placements = before.captionPlacements.flatMap((p) => {
+          if (p.endUs <= startUs || p.startUs >= endUs) return [p];
+          return [
+            ...(p.startUs < startUs ? [{ ...p, endUs: startUs }] : []),
+            ...(p.endUs > endUs
+              ? [{ ...p, id: randomUUID(), startUs: endUs }]
+              : []),
+          ];
+        });
+        if (args.anchor)
+          placements.push({
+            id: randomUUID(),
+            startUs,
+            endUs,
+            anchor:
+              args.anchor as import("../../../packages/shared/src/contracts").CaptionAnchor,
+          });
+        command(id, "caption-workspace", before, {
+          ...before,
+          captionPlacements: placements,
+        });
+      }
+      return snapshot(id);
+    }
+    case "captions.translation": {
+      const snap = snapshot(id);
+      const scene = buildCaptionScenes(snap).find((s) => s.id === args.cueId);
+      if (!scene || scene.sourceHash !== args.sourceHash)
+        throw new Error("Caption changed. Reopen this caption before saving.");
+      const before = workspace(id);
+      const translations = before.captionTranslations.filter(
+        (t) => t.id !== args.cueId || t.language !== args.language,
+      );
+      translations.push({
+        id: args.cueId as string,
+        language: args.language as "th" | "en",
+        text: args.text as string,
+        sourceHash: scene.sourceHash!,
+        manual: true,
+      });
+      command(id, "caption-workspace", before, {
+        ...before,
+        captionTranslations: translations,
+      });
+      return snapshot(id);
+    }
+    case "captions.glossary": {
+      const before = workspace(id);
+      if (before.translationGlossary !== args.glossary)
+        command(id, "caption-workspace", before, {
+          ...before,
+          translationGlossary: args.glossary,
+        });
+      return snapshot(id);
+    }
+    case "captions.finishTranslation": {
+      const before = workspace(id);
+      const scenes = new Map(
+        buildCaptionScenes(snapshot(id)).map((s) => [s.id, s]),
+      );
+      const translations = [...before.captionTranslations];
+      for (const translated of args.translations as import("../../../packages/shared/src/contracts").CaptionTranslation[]) {
+        if (scenes.get(translated.id)?.sourceHash !== translated.sourceHash)
+          continue;
+        const i = translations.findIndex(
+          (t) => t.id === translated.id && t.language === translated.language,
+        );
+        if (i >= 0 && translations[i].manual) continue;
+        if (i >= 0) translations[i] = translated;
+        else translations.push(translated);
+      }
+      command(id, "caption-workspace", before, {
+        ...before,
+        captionTranslations: translations,
+      });
+      return snapshot(id);
+    }
+    case "fonts.add": {
+      const before = workspace(id);
+      const font =
+        args.font as import("../../../packages/shared/src/fonts").CaptionFont;
+      const fonts = [
+        ...before.captionFonts.filter((f) => f.id !== font.id),
+        font,
+      ];
+      command(id, "caption-workspace", before, {
+        ...before,
+        captionFonts: fonts,
+      });
       return snapshot(id);
     }
     case "captions.style": {

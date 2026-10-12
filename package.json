@@ -37,7 +37,11 @@
     "release:upload": "node scripts/release-upload.mjs",
     "release:manual": "node scripts/manual-release.mjs",
     "notices:prepare": "node scripts/collect-notices.mjs",
-    "start:unpackaged": "pnpm build && electron ."
+    "start:unpackaged": "pnpm build && electron .",
+    "native:translation": "node scripts/build-translation-native.mjs",
+    "fonts:prepare": "node scripts/prepare-fonts.mjs",
+    "fonts:verify": "node scripts/verify-fonts.mjs",
+    "test:translation": "vitest run tests/integration/translation-native.test.ts"
   },
   "dependencies": {
     "@fontsource/inter": "5.3.0",

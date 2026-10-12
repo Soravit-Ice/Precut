@@ -1,3 +1,10 @@
+import { CaptionLanguages } from "./CaptionLanguages";
+import {
+  bundledFonts,
+  supportedWeight,
+  type CaptionFont,
+} from "../../../../packages/shared/src/fonts";
+import { eligibleSilenceCut } from "../../../../packages/core/src/cleanup";
 import { useMemo, useState, useEffect, useRef } from "react";
 import {
   Scissors,
@@ -25,6 +32,7 @@ import {
   safe,
   clock,
   pendingCaptionSaves,
+  flushCaptionSave,
 } from "../lib/store";
 import { useT } from "../lib/i18n";
 import {
@@ -74,7 +82,9 @@ export function CleanupInspector() {
       useStore.getState().set({ reviewId: selected.id });
   }, [selected?.id]);
   const safeCount = snap.suggestions.filter(
-    (s) => s.level === "high" && s.status === "pending",
+    (s) =>
+      eligibleSilenceCut(s, snap.words, snap.assets[0]?.fps) &&
+      s.status === "pending",
   ).length;
   const potential =
     snap.project.durationUs -
@@ -385,6 +395,8 @@ export function CaptionInspector() {
     [animateSample, setAnimateSample] = useState(true),
     [hoveredPreset, setHoveredPreset] = useState<string>(),
     [studioTab, setStudioTab] = useState("styles");
+  const fonts = [...bundledFonts, ...(snap.captionFonts ?? [])];
+  const [fontSearch, setFontSearch] = useState("");
   const activePreset = presets.find((p) => p.id === draft.preset)!;
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => {
@@ -432,6 +444,7 @@ export function CaptionInspector() {
         {t("Give every word the right presence.")}
       </p>
       <div className="caption-inspector-scroll">
+        <CaptionLanguages update={update} />
         <div className="caption-studio-tabs" aria-label={t("Caption controls")}>
           {[
             { id: "styles", label: "Styles" },
@@ -530,6 +543,13 @@ export function CaptionInspector() {
                   ...p.style,
                   color: draft.color,
                   activeColor: draft.activeColor,
+                  languageMode: draft.languageMode,
+                  englishFont: draft.englishFont,
+                  englishWeight: draft.englishWeight,
+                  englishSize: draft.englishSize,
+                  anchor: draft.anchor,
+                  font: draft.font,
+                  weight: draft.weight,
                 })
               }
               aria-label={`Caption preset ${p.name}`}
@@ -621,31 +641,210 @@ export function CaptionInspector() {
           hidden={studioTab !== "layout"}
         >
           <h3>{t("Appearance")}</h3>
+          <Input
+            aria-label={t("Search fonts")}
+            placeholder={t("Search fonts")}
+            value={fontSearch}
+            onChange={(e) => setFontSearch(e.target.value)}
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() =>
+              safe(async () => {
+                await flushCaptionSave(snap.project.id);
+                const font = await window.precut.call<CaptionFont | null>(
+                  "fonts.import",
+                  { projectId: snap.project.id },
+                );
+                if (font) {
+                  const english =
+                    draft.languageMode === "en" ||
+                    (!font.languages.includes("th") &&
+                      draft.languageMode === "th-en");
+                  if (!font.languages.includes(english ? "en" : "th")) {
+                    useStore
+                      .getState()
+                      .set({
+                        error: t(
+                          "Font imported. Choose English captions to use this font.",
+                        ),
+                      });
+                    return;
+                  }
+                  await mutate("captions.style", {
+                    projectId: snap.project.id,
+                    style: {
+                      ...useStore.getState().snapshot!.captionStyle,
+                      ...(english
+                        ? {
+                            englishFont: font.id,
+                            englishWeight: supportedWeight(font, 600),
+                          }
+                        : {
+                            font: font.id,
+                            weight: supportedWeight(font, 700),
+                          }),
+                    },
+                  });
+                }
+              })
+            }
+          >
+            {t("Import TTF / OTF")}
+          </Button>
           <label className="control-row">
             <span>{t("Font")}</span>
             <Select
               label="Caption font"
-              value={draft.font}
-              onValueChange={(font) =>
-                update({ font: font as CaptionStyle["font"] })
+              value={
+                draft.languageMode === "en"
+                  ? (draft.englishFont ?? draft.font)
+                  : draft.font
               }
-              options={["Noto Sans Thai", "Inter"].map((value) => ({
-                value,
-                label: value,
-              }))}
+              onValueChange={(font) =>
+                update(
+                  draft.languageMode === "en"
+                    ? {
+                        englishFont: font,
+                        englishWeight: supportedWeight(
+                          fonts.find((f) => f.id === font),
+                          draft.englishWeight ?? 600,
+                        ),
+                      }
+                    : {
+                        font,
+                        weight: supportedWeight(
+                          fonts.find((f) => f.id === font),
+                          draft.weight,
+                        ),
+                      },
+                )
+              }
+              options={fonts
+                .filter(
+                  (f) =>
+                    (!draft.languageMode || draft.languageMode !== "en"
+                      ? f.languages.includes("th")
+                      : f.languages.includes("en")) &&
+                    f.name.toLowerCase().includes(fontSearch.toLowerCase()),
+                )
+                .map((f) => ({
+                  value: f.id,
+                  label: f.name + (f.custom ? " · Imported" : ""),
+                }))}
             />
           </label>
+          <label className="control-row">
+            <span>{t("Font weight")}</span>
+            <Select
+              label="Caption font weight"
+              value={String(
+                draft.languageMode === "en"
+                  ? (draft.englishWeight ?? draft.weight)
+                  : draft.weight,
+              )}
+              onValueChange={(weight) =>
+                update(
+                  draft.languageMode === "en"
+                    ? { englishWeight: Number(weight) }
+                    : { weight: Number(weight) },
+                )
+              }
+              options={(
+                fonts.find(
+                  (f) =>
+                    f.id ===
+                    (draft.languageMode === "en"
+                      ? (draft.englishFont ?? draft.font)
+                      : draft.font),
+                )?.weights ?? [400, 700]
+              ).map((w) => ({ value: String(w), label: String(w) }))}
+            />
+          </label>
+          {draft.languageMode === "th-en" && (
+            <>
+              <label className="control-row">
+                <span>{t("English font")}</span>
+                <Select
+                  label="English caption font"
+                  value={draft.englishFont ?? draft.font}
+                  onValueChange={(englishFont) =>
+                    update({
+                      englishFont,
+                      englishWeight: supportedWeight(
+                        fonts.find((f) => f.id === englishFont),
+                        draft.englishWeight ?? 600,
+                      ),
+                    })
+                  }
+                  options={fonts
+                    .filter(
+                      (f) =>
+                        f.languages.includes("en") &&
+                        f.name.toLowerCase().includes(fontSearch.toLowerCase()),
+                    )
+                    .map((f) => ({
+                      value: f.id,
+                      label: f.name + (f.custom ? " · Imported" : ""),
+                    }))}
+                />
+              </label>
+              <label className="control-row">
+                <span>{t("English weight")}</span>
+                <Select
+                  label="English font weight"
+                  value={String(draft.englishWeight ?? draft.weight)}
+                  onValueChange={(weight) =>
+                    update({ englishWeight: Number(weight) })
+                  }
+                  options={(
+                    fonts.find(
+                      (f) => f.id === (draft.englishFont ?? draft.font),
+                    )?.weights ?? [400, 700]
+                  ).map((w) => ({ value: String(w), label: String(w) }))}
+                />
+              </label>
+              <label className="slider-control">
+                <span>
+                  {t("English size")} <b>{draft.englishSize ?? 38}px</b>
+                </span>
+                <Slider
+                  label="English font size"
+                  min={18}
+                  max={100}
+                  value={draft.englishSize ?? 38}
+                  onValueChange={(englishSize) => update({ englishSize })}
+                />
+              </label>
+            </>
+          )}
           <label className="slider-control">
             <span>
               {t("Font size")}
-              <b>{draft.size}px</b>
+              <b>
+                {draft.languageMode === "en"
+                  ? (draft.englishSize ?? draft.size)
+                  : draft.size}
+                px
+              </b>
             </span>
             <Slider
-              value={draft.size}
+              value={
+                draft.languageMode === "en"
+                  ? (draft.englishSize ?? draft.size)
+                  : draft.size
+              }
               min={24}
               max={100}
               label="Font size"
-              onValueChange={(size) => update({ size })}
+              onValueChange={(size) =>
+                update(
+                  draft.languageMode === "en"
+                    ? { englishSize: size }
+                    : { size },
+                )
+              }
             />
           </label>
           <div className="check-controls">
@@ -699,7 +898,10 @@ export function CaptionInspector() {
               label="Caption position"
               value={draft.position}
               onValueChange={(position) =>
-                update({ position: position as CaptionStyle["position"] })
+                update({
+                  position: position as CaptionStyle["position"],
+                  anchor: undefined,
+                })
               }
               options={["bottom", "middle", "top"].map((value) => ({
                 value,

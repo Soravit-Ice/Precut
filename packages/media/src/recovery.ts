@@ -37,7 +37,8 @@ export async function stopOrphanedSidecars(
                 ])
               : await exec("ps", ["-p", String(pid), "-o", "command="]);
           if (
-            stdout.includes(join(nativeRoot, "bin")) &&
+            (stdout.includes(join(nativeRoot, "bin")) ||
+              stdout.includes(join(nativeRoot, "translation", "bin"))) &&
             stdout.includes(join(projectsRoot, project.name))
           )
             terminate(pid);

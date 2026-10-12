@@ -57,6 +57,8 @@ import {
   type CleanupOptions,
   type AppEvent,
   type SpeechConfig,
+  type CaptionStyle,
+  type Model,
 } from "../../../packages/shared/src/contracts";
 import {
   formatTime,
@@ -68,7 +70,8 @@ import { Resizer } from "./components/Resizer";
 import { Player } from "./features/Player";
 import { Timeline } from "./features/Timeline";
 import { Transcript } from "./features/Transcript";
-import { CleanupInspector, CaptionInspector } from "./features/Inspector";
+import { TranscriptInspector } from "./features/TranscriptInspector";
+import { CaptionLanguageOptions } from "./features/CaptionLanguageOptions";
 import { ExportPanel } from "./features/ExportPanel";
 import { SignInDialog } from "./features/SignInDialog";
 import { appVersion } from "./lib/app-info";
@@ -81,7 +84,6 @@ const nav = [
   { id: "projects", label: "Projects", icon: FolderOpen },
   { id: "media", label: "Media", icon: Clapperboard },
   { id: "transcript", label: "Transcript", icon: FileText },
-  { id: "captions", label: "Captions", icon: Subtitles },
   { id: "export", label: "Export", icon: Download },
 ] as const;
 function Logo() {
@@ -129,6 +131,7 @@ export default function App() {
     [name, setName] = useState("Untitled project"),
     [autoOpen, setAutoOpen] = useState(false),
     [cleanup, setCleanup] = useState(defaultCleanup),
+    [customWordText, setCustomWordText] = useState(""),
     [query, setQuery] = useState(""),
     [commandOpen, setCommandOpen] = useState(false),
     [collapsed, setCollapsed] = useState(false),
@@ -178,11 +181,28 @@ export default function App() {
     quality: settings.speechQuality,
     vocabulary: "",
   });
+  const [captionLanguage, setCaptionLanguage] =
+      useState<NonNullable<CaptionStyle["languageMode"]>>("th"),
+    [models, setModels] = useState<Model[]>([]);
+  useEffect(() => {
+    if (autoOpen)
+      safe(async () => setModels(await call<Model[]>("models.list")));
+  }, [
+    autoOpen,
+    jobs.filter((j) => j.type === "model" && j.state === "completed").length,
+  ]);
+  const translationInstalled = models.find(
+    (m) => m.id === "translation",
+  )?.installed;
+  const modelDownload = [...jobs]
+    .reverse()
+    .find((j) => j.type === "model" && ["queued", "running"].includes(j.state));
   const [forceAnalysis, setForceAnalysis] = useState(false),
     [applySilence, setApplySilence] = useState(true),
     [reassessKept, setReassessKept] = useState(false);
   useEffect(() => {
     if (autoOpen) {
+      setCaptionLanguage(snap?.captionStyle.languageMode ?? "th");
       setSpeechDraft(
         snap?.speech ?? {
           profile: "thai-english",
@@ -235,12 +255,21 @@ export default function App() {
     });
     setAutoOpen(false);
     setAnalysisProgressOpen(true);
-    set({ view: "transcript" });
+    set({ view: "transcript", transcriptTool: "cleanup" });
     try {
+      await flushCaptionSave(id);
       const started = await call<Job>("jobs.analyze", {
         projectId: id,
-        options: cleanup,
+        options: {
+          ...cleanup,
+          customWords: customWordText
+            .split(/[,\n]/)
+            .map((x) => x.trim())
+            .filter(Boolean)
+            .slice(0, 100),
+        },
         speech: speechDraft,
+        captionLanguage,
         force: forceAnalysis,
         autoApplySilence: applySilence,
         reassessKeptSilence: reassessKept,
@@ -261,7 +290,13 @@ export default function App() {
     if (useStore.getState().snapshot)
       await flushCaptionSave(useStore.getState().snapshot!.project.id);
     const snapshot = await call<Snapshot>("projects.open", { id: projectId });
-    set({ snapshot, view: "transcript", reviewId: undefined });
+    set({
+      snapshot,
+      view: "transcript",
+      reviewId: undefined,
+      captionCueId: undefined,
+      transcriptTool: "cleanup",
+    });
     clock.set(0);
   };
   useEffect(() => {
@@ -868,7 +903,7 @@ export default function App() {
               key={id}
               style={
                 {
-                  "--inspector-width": `${view === "captions" ? Math.max(340, inspectorWidth) : inspectorWidth}px`,
+                  "--inspector-width": `${view === "transcript" ? Math.max(340, inspectorWidth) : inspectorWidth}px`,
                   "--transcript-height": `${transcriptHeight}px`,
                 } as React.CSSProperties
               }
@@ -879,7 +914,7 @@ export default function App() {
                     job={analysisJob}
                     onOpen={() => {
                       if (analysisJob.state === "completed") {
-                        set({ view: "transcript" });
+                        set({ view: "transcript", transcriptTool: "cleanup" });
                         setTrackedAnalysisId(undefined);
                       } else showAnalysisProgress();
                     }}
@@ -931,20 +966,22 @@ export default function App() {
               <Resizer
                 orientation="vertical"
                 label={t("Resize inspector")}
-                value={inspectorWidth}
-                min={260}
+                value={
+                  view === "transcript"
+                    ? Math.max(340, inspectorWidth)
+                    : inspectorWidth
+                }
+                min={view === "transcript" ? 340 : 260}
                 max={440}
                 invert
                 onChange={setInspectorWidth}
               />
-              {view === "captions" ? (
-                <CaptionInspector />
-              ) : view === "export" ? (
+              {view === "export" ? (
                 <ExportPanel />
               ) : view === "media" ? (
                 <MediaInspector />
               ) : (
-                <CleanupInspector />
+                <TranscriptInspector />
               )}
             </div>
           )}
@@ -1123,6 +1160,62 @@ export default function App() {
             </>
           }
         >
+          <section className="auto-edit-captions">
+            <h3>
+              <Subtitles size={15} />
+              {t("Caption language")}
+            </h3>
+            <CaptionLanguageOptions
+              value={captionLanguage}
+              onChange={setCaptionLanguage}
+            />
+            <p>
+              {t(
+                "Auto Edit creates your chosen subtitles. Edit text, fonts and position in Transcript.",
+              )}
+            </p>
+            <small>
+              {t(
+                translationInstalled
+                  ? "Translation runs offline after speech analysis when needed."
+                  : "Speech analysis can continue. Translated subtitles need the offline model, installed once.",
+              )}
+            </small>
+            {!translationInstalled && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={Boolean(modelDownload)}
+                onClick={() =>
+                  safe(() => call("models.download", { id: "translation" }))
+                }
+              >
+                {t(
+                  modelDownload
+                    ? "Downloading translation model…"
+                    : "Download translation model · 4.28 GB",
+                )}
+              </Button>
+            )}
+            {modelDownload && (
+              <div className="caption-translation-progress">
+                <progress max={1} value={modelDownload.progress} />
+                <span>
+                  {modelDownload.stage} ·{" "}
+                  {Math.round(modelDownload.progress * 100)}%
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() =>
+                    safe(() => call("jobs.cancel", { id: modelDownload.id }))
+                  }
+                >
+                  {t("Cancel")}
+                </Button>
+              </div>
+            )}
+          </section>
           <label className="dialog-field">
             <span>{t("Speech language")}</span>
             <Select
@@ -1194,6 +1287,16 @@ export default function App() {
               />
             )}
           </div>
+          <label className="caption-field">
+            <span>{t("Custom words to review")}</span>
+            <Input
+              aria-label={t("Custom words to review")}
+              maxLength={10000}
+              placeholder="เอ่อ, แบบว่า, um, you know"
+              value={customWordText}
+              onChange={(e) => setCustomWordText(e.target.value)}
+            />
+          </label>
           <label className="dialog-field">
             <span>{t("Pacing")}</span>
             <div className="pacing-options">
@@ -1257,7 +1360,7 @@ export default function App() {
             onReview={() => {
               setAnalysisProgressOpen(false);
               setTrackedAnalysisId(undefined);
-              set({ view: "transcript" });
+              set({ view: "transcript", transcriptTool: "cleanup" });
               safe(() => refresh(id));
             }}
             onRetry={() => {

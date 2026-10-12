@@ -101,13 +101,21 @@ test("Auto Edit shows live progress, can run in the background, completes and ca
   );
   await page.getByRole("combobox", { name: "Speech language profile" }).click();
   await page.getByRole("option", { name: "English", exact: true }).click();
+  const languages = page.getByRole("group", { name: "Caption language" });
+  await languages
+    .getByRole("button", { name: "ไทย + English", exact: true })
+    .click();
+  await expect(
+    languages.getByRole("button", { name: "ไทย + English", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await languages.getByRole("button", { name: "English", exact: true }).click();
   await page
     .getByRole("dialog")
     .getByRole("button", { name: "Auto Edit", exact: true })
     .click();
   const dialog = page.locator(".analysis-progress-dialog");
   await expect(dialog).toBeVisible();
-  await expect(dialog.locator(".analysis-steps li")).toHaveCount(5);
+  await expect(dialog.locator(".analysis-steps li")).toHaveCount(6);
   const bar = dialog.getByRole("progressbar");
   await expect
     .poll(async () => Number(await bar.getAttribute("aria-valuenow")))
@@ -129,6 +137,16 @@ test("Auto Edit shows live progress, can run in the background, completes and ca
   await dialog.getByRole("button", { name: "Continue in background" }).click();
   await expect(dialog).toHaveCount(0);
   await expect(page.locator(".analysis-progress-banner")).toBeVisible();
+  // Editing in the same workspace while Auto Edit runs must retain layout/style.
+  const duringAnalysis = await call<Snapshot>("projects.open", { id });
+  await call("captions.style", {
+    projectId: id,
+    style: {
+      ...duringAnalysis.captionStyle,
+      color: "#FFE066",
+      anchor: { x: 0.34, y: 0.35 },
+    },
+  });
   await page
     .locator(".analysis-progress-banner")
     .getByRole("button", { name: "View progress" })
@@ -138,7 +156,10 @@ test("Auto Edit shows live progress, can run in the background, completes and ca
     dialog.getByRole("heading", { name: "Your first cut is ready" }),
   ).toBeVisible({ timeout: 180000 });
   await expect(bar).toHaveAttribute("aria-valuenow", "100");
-  await expect(dialog.locator(".analysis-steps .is-done")).toHaveCount(5);
+  await expect(dialog.locator(".analysis-steps .is-done")).toHaveCount(6);
+  expect(
+    (await call<Snapshot>("projects.open", { id })).captionStyle,
+  ).toMatchObject({ color: "#FFE066", anchor: { x: 0.34, y: 0.35 } });
   const events = await page.evaluate(
     () => (window as typeof window & { analysisEvents: Job[] }).analysisEvents,
   );
@@ -160,6 +181,39 @@ test("Auto Edit shows live progress, can run in the background, completes and ca
   expect(
     (await call<Snapshot>("projects.open", { id })).words.length,
   ).toBeGreaterThan(10);
+  expect(
+    (await call<Snapshot>("projects.open", { id })).captionStyle.languageMode,
+  ).toBe("en");
+  await expect(
+    page
+      .locator(".main-navigation")
+      .getByRole("button", { name: "Captions", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("tab", { name: "Captions", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "English", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+
+  await page.getByRole("button", { name: "Auto Edit", exact: true }).click();
+  await page
+    .getByRole("group", { name: "Caption language" })
+    .getByRole("button", { name: "ไทย + English", exact: true })
+    .click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Auto Edit", exact: true })
+    .click();
+  await expect(
+    dialog.getByRole("heading", { name: "Your first cut is ready" }),
+  ).toBeVisible({ timeout: 60000 });
+  await expect(dialog.locator(".analysis-steps .is-done")).toHaveCount(5);
+  await expect(dialog.locator(".analysis-steps .is-pending")).toContainText(
+    "Awaiting translation model",
+  );
+  await expect(bar).toHaveAttribute("aria-valuenow", "100");
+  await dialog
+    .getByRole("button", { name: "Review edits", exact: true })
+    .click();
 
   await call("settings.update", {
     ...(await call<Settings>("settings.get")),
