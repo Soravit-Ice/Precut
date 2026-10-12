@@ -2,21 +2,8 @@
   {
     "id": "Kanit",
     "name": "Kanit",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["th", "en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "kanit/Kanit-Thin.ttf",
@@ -68,21 +55,8 @@
   {
     "id": "Prompt",
     "name": "Prompt",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["th", "en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "prompt/Prompt-Thin.ttf",
@@ -134,20 +108,8 @@
   {
     "id": "Sarabun",
     "name": "Sarabun",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800
-    ],
+    "languages": ["th", "en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800],
     "files": [
       {
         "file": "sarabun/Sarabun-Thin.ttf",
@@ -194,21 +156,8 @@
   {
     "id": "Noto Sans Thai",
     "name": "Noto Sans Thai",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["th", "en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "notosansthai/NotoSansThai[wdth,wght].ttf",
@@ -220,21 +169,8 @@
   {
     "id": "Noto Sans Thai Looped",
     "name": "Noto Sans Thai Looped",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["th", "en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "notosansthailooped/NotoSansThaiLooped[wdth,wght].ttf",
@@ -246,19 +182,8 @@
   {
     "id": "IBM Plex Sans Thai",
     "name": "IBM Plex Sans Thai",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700
-    ],
+    "languages": ["th", "en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700],
     "files": [
       {
         "file": "ibmplexsansthai/IBMPlexSansThai-Thin.ttf",
@@ -300,19 +225,8 @@
   {
     "id": "IBM Plex Sans Thai Looped",
     "name": "IBM Plex Sans Thai Looped",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700
-    ],
+    "languages": ["th", "en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700],
     "files": [
       {
         "file": "ibmplexsansthailooped/IBMPlexSansThaiLooped-Thin.ttf",
@@ -354,19 +268,8 @@
   {
     "id": "Anuphan",
     "name": "Anuphan",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700
-    ],
+    "languages": ["th", "en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700],
     "files": [
       {
         "file": "anuphan/Anuphan[wght].ttf",
@@ -378,18 +281,8 @@
   {
     "id": "Bai Jamjuree",
     "name": "Bai Jamjuree",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      200,
-      300,
-      400,
-      500,
-      600,
-      700
-    ],
+    "languages": ["th", "en"],
+    "weights": [200, 300, 400, 500, 600, 700],
     "files": [
       {
         "file": "baijamjuree/BaiJamjuree-ExtraLight.ttf",
@@ -426,17 +319,8 @@
   {
     "id": "Chakra Petch",
     "name": "Chakra Petch",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      300,
-      400,
-      500,
-      600,
-      700
-    ],
+    "languages": ["th", "en"],
+    "weights": [300, 400, 500, 600, 700],
     "files": [
       {
         "file": "chakrapetch/ChakraPetch-Light.ttf",
@@ -468,13 +352,8 @@
   {
     "id": "Chonburi",
     "name": "Chonburi",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      400
-    ],
+    "languages": ["th", "en"],
+    "weights": [400],
     "files": [
       {
         "file": "chonburi/Chonburi-Regular.ttf",
@@ -486,18 +365,8 @@
   {
     "id": "Fahkwang",
     "name": "Fahkwang",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      200,
-      300,
-      400,
-      500,
-      600,
-      700
-    ],
+    "languages": ["th", "en"],
+    "weights": [200, 300, 400, 500, 600, 700],
     "files": [
       {
         "file": "fahkwang/Fahkwang-ExtraLight.ttf",
@@ -534,13 +403,8 @@
   {
     "id": "Itim",
     "name": "Itim",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      400
-    ],
+    "languages": ["th", "en"],
+    "weights": [400],
     "files": [
       {
         "file": "itim/Itim-Regular.ttf",
@@ -552,18 +416,8 @@
   {
     "id": "Mali",
     "name": "Mali",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      200,
-      300,
-      400,
-      500,
-      600,
-      700
-    ],
+    "languages": ["th", "en"],
+    "weights": [200, 300, 400, 500, 600, 700],
     "files": [
       {
         "file": "mali/Mali-ExtraLight.ttf",
@@ -600,18 +454,8 @@
   {
     "id": "Mitr",
     "name": "Mitr",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      200,
-      300,
-      400,
-      500,
-      600,
-      700
-    ],
+    "languages": ["th", "en"],
+    "weights": [200, 300, 400, 500, 600, 700],
     "files": [
       {
         "file": "mitr/Mitr-ExtraLight.ttf",
@@ -648,18 +492,8 @@
   {
     "id": "Pridi",
     "name": "Pridi",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      200,
-      300,
-      400,
-      500,
-      600,
-      700
-    ],
+    "languages": ["th", "en"],
+    "weights": [200, 300, 400, 500, 600, 700],
     "files": [
       {
         "file": "pridi/Pridi-ExtraLight.ttf",
@@ -696,13 +530,8 @@
   {
     "id": "Sriracha",
     "name": "Sriracha",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      400
-    ],
+    "languages": ["th", "en"],
+    "weights": [400],
     "files": [
       {
         "file": "sriracha/Sriracha-Regular.ttf",
@@ -714,21 +543,8 @@
   {
     "id": "Taviraj",
     "name": "Taviraj",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["th", "en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "taviraj/Taviraj-Thin.ttf",
@@ -780,18 +596,8 @@
   {
     "id": "Athiti",
     "name": "Athiti",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      200,
-      300,
-      400,
-      500,
-      600,
-      700
-    ],
+    "languages": ["th", "en"],
+    "weights": [200, 300, 400, 500, 600, 700],
     "files": [
       {
         "file": "athiti/Athiti-ExtraLight.ttf",
@@ -828,21 +634,8 @@
   {
     "id": "Trirong",
     "name": "Trirong",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["th", "en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "trirong/Trirong-Thin.ttf",
@@ -894,18 +687,8 @@
   {
     "id": "Krub",
     "name": "Krub",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      200,
-      300,
-      400,
-      500,
-      600,
-      700
-    ],
+    "languages": ["th", "en"],
+    "weights": [200, 300, 400, 500, 600, 700],
     "files": [
       {
         "file": "krub/Krub-ExtraLight.ttf",
@@ -942,20 +725,8 @@
   {
     "id": "K2D",
     "name": "K2D",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800
-    ],
+    "languages": ["th", "en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800],
     "files": [
       {
         "file": "k2d/K2D-Thin.ttf",
@@ -1002,14 +773,8 @@
   {
     "id": "Charm",
     "name": "Charm",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      400,
-      700
-    ],
+    "languages": ["th", "en"],
+    "weights": [400, 700],
     "files": [
       {
         "file": "charm/Charm-Regular.ttf",
@@ -1026,13 +791,8 @@
   {
     "id": "Pattaya",
     "name": "Pattaya",
-    "languages": [
-      "th",
-      "en"
-    ],
-    "weights": [
-      400
-    ],
+    "languages": ["th", "en"],
+    "weights": [400],
     "files": [
       {
         "file": "pattaya/Pattaya-Regular.ttf",
@@ -1044,20 +804,8 @@
   {
     "id": "Inter",
     "name": "Inter",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "inter/Inter[opsz,wght].ttf",
@@ -1069,20 +817,8 @@
   {
     "id": "Roboto",
     "name": "Roboto",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "roboto/Roboto[wdth,wght].ttf",
@@ -1094,20 +830,8 @@
   {
     "id": "Montserrat",
     "name": "Montserrat",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "montserrat/Montserrat[wght].ttf",
@@ -1119,20 +843,8 @@
   {
     "id": "Poppins",
     "name": "Poppins",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "poppins/Poppins-Thin.ttf",
@@ -1184,17 +896,8 @@
   {
     "id": "Open Sans",
     "name": "Open Sans",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      300,
-      400,
-      500,
-      600,
-      700,
-      800
-    ],
+    "languages": ["en"],
+    "weights": [300, 400, 500, 600, 700, 800],
     "files": [
       {
         "file": "opensans/OpenSans[wdth,wght].ttf",
@@ -1206,20 +909,8 @@
   {
     "id": "Lato",
     "name": "Lato",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "lato/Lato-Thin.ttf",
@@ -1271,20 +962,8 @@
   {
     "id": "Nunito",
     "name": "Nunito",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900,
-      1000
-    ],
+    "languages": ["en"],
+    "weights": [200, 300, 400, 500, 600, 700, 800, 900, 1000],
     "files": [
       {
         "file": "nunito/Nunito[wght].ttf",
@@ -1296,20 +975,8 @@
   {
     "id": "Nunito Sans",
     "name": "Nunito Sans",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900,
-      1000
-    ],
+    "languages": ["en"],
+    "weights": [200, 300, 400, 500, 600, 700, 800, 900, 1000],
     "files": [
       {
         "file": "nunitosans/NunitoSans[YTLC,opsz,wdth,wght].ttf",
@@ -1321,17 +988,8 @@
   {
     "id": "Oswald",
     "name": "Oswald",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      200,
-      300,
-      400,
-      500,
-      600,
-      700
-    ],
+    "languages": ["en"],
+    "weights": [200, 300, 400, 500, 600, 700],
     "files": [
       {
         "file": "oswald/Oswald[wght].ttf",
@@ -1343,12 +1001,8 @@
   {
     "id": "Anton",
     "name": "Anton",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      400
-    ],
+    "languages": ["en"],
+    "weights": [400],
     "files": [
       {
         "file": "anton/Anton-Regular.ttf",
@@ -1360,12 +1014,8 @@
   {
     "id": "Bebas Neue",
     "name": "Bebas Neue",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      400
-    ],
+    "languages": ["en"],
+    "weights": [400],
     "files": [
       {
         "file": "bebasneue/BebasNeue-Regular.ttf",
@@ -1377,18 +1027,8 @@
   {
     "id": "Rubik",
     "name": "Rubik",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["en"],
+    "weights": [300, 400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "rubik/Rubik[wght].ttf",
@@ -1400,20 +1040,8 @@
   {
     "id": "Raleway",
     "name": "Raleway",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "raleway/Raleway[wght].ttf",
@@ -1425,20 +1053,8 @@
   {
     "id": "Barlow",
     "name": "Barlow",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "barlow/Barlow-Thin.ttf",
@@ -1490,20 +1106,8 @@
   {
     "id": "Barlow Condensed",
     "name": "Barlow Condensed",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "barlowcondensed/BarlowCondensed-Thin.ttf",
@@ -1555,20 +1159,8 @@
   {
     "id": "Work Sans",
     "name": "Work Sans",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "worksans/WorkSans[wght].ttf",
@@ -1580,21 +1172,8 @@
   {
     "id": "DM Sans",
     "name": "DM Sans",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900,
-      1000
-    ],
+    "languages": ["en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
     "files": [
       {
         "file": "dmsans/DMSans[opsz,wght].ttf",
@@ -1606,20 +1185,8 @@
   {
     "id": "Outfit",
     "name": "Outfit",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      100,
-      200,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["en"],
+    "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "outfit/Outfit[wght].ttf",
@@ -1631,17 +1198,8 @@
   {
     "id": "Playfair Display",
     "name": "Playfair Display",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["en"],
+    "weights": [400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "playfairdisplay/PlayfairDisplay[wght].ttf",
@@ -1653,18 +1211,8 @@
   {
     "id": "Merriweather",
     "name": "Merriweather",
-    "languages": [
-      "en"
-    ],
-    "weights": [
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      900
-    ],
+    "languages": ["en"],
+    "weights": [300, 400, 500, 600, 700, 800, 900],
     "files": [
       {
         "file": "merriweather/Merriweather[opsz,wdth,wght].ttf",

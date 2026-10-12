@@ -663,13 +663,11 @@ export function CaptionInspector() {
                     (!font.languages.includes("th") &&
                       draft.languageMode === "th-en");
                   if (!font.languages.includes(english ? "en" : "th")) {
-                    useStore
-                      .getState()
-                      .set({
-                        error: t(
-                          "Font imported. Choose English captions to use this font.",
-                        ),
-                      });
+                    useStore.getState().set({
+                      error: t(
+                        "Font imported. Choose English captions to use this font.",
+                      ),
+                    });
                     return;
                   }
                   await mutate("captions.style", {

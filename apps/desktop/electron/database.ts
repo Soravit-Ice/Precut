@@ -124,16 +124,14 @@ function db(id: string) {
       .prepare("INSERT OR IGNORE INTO migrations VALUES(3,datetime('now'))")
       .run();
   })();
-  database
-    .prepare("INSERT OR IGNORE INTO caption_workspace VALUES(1,?)")
-    .run(
-      JSON.stringify({
-        captionPlacements: [],
-        captionTranslations: [],
-        captionFonts: [],
-        translationGlossary: "",
-      }),
-    );
+  database.prepare("INSERT OR IGNORE INTO caption_workspace VALUES(1,?)").run(
+    JSON.stringify({
+      captionPlacements: [],
+      captionTranslations: [],
+      captionFonts: [],
+      translationGlossary: "",
+    }),
+  );
   database
     .prepare("INSERT OR IGNORE INTO caption_settings VALUES(1,?)")
     .run(JSON.stringify(presets[1].style));
@@ -398,17 +396,15 @@ export async function dispatch(
         .run(projectId, args.name, now, now);
       const database = db(projectId);
       const style = snapshot(projectId).captionStyle;
-      database
-        .prepare("UPDATE caption_settings SET data=? WHERE id=1")
-        .run(
-          JSON.stringify({
-            ...style,
-            languageMode: "th",
-            englishFont: "Inter",
-            englishWeight: 600,
-            englishSize: 38,
-          }),
-        );
+      database.prepare("UPDATE caption_settings SET data=? WHERE id=1").run(
+        JSON.stringify({
+          ...style,
+          languageMode: "th",
+          englishFont: "Inter",
+          englishWeight: 600,
+          englishSize: 38,
+        }),
+      );
       return snapshot(projectId);
     }
     case "projects.open":

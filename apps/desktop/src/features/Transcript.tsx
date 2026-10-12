@@ -391,12 +391,10 @@ export function Transcript() {
                             key={s.id}
                             className={`transcript-category ${s.status === "accepted" ? "applied" : ""}`}
                             onClick={() => {
-                              useStore
-                                .getState()
-                                .set({
-                                  reviewId: s.id,
-                                  transcriptTool: "cleanup",
-                                });
+                              useStore.getState().set({
+                                reviewId: s.id,
+                                transcriptTool: "cleanup",
+                              });
                               clock.seek?.(s.startUs);
                             }}
                           >

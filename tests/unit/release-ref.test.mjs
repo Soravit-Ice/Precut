@@ -13,7 +13,7 @@ async function fixture(version, notes = "Release notes") {
   return root;
 }
 describe("release preflight", () => {
-  it.each(["2.0.0", "2.1.0"])(
+  it.each(["2.0.0", "2.1.0", "2.5.0"])(
     "accepts matching %s tags and local release preparation",
     async (version) => {
       const root = await fixture(version);
@@ -36,6 +36,7 @@ describe("release preflight", () => {
   it.each([
     ["1.0.1", "2.0.0"],
     ["2.0.1", "2.1.0"],
+    ["2.1.0", "2.5.0"],
   ])(
     "rejects package %s with stale release tag %s before native builds",
     async (version, tagVersion) => {

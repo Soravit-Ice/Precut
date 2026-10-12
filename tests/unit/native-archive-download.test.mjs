@@ -25,14 +25,12 @@ describe("private native build input", () => {
     expect(fetcher.mock.calls[1][1]).toEqual({ redirect: "error" });
   });
   it("rejects an unexpected asset redirect and other repository API paths", async () => {
-    const fetcher = vi
-      .fn()
-      .mockResolvedValue(
-        new Response(null, {
-          status: 302,
-          headers: { location: "https://untrusted.example/native.zip" },
-        }),
-      );
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(null, {
+        status: 302,
+        headers: { location: "https://untrusted.example/native.zip" },
+      }),
+    );
     await expect(
       fetchNativeArchive(
         "https://api.github.com/repos/Soravit-Ice/Precut/releases/assets/123",
