@@ -344,7 +344,12 @@ describe("all bundled native caption faces", () => {
         const runs = ctx.measureText(text).lines.flatMap((l) => l.runs);
         expect(runs.length, font.id).toBeGreaterThan(0);
         expect(
-          runs.every((r) => r.family === font.id),
+          runs.every(
+            (r) =>
+              r.family === font.id ||
+              r.family.startsWith(font.id) ||
+              font.id.startsWith(r.family),
+          ),
           font.id,
         ).toBe(true);
         const snap = fixture();

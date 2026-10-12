@@ -47,25 +47,66 @@ async function sha256(path) {
   for await (const chunk of createReadStream(path)) hash.update(chunk);
   return hash.digest("hex");
 }
-async function download(source, path) {
+async function download(source, path, retries = 5) {
   if (existsSync(path) && (await sha256(path)) === source.sha256) return;
   const partial = path + ".partial";
   await rm(partial, { force: true });
-  const response = await fetch(source.url, {
-    signal: AbortSignal.timeout(600_000),
-  });
-  if (
-    !response.ok ||
-    new URL(response.url).protocol !== "https:" ||
-    !response.body
-  )
-    throw new Error("Pinned native archive download failed");
-  await pipeline(Readable.fromWeb(response.body), createWriteStream(partial));
-  if ((await sha256(partial)) !== source.sha256) {
-    await rm(partial, { force: true });
-    throw new Error("Pinned native archive checksum mismatch");
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      console.log(
+        `Fetching ${source.name || "archive"} from ${source.url} (attempt ${attempt}/${retries})...`,
+      );
+      const response = await fetch(source.url, {
+        signal: AbortSignal.timeout(600_000),
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+          Accept: "*/*",
+        },
+      });
+      if (response.status === 429 || response.status >= 500) {
+        console.warn(
+          `Server returned HTTP ${response.status} for ${source.url}.`,
+        );
+        if (attempt === retries) {
+          throw new Error(
+            `Download failed after ${retries} attempts: HTTP ${response.status} from ${source.url}`,
+          );
+        }
+        const delay = Math.min(attempt * 4000, 20000);
+        console.log(`Waiting ${delay / 1000}s before retrying...`);
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
+      if (
+        !response.ok ||
+        new URL(response.url).protocol !== "https:" ||
+        !response.body
+      ) {
+        throw new Error(
+          `Download failed: HTTP ${response.status} (${response.statusText}) from ${source.url}`,
+        );
+      }
+      await pipeline(
+        Readable.fromWeb(response.body),
+        createWriteStream(partial),
+      );
+      if ((await sha256(partial)) !== source.sha256) {
+        await rm(partial, { force: true });
+        throw new Error(
+          `Pinned native archive checksum mismatch for ${source.url}`,
+        );
+      }
+      await rename(partial, path);
+      console.log(`Successfully verified ${source.name || path}`);
+      return;
+    } catch (error) {
+      if (attempt === retries) throw error;
+      console.warn(`Download error on attempt ${attempt}: ${error.message}`);
+      const delay = Math.min(attempt * 4000, 20000);
+      await new Promise((r) => setTimeout(r, delay));
+    }
   }
-  await rename(partial, path);
 }
 const media = join(tools, "media");
 await rm(media, { recursive: true, force: true });
