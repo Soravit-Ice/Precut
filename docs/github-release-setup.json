@@ -84,21 +84,20 @@
     "macIntelArtifactId": "11632548137"
   },
   "latestCiSubmission": {
-    "version": "2.0.0",
-    "tag": "v2.0.0",
-    "tagCommit": "3095d90315722109abc606d6dc5619a670be0e4b",
-    "workflowRunId": "38082070020",
-    "workflowRunUrl": "https://github.com/Soravit-Ice/Precut/actions/runs/38082070020",
+    "version": "2.5.0",
+    "tag": "v2.5.0",
+    "tagCommit": "74fa868cf28511222e663606a0c6e6c3049f7a8d",
+    "workflowRunId": "38243633297",
+    "workflowRunUrl": "https://github.com/Soravit-Ice/Precut/actions/runs/38243633297",
     "conclusion": "success",
     "targets": 3,
-    "testsPerTarget": 126,
     "submittedToStore": true,
-    "sessionId": "7a219715-9cda-4da3-a89c-439341a36275",
+    "sessionId": "5d57669a-7f5d-4926-a529-b414ba89cc20",
     "submittedForVerification": true,
     "published": false,
     "statusObserved": "SUBMITTED_FOR_VERIFICATION",
     "readyVerified": false,
     "ciMayPublish": false,
-    "acceptance": "docs/github-release-acceptance-2.0.0.json"
+    "acceptance": "docs/github-release-acceptance-2.5.0.json"
   }
 }
