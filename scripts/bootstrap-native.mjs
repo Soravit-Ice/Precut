@@ -47,7 +47,7 @@ async function sha256(path) {
   for await (const chunk of createReadStream(path)) hash.update(chunk);
   return hash.digest("hex");
 }
-async function download(source, path, retries = 5) {
+async function download(source, path, retries = 6) {
   if (existsSync(path) && (await sha256(path)) === source.sha256) return;
   const partial = path + ".partial";
   await rm(partial, { force: true });
@@ -64,18 +64,34 @@ async function download(source, path, retries = 5) {
           Accept: "*/*",
         },
       });
-      if (response.status === 429 || response.status >= 500) {
+      if (response.status === 429) {
+        const delay = Math.min(30 + attempt * 25, 120);
         console.warn(
-          `Server returned HTTP ${response.status} for ${source.url}.`,
+          `Server rate limit (HTTP 429) encountered for ${source.url}.`,
         );
         if (attempt === retries) {
           throw new Error(
-            `Download failed after ${retries} attempts: HTTP ${response.status} from ${source.url}`,
+            `Download failed after ${retries} attempts: rate limit (HTTP 429) from ${source.url}`,
           );
         }
-        const delay = Math.min(attempt * 4000, 20000);
-        console.log(`Waiting ${delay / 1000}s before retrying...`);
-        await new Promise((r) => setTimeout(r, delay));
+        console.log(
+          `Waiting ${delay}s for server rate-limit window to reset...`,
+        );
+        await new Promise((r) => setTimeout(r, delay * 1000));
+        continue;
+      }
+      if (response.status >= 500) {
+        const delay = attempt * 5;
+        console.warn(
+          `Server error (HTTP ${response.status}) for ${source.url}.`,
+        );
+        if (attempt === retries) {
+          throw new Error(
+            `Download failed: HTTP ${response.status} from ${source.url}`,
+          );
+        }
+        console.log(`Waiting ${delay}s before retrying...`);
+        await new Promise((r) => setTimeout(r, delay * 1000));
         continue;
       }
       if (
@@ -103,15 +119,20 @@ async function download(source, path, retries = 5) {
     } catch (error) {
       if (attempt === retries) throw error;
       console.warn(`Download error on attempt ${attempt}: ${error.message}`);
-      const delay = Math.min(attempt * 4000, 20000);
-      await new Promise((r) => setTimeout(r, delay));
+      const delay = Math.min(10 + attempt * 10, 60);
+      await new Promise((r) => setTimeout(r, delay * 1000));
     }
   }
 }
 const media = join(tools, "media");
 await rm(media, { recursive: true, force: true });
 await mkdir(media, { recursive: true });
-for (const source of sources[target]) {
+for (let i = 0; i < sources[target].length; i++) {
+  const source = sources[target][i];
+  if (i > 0) {
+    console.log("Pausing 20s between downloads to respect host rate limits...");
+    await new Promise((r) => setTimeout(r, 20_000));
+  }
   const archive = join(tools, `${source.name}.zip`);
   await download(source, archive);
   execFileSync("tar", ["-xf", archive, "-C", media], { stdio: "inherit" });
