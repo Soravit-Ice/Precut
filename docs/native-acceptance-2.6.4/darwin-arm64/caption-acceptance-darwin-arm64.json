@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-14T19:48:59.777Z",
+  "platform": "darwin",
+  "arch": "arm64",
+  "version": "2.6.4",
+  "passed": true,
+  "packaged": true,
+  "productionLicensing": "unchanged",
+  "externalRendererRequests": "blocked",
+  "gallery": "23 cards",
+  "opaquePreview": "passed",
+  "mp4": "passed",
+  "srt": "passed",
+  "cancellation": "passed",
+  "workerCrashRecovery": "passed",
+  "nativePidsRemaining": 0,
+  "fixtureDurationSeconds": 2,
+  "renderSeconds": 14.67,
+  "totalFrames": 60,
+  "artifact": "/var/folders/5n/5t77mfb93jd7q8v9s6f0dn0m0000gn/T/precut-caption-package-tZ6Iw9/captions.mp4",
+  "scope": "Offline bundled runtime/browser/fonts. Direct packaged worker fixture; production GUI export quota not exercised."
+}

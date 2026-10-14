@@ -1,6 +1,20 @@
 # นำ Precut ขึ้นขายบน T2ETECH Store
 
-ฉบับสำหรับ Precut `2.0.0` ผ่าน GitHub Actions วันที่ 11 ตุลาคม 2026 พร้อมประวัติการปล่อย `1.0.1` แบบ manual — Made by t2etech
+ฉบับปัจจุบัน Precut `2.6.4` เผยแพร่บน production วันที่ 15 ตุลาคม 2026 ตามเวลาไทย พร้อมประวัติ release ด้านล่าง — Made by t2etech
+
+## สถานะ production 2.6.4
+
+[Store](https://store.t2etech.com/products/precut) เผยแพร่ `2.6.4` จาก tag `v2.6.4`, commit `b5eaf287a135327572948c3b03be72fdaaddd16f` แล้ว [CI 38625485653](https://github.com/Soravit-Ice/Precut/actions/runs/38625485653) สำเร็จครบ Mac Apple Silicon, Mac Intel และ Windows X64 ตัวติดตั้งและ manifest อยู่ใน [immutable GitHub release](https://github.com/Soravit-Ice/Precut-releases/releases/tag/v2.6.4) การแก้ code ถัดไปต้องสร้าง version และ tag ใหม่
+
+Apple Silicon ต้องใช้ **macOS 27 ขึ้นไป**; Intel ต้องใช้ **macOS 15 ขึ้นไป** ตัวติดตั้งทุกระบบยัง unsigned และอัปเดตด้วยตนเอง ผล native acceptance แยกตามระบบอยู่ใน `docs/native-acceptance-2.6.4/` รวม packaged import, speech, waveform, restart, MP4/SRT captions, cancellation และ worker crash recovery โดยไม่มี native process ค้าง
+
+ทดสอบ production licence SDK ในแอปที่แพ็กจริงบน Apple Silicon แล้ว: ปฏิเสธ key ของอีกผลิตภัณฑ์, Activate key ของ PC, ส่งออก SRT ที่ต้องมีสิทธิ์, เก็บสถานะหลังเปิดใหม่ และ Deactivate สำเร็จ ใช้สิทธิ์ QA ชั่วคราวของผู้เผยแพร่และเพิกถอนหลังทดสอบ ไม่ได้เปลี่ยน order, payment หรือสิทธิ์ลูกค้า ผลนี้ไม่ครอบคลุม OAuth sign-in, การซื้อจริง, trial quota, clean OS installation หรือ migration จากรุ่นเก่า
+
+ไฟล์ `docs/production-release-2.6.4.json` บันทึกผลสุดท้ายและ SHA-256 จากการดาวน์โหลดผ่าน Store production ส่วนการตรวจในเครื่องใช้ binary ที่ build ในเครื่อง ซึ่งอาจมี hash ต่างจาก CI เพราะ build timestamps อย่าใช้ hash ในเครื่องแทน hash ของ installer ที่เผยแพร่
+
+การเตรียม CI รุ่นนี้ระบุ Puppeteer install hook เป็น disabled เพราะใช้ browser ที่ pin แยกไว้, รักษา byte ของ vendor/font licenses ข้าม Git checkout, เปรียบเทียบ original caption กับ production export บน OS เดียวกันโดยใช้ tolerance เดิม และ cache เฉพาะ native bundle ที่ผ่าน integrity check แล้ว ทุก native และ packaged gate ยังคงทำงาน
+
+รายละเอียดรุ่น 2.0.0 และ 1.0.1 ต่อจากนี้เป็นประวัติ ไม่ใช่สถานะ production ปัจจุบัน
 
 ## รุ่น 2.0.0 ผ่าน GitHub Actions
 

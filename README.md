@@ -1,6 +1,6 @@
 # Precut
 
-**Skip the boring first edit.** An offline desktop first-cut editor for Thai, English and mixed speech. The current desktop build is **2.5.0**, with a real media engine and the verified T2ETECH licence SDK. Made by t2etech.
+**Skip the boring first edit.** An offline desktop first-cut editor for Thai, English and mixed speech. The current desktop build is **2.6.4**, with a real media engine and the verified T2ETECH licence SDK. Made by t2etech.
 
 ![Precut workspace](docs/screenshots/workspace.png)
 
@@ -10,7 +10,7 @@
 
 Double-click [`scripts/open-preview.command`](scripts/open-preview.command). It uses the included local Node 24 runtime and starts the Electron development app. The development export adapter applies only to unconfigured development sessions. Installed applications always require the real Precut product configuration for export.
 
-The rebuilt Apple Silicon application is `out/mac-arm64/Precut.app`. Build a fresh installer from the current source with `pnpm package`. See the detailed Thai guide [`docs/RELEASE_TO_STORE_TH.md`](docs/RELEASE_TO_STORE_TH.md) for Store setup, native CI inputs, repository binding, first publication and future updates. The caption update’s actual packaged-app check is recorded in `docs/caption-package-qa.json`. macOS Intel and Windows x64 workflow targets are supplied; those platforms have not been built or certified on this host.
+The rebuilt Apple Silicon application is `out/mac-arm64/Precut.app`. Build a fresh installer from the current source with `pnpm package`. See the detailed Thai guide [`docs/RELEASE_TO_STORE_TH.md`](docs/RELEASE_TO_STORE_TH.md) for Store setup, native CI inputs, repository binding, first publication and future updates. The caption update’s actual packaged-app check is recorded in `docs/caption-package-qa.json`. Release 2.6.4 passed native CI and packaged import, speech, waveform, restart, animated-caption export, cancellation and worker-recovery checks on Apple Silicon, Intel and Windows x64. See `docs/native-acceptance-2.6.4/` for each platform’s results. Apple Silicon requires macOS 27 or later; Intel requires macOS 15 or later. Installers are unsigned and use manual installation and updates.
 
 Import your own recording, run **Auto Edit**, apply **Clean safe edits**, review remaining suggestions using Before/After, choose a caption preset and export. Every edit is non-destructive and undoable. Use **Edit text** to click a word and correct it, or click the pencil beside a sentence. Press Enter to save; changing the selected word also saves your correction. **Find & replace** previews replacements within individual transcript words and applies them as one Undo step. Word timing is preserved unless you expand **Adjust word timing**. Drag the timeline to make a manual cut. Drag the panel separators to resize the workspace.
 

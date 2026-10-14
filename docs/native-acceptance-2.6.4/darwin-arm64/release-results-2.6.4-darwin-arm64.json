@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-14T19:48:08.996Z",
+  "platform": "darwin",
+  "arch": "arm64",
+  "packaged": true,
+  "version": "2.6.4",
+  "coldLaunchMs": 3688,
+  "developmentAdapterRejected": true,
+  "productionConfigLoaded": true,
+  "unsignedStoreUpdatePolicy": "passed",
+  "minimumMacOS": "27.0.0",
+  "testedMacOS": "27.0.1",
+  "import": "passed",
+  "speechWords": 22,
+  "waveform": "passed",
+  "restartPersistence": "passed",
+  "scope": "Isolated user data. Bundled FFmpeg/Whisper/models/SQLite. No paid purchase, OAuth login, quota-consuming export, OS installation or prior-version migration performed."
+}
