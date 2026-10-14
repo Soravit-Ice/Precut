@@ -68,6 +68,10 @@ jobs:
       - name: Build pinned offline translation runtime
         run: pnpm native:translation
       - run: pnpm models:prepare
+      - name: Bundle pinned offline caption browser
+        run: |
+          pnpm captions:browser
+          node scripts/build-caption-runtime.mjs
       - name: Test Windows native CPU speech before packaging
         if: ${{ matrix.platform == 'win32' }}
         run: |
@@ -77,6 +81,8 @@ jobs:
       - run: pnpm fixtures:prepare
       - name: Test the actual packaged application
         run: node scripts/release-smoke.mjs
+      - name: Test offline packaged caption preview, MP4, SRT and cancellation
+        run: pnpm test:captions:packaged
       - uses: actions/upload-artifact@v4
         with:
           name: precut-store-${{ matrix.platform }}-${{ matrix.arch }}
@@ -93,6 +99,8 @@ jobs:
           path: |
             docs/release-results-*.json
             docs/screenshots/release-*.png
+            docs/caption-acceptance-*.json
+            docs/screenshots/caption-gallery-*.png
             .tools/native-speech-smoke/results.json
   upload:
     needs: build

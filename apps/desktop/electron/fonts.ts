@@ -56,6 +56,10 @@ export async function registerCaptionFonts(
     "Noto Sans Thai",
     "Inter",
   ]);
+  for (const override of snap.captionStyleOverrides ?? []) {
+    names.add(override.style.font);
+    names.add(override.style.englishFont ?? override.style.font);
+  }
   for (const font of projectFonts(snap).filter((f) => names.has(f.id))) {
     const paths = font.files.map((f) =>
       join(font.custom ? join(projectRoot, "fonts") : fontsRoot, f.file),

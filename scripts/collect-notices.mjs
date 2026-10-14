@@ -2,6 +2,19 @@ import { mkdir, readdir, readFile, writeFile, cp } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 await mkdir("licenses", { recursive: true });
+await cp("node_modules/gsap/README.md", "licenses/GSAP-README.md");
+await cp("vendor/hyperframes/LICENSE", "licenses/HyperFrames-Apache-2.0.txt");
+await cp(
+  "vendor/hyperframes/LICENSE-TWEMOJI-GRAPHICS",
+  "licenses/Twemoji-CC-BY-4.0.txt",
+);
+await mkdir("licenses/caption-fonts", { recursive: true });
+for (const file of await readdir("vendor/hyperframes/fonts"))
+  if (file.endsWith("OFL.txt"))
+    await cp(
+      "vendor/hyperframes/fonts/" + file,
+      "licenses/caption-fonts/" + file,
+    );
 const pkg = JSON.parse(await readFile("package.json", "utf8"));
 for (const name of Object.keys(pkg.dependencies)) {
   const folder = `node_modules/${name}`;

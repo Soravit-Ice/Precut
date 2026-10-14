@@ -43,8 +43,11 @@ import {
 import {
   presets,
   segmentCaptions,
+  buildCaptionScenes,
 } from "../../../../packages/core/src/captions";
 import { CaptionPreview } from "./CaptionPreview";
+import { CaptionStyleGallery } from "./CaptionStyleGallery";
+import { captionAnimations } from "../../../../packages/shared/src/caption-animations";
 import { CaptionColor } from "./CaptionColor";
 import type {
   Category,
@@ -389,25 +392,143 @@ export function CleanupInspector() {
 export function CaptionInspector() {
   const snap = useStore((s) => s.snapshot)!,
     t = useT();
+  const scope = useStore((s) => s.captionScope) ?? "project",
+    selectedId = useStore((s) => s.captionCueId);
+  const [time, setTime] = useState(clock.currentUs),
+    [galleryOpen, setGalleryOpen] = useState(false);
+  useEffect(
+    () =>
+      clock.subscribe(() =>
+        setTime(Math.floor(clock.currentUs / 100000) * 100000),
+      ),
+    [],
+  );
+  const scenes = useMemo(
+    () => buildCaptionScenes(snap, false),
+    [
+      snap.words,
+      snap.suggestions,
+      snap.captionStyle,
+      snap.captionStyleOverrides,
+      snap.captionTranslations,
+      snap.captionPlacements,
+    ],
+  );
+  const selectedCue =
+    scenes.find((s) => s.id === selectedId) ??
+    scenes.find((s) => s.startUs <= time && s.endUs > time) ??
+    scenes[0];
   const [advanced, setAdvanced] = useState(false),
     [draft, setDraft] = useState(snap.captionStyle);
   const [sample, setSample] = useState(t("Make it count.")),
     [animateSample, setAnimateSample] = useState(true),
-    [hoveredPreset, setHoveredPreset] = useState<string>(),
     [studioTab, setStudioTab] = useState("styles");
   const fonts = [...bundledFonts, ...(snap.captionFonts ?? [])];
   const [fontSearch, setFontSearch] = useState("");
-  const activePreset = presets.find((p) => p.id === draft.preset)!;
+  const activeAnimation = captionAnimations.find(
+    (p) => p.id === draft.animation?.templateId,
+  );
+  const activePreset = {
+    ...presets.find((p) => p.id === draft.preset)!,
+    ...(activeAnimation
+      ? {
+          name: activeAnimation.name,
+          description:
+            useStore.getState().settings.language === "th"
+              ? activeAnimation.descriptionTh
+              : activeAnimation.description,
+        }
+      : {}),
+  };
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(
+    () => () => {
+      void flushCaptionSave(snap.project.id).catch(() => {});
+    },
+    [snap.project.id, scope, selectedCue?.id],
+  );
   useEffect(() => {
-    setDraft(snap.captionStyle);
-  }, [snap.captionStyle]);
+    setDraft(
+      scope === "cue"
+        ? (selectedCue?.style ?? snap.captionStyle)
+        : snap.captionStyle,
+    );
+  }, [snap.captionStyle, snap.captionStyleOverrides, scope, selectedCue?.id]);
+  const nativeOriginal = (field: string) =>
+    Boolean(
+      activeAnimation &&
+      !draft.animation?.customizations?.includes(field as never),
+    );
+  const shownSize = (english: boolean) =>
+    nativeOriginal(english ? "englishSize" : "size")
+      ? english
+        ? 38
+        : 48
+      : english
+        ? (draft.englishSize ?? draft.size)
+        : draft.size;
+  const restoreNative = (...fields: string[]) =>
+    update({
+      animation: {
+        ...draft.animation!,
+        customizations: draft.animation?.customizations?.filter(
+          (field) => !fields.includes(field),
+        ),
+      },
+    });
   // The autosave survives closing this inspector; navigating away must not discard the last change.
-  const update = (patch: Partial<CaptionStyle>) => {
-    const style = { ...draft, ...patch };
+  const update = (patch: Partial<CaptionStyle>, project = false) => {
+    const target = project ? "project" : scope;
+    if (target === "cue" && !selectedCue) return;
+    const style = { ...(project ? snap.captionStyle : draft), ...patch };
+    if (style.animation && !patch.animation) {
+      const fields = [
+        "font",
+        "englishFont",
+        "weight",
+        "englishWeight",
+        "size",
+        "englishSize",
+        "color",
+        "activeColor",
+        "intensity",
+        "maxWidth",
+        "outline",
+        "shadow",
+        "radius",
+      ] as const;
+      const changed = fields.filter((field) => field in patch);
+      if (changed.length)
+        style.animation = {
+          ...style.animation,
+          customizations: [
+            ...new Set([...(style.animation.customizations ?? []), ...changed]),
+          ],
+        };
+    }
     setDraft(style);
     useStore.getState().set({
-      snapshot: { ...useStore.getState().snapshot!, captionStyle: style },
+      snapshot:
+        target === "project"
+          ? { ...useStore.getState().snapshot!, captionStyle: style }
+          : {
+              ...useStore.getState().snapshot!,
+              captionStyleOverrides: [
+                ...(
+                  useStore.getState().snapshot!.captionStyleOverrides ?? []
+                ).filter(
+                  (p) =>
+                    p.endUs <= selectedCue!.sourceStartUs! ||
+                    p.startUs >= selectedCue!.sourceEndUs!,
+                ),
+                {
+                  id: "draft",
+                  startUs: selectedCue!.sourceStartUs!,
+                  endUs: selectedCue!.sourceEndUs!,
+                  style,
+                },
+              ],
+            },
       saving: true,
     });
     clearTimeout(timer.current);
@@ -418,11 +539,25 @@ export function CaptionInspector() {
         try {
           const result = await window.precut.call<
             import("../../../../packages/shared/src/contracts").Snapshot
-          >("captions.style", { projectId: snap.project.id, style });
+          >("captions.style", {
+            projectId: snap.project.id,
+            style,
+            scope: target,
+            ...(target === "cue"
+              ? {
+                  startUs: selectedCue!.sourceStartUs,
+                  endUs: selectedCue!.sourceEndUs,
+                }
+              : {}),
+          });
           const state = useStore.getState();
           if (
             state.snapshot?.project.id === snap.project.id &&
-            state.snapshot.captionStyle === style
+            (target === "project"
+              ? state.snapshot.captionStyle === style
+              : state.snapshot.captionStyleOverrides?.some(
+                  (p) => p.style === style,
+                ))
           )
             state.set({ snapshot: result, saving: false });
         } finally {
@@ -444,10 +579,83 @@ export function CaptionInspector() {
         {t("Give every word the right presence.")}
       </p>
       <div className="caption-inspector-scroll">
-        <CaptionLanguages update={update} />
+        <CaptionLanguages update={(patch) => update(patch, true)} />
+        <div
+          className="caption-style-scope"
+          role="group"
+          aria-label={t("Caption style scope")}
+        >
+          {[
+            { id: "project", label: "Whole clip" },
+            { id: "cue", label: "This caption" },
+          ].map((s) => (
+            <button
+              key={s.id}
+              disabled={s.id === "cue" && !selectedCue}
+              aria-pressed={scope === s.id}
+              onClick={() =>
+                safe(async () => {
+                  await flushCaptionSave(snap.project.id);
+                  useStore
+                    .getState()
+                    .set({ captionScope: s.id as "project" | "cue" });
+                })
+              }
+            >
+              {t(s.label)}
+            </button>
+          ))}
+        </div>
+        {scope === "cue" && selectedCue?.styleOverrideId && (
+          <div className="caption-override-note">
+            <span>{t("Custom subtitle style")}</span>
+            <button
+              onClick={() =>
+                safe(async () => {
+                  await flushCaptionSave(snap.project.id);
+                  await mutate("captions.style", {
+                    projectId: snap.project.id,
+                    scope: "cue",
+                    startUs: selectedCue.sourceStartUs,
+                    endUs: selectedCue.sourceEndUs,
+                    style: null,
+                  });
+                })
+              }
+            >
+              {t("Use whole clip style")}
+            </button>
+          </div>
+        )}
+        {activeAnimation && (
+          <div className="caption-original-note">
+            <span>
+              {useStore.getState().settings.language === "th"
+                ? "ดีไซน์ต้นฉบับ HyperFrames · ปรับแต่งได้"
+                : "HyperFrames original design · customizable"}
+            </span>
+            {Boolean(draft.animation?.customizations?.length) && (
+              <button
+                onClick={() =>
+                  update({
+                    animation: {
+                      templateId: draft.animation!.templateId,
+                      revision: 1,
+                    },
+                  })
+                }
+              >
+                {useStore.getState().settings.language === "th"
+                  ? "คืนดีไซน์ต้นฉบับ"
+                  : "Restore original design"}
+              </button>
+            )}
+          </div>
+        )}
         <div className="caption-studio-tabs" aria-label={t("Caption controls")}>
           {[
             { id: "styles", label: "Styles" },
+            { id: "motion", label: "Motion" },
             { id: "colors", label: "Colors" },
             { id: "layout", label: "Layout" },
           ].map((tab) => (
@@ -461,6 +669,89 @@ export function CaptionInspector() {
               {t(tab.label)}
             </button>
           ))}
+        </div>
+        <div
+          className="inspector-control-section"
+          hidden={studioTab !== "motion"}
+        >
+          <h3>{t("Motion")}</h3>
+          {activeAnimation &&
+            !activeAnimation.controls.intensity &&
+            !activeAnimation.controls.texture &&
+            !activeAnimation.controls.emoji && (
+              <p className="muted">
+                {t("This style follows caption timing automatically.")}
+              </p>
+            )}
+          {(!activeAnimation || activeAnimation.controls.intensity) && (
+            <label className="slider-control">
+              <span>
+                {t("Animation intensity")}
+                <b>{Math.round(draft.intensity * 100)}%</b>
+              </span>
+              <Slider
+                label="Animation intensity"
+                value={draft.intensity}
+                min={0}
+                max={1}
+                step={0.01}
+                onValueChange={(intensity) => update({ intensity })}
+              />
+            </label>
+          )}
+          {activeAnimation?.controls.texture && (
+            <label className="control-row">
+              <span>{t("Texture")}</span>
+              <Select
+                label="Caption texture"
+                value={draft.animation?.texture ?? "lava"}
+                options={[
+                  "lava",
+                  "marble",
+                  "metal",
+                  "wood",
+                  "concrete",
+                  "rock",
+                ].map((value) => ({ value, label: t(value) }))}
+                onValueChange={(texture) =>
+                  update({
+                    animation: {
+                      ...draft.animation!,
+                      texture: texture as NonNullable<
+                        CaptionStyle["animation"]
+                      >["texture"],
+                    },
+                  })
+                }
+              />
+            </label>
+          )}
+          {activeAnimation?.controls.emoji && (
+            <label className="control-row">
+              <span>{t("Emoji")}</span>
+              <Select
+                label="Caption emoji"
+                value={draft.animation?.emoji ?? "sparkles"}
+                options={[
+                  { value: "sparkles", label: "✨" },
+                  { value: "fire", label: "🔥" },
+                  { value: "heart", label: "❤️" },
+                  { value: "star", label: "⭐" },
+                  { value: "clap", label: "👏" },
+                ]}
+                onValueChange={(emoji) =>
+                  update({
+                    animation: {
+                      ...draft.animation!,
+                      emoji: emoji as NonNullable<
+                        CaptionStyle["animation"]
+                      >["emoji"],
+                    },
+                  })
+                }
+              />
+            </label>
+          )}
         </div>
         <div className="caption-live-preview">
           <div className="caption-preview-heading">
@@ -526,60 +817,25 @@ export function CaptionInspector() {
             {t("Preview on video")}
           </Button>
         </div>
-        <div
-          className="caption-section-heading"
-          hidden={studioTab !== "styles"}
-        >
-          <h3>{t("Choose a style")}</h3>
-          <span>6 {t("styles")}</span>
+        <div className="caption-gallery-launch" hidden={studioTab !== "styles"}>
+          <span>
+            17 {t("animated styles")} · 6 {t("classic styles")}
+          </span>
+          <Button className="full-width" onClick={() => setGalleryOpen(true)}>
+            {t("Choose a style")}
+          </Button>
+          <p>{t("Try every style on your own video before applying.")}</p>
         </div>
-        <div className="caption-preset-grid" hidden={studioTab !== "styles"}>
-          {presets.map((p) => (
-            <button
-              key={p.id}
-              className={`preset-card ${draft.preset === p.id ? "selected" : ""}`}
-              onClick={() =>
-                update({
-                  ...p.style,
-                  color: draft.color,
-                  activeColor: draft.activeColor,
-                  languageMode: draft.languageMode,
-                  englishFont: draft.englishFont,
-                  englishWeight: draft.englishWeight,
-                  englishSize: draft.englishSize,
-                  anchor: draft.anchor,
-                  font: draft.font,
-                  weight: draft.weight,
-                })
-              }
-              aria-label={`Caption preset ${p.name}`}
-              aria-pressed={draft.preset === p.id}
-              title={t(p.description)}
-              onMouseEnter={() => setHoveredPreset(p.id)}
-              onMouseLeave={() => setHoveredPreset(undefined)}
-              onFocus={() => setHoveredPreset(p.id)}
-              onBlur={() => setHoveredPreset(undefined)}
-            >
-              <div className="preset-art">
-                <CaptionPreview
-                  style={{
-                    ...p.style,
-                    color: draft.color,
-                    activeColor: draft.activeColor,
-                  }}
-                  text={t("Make it count.")}
-                  compact
-                  animated={hoveredPreset === p.id}
-                />
-              </div>
-              <div className="preset-name">
-                {p.name}
-                {draft.preset === p.id && <Check size={12} />}
-              </div>
-              <small className="preset-description">{t(p.description)}</small>
-            </button>
-          ))}
-        </div>
+        <CaptionStyleGallery
+          open={galleryOpen}
+          onOpenChange={setGalleryOpen}
+          style={draft}
+          scene={selectedCue}
+          onApply={async (style) => {
+            update(style);
+            await flushCaptionSave(snap.project.id);
+          }}
+        />
         <div
           className="inspector-control-section"
           hidden={studioTab !== "colors"}
@@ -588,16 +844,23 @@ export function CaptionInspector() {
             <h3>{t("Colors")}</h3>
             <button
               onClick={() =>
-                update({
-                  color: activePreset.style.color,
-                  activeColor: activePreset.style.activeColor,
-                })
+                activeAnimation
+                  ? restoreNative("color", "activeColor")
+                  : update({
+                      color: activePreset.style.color,
+                      activeColor: activePreset.style.activeColor,
+                    })
               }
             >
               {t("Reset colors")}
             </button>
           </div>
-          <div className="caption-palettes">
+          <div
+            className="caption-palettes"
+            hidden={Boolean(
+              activeAnimation && !activeAnimation.controls.activeColor,
+            )}
+          >
             {[
               { name: "Ocean", color: "#FFFFFF", activeColor: "#36C5FF" },
               { name: "Sunshine", color: "#FFFFFF", activeColor: "#FFE066" },
@@ -609,7 +872,8 @@ export function CaptionInspector() {
                 aria-label={`Color palette ${p.name}`}
                 aria-pressed={
                   draft.color.toUpperCase() === p.color &&
-                  draft.activeColor.toUpperCase() === p.activeColor
+                  draft.activeColor.toUpperCase() === p.activeColor &&
+                  !nativeOriginal("color")
                 }
                 onClick={() =>
                   update({ color: p.color, activeColor: p.activeColor })
@@ -625,14 +889,18 @@ export function CaptionInspector() {
             value={draft.color}
             onChange={(color) => update({ color })}
           />
-          <CaptionColor
-            label={t("Active word color")}
-            value={draft.activeColor}
-            onChange={(activeColor) => update({ activeColor })}
-          />
+          {(!activeAnimation || activeAnimation.controls.activeColor) && (
+            <CaptionColor
+              label={t("Active word color")}
+              value={draft.activeColor}
+              onChange={(activeColor) => update({ activeColor })}
+            />
+          )}
           <p className="caption-color-note">
             {t(
-              "Active color appears in Highlight, Pop and Karaoke. Colors carry over when you switch styles.",
+              activeAnimation
+                ? "Original colors are used until you customize them."
+                : "Active color appears in Highlight, Pop and Karaoke. Colors carry over when you switch styles.",
             )}
           </p>
         </div>
@@ -670,148 +938,209 @@ export function CaptionInspector() {
                     });
                     return;
                   }
-                  await mutate("captions.style", {
-                    projectId: snap.project.id,
-                    style: {
-                      ...useStore.getState().snapshot!.captionStyle,
-                      ...(english
-                        ? {
-                            englishFont: font.id,
-                            englishWeight: supportedWeight(font, 600),
-                          }
-                        : {
-                            font: font.id,
-                            weight: supportedWeight(font, 700),
-                          }),
-                    },
-                  });
+                  update(
+                    english
+                      ? {
+                          englishFont: font.id,
+                          englishWeight: supportedWeight(font, 600),
+                        }
+                      : {
+                          font: font.id,
+                          weight: supportedWeight(font, 700),
+                        },
+                  );
                 }
               })
             }
           >
             {t("Import TTF / OTF")}
           </Button>
-          <label className="control-row">
+          <label className="control-row caption-font-row">
             <span>{t("Font")}</span>
             <Select
               label="Caption font"
               value={
-                draft.languageMode === "en"
-                  ? (draft.englishFont ?? draft.font)
-                  : draft.font
+                nativeOriginal(
+                  draft.languageMode === "en" ? "englishFont" : "font",
+                )
+                  ? "__original"
+                  : draft.languageMode === "en"
+                    ? (draft.englishFont ?? draft.font)
+                    : draft.font
               }
               onValueChange={(font) =>
-                update(
-                  draft.languageMode === "en"
-                    ? {
-                        englishFont: font,
-                        englishWeight: supportedWeight(
-                          fonts.find((f) => f.id === font),
-                          draft.englishWeight ?? 600,
-                        ),
-                      }
-                    : {
-                        font,
-                        weight: supportedWeight(
-                          fonts.find((f) => f.id === font),
-                          draft.weight,
-                        ),
-                      },
-                )
+                font === "__original"
+                  ? restoreNative(
+                      draft.languageMode === "en" ? "englishFont" : "font",
+                      draft.languageMode === "en" ? "englishWeight" : "weight",
+                    )
+                  : update(
+                      draft.languageMode === "en"
+                        ? {
+                            englishFont: font,
+                            englishWeight: supportedWeight(
+                              fonts.find((f) => f.id === font),
+                              draft.englishWeight ?? 600,
+                            ),
+                          }
+                        : {
+                            font,
+                            weight: supportedWeight(
+                              fonts.find((f) => f.id === font),
+                              draft.weight,
+                            ),
+                          },
+                    )
               }
-              options={fonts
-                .filter(
-                  (f) =>
-                    (!draft.languageMode || draft.languageMode !== "en"
-                      ? f.languages.includes("th")
-                      : f.languages.includes("en")) &&
-                    f.name.toLowerCase().includes(fontSearch.toLowerCase()),
-                )
-                .map((f) => ({
-                  value: f.id,
-                  label: f.name + (f.custom ? " · Imported" : ""),
-                }))}
+              options={[
+                ...(activeAnimation
+                  ? [{ value: "__original", label: t("Original design") }]
+                  : []),
+                ...fonts
+                  .filter(
+                    (f) =>
+                      (!draft.languageMode || draft.languageMode !== "en"
+                        ? f.languages.includes("th")
+                        : f.languages.includes("en")) &&
+                      (f.name
+                        .toLowerCase()
+                        .includes(fontSearch.toLowerCase()) ||
+                        f.id ===
+                          (draft.languageMode === "en"
+                            ? (draft.englishFont ?? draft.font)
+                            : draft.font)),
+                  )
+                  .map((f) => ({
+                    value: f.id,
+                    label: f.name + (f.custom ? " · Imported" : ""),
+                  })),
+              ]}
             />
           </label>
           <label className="control-row">
             <span>{t("Font weight")}</span>
             <Select
               label="Caption font weight"
-              value={String(
-                draft.languageMode === "en"
-                  ? (draft.englishWeight ?? draft.weight)
-                  : draft.weight,
-              )}
-              onValueChange={(weight) =>
-                update(
-                  draft.languageMode === "en"
-                    ? { englishWeight: Number(weight) }
-                    : { weight: Number(weight) },
+              value={
+                nativeOriginal(
+                  draft.languageMode === "en" ? "englishWeight" : "weight",
                 )
+                  ? "__original"
+                  : String(
+                      draft.languageMode === "en"
+                        ? (draft.englishWeight ?? draft.weight)
+                        : draft.weight,
+                    )
               }
-              options={(
-                fonts.find(
-                  (f) =>
-                    f.id ===
-                    (draft.languageMode === "en"
-                      ? (draft.englishFont ?? draft.font)
-                      : draft.font),
-                )?.weights ?? [400, 700]
-              ).map((w) => ({ value: String(w), label: String(w) }))}
+              onValueChange={(weight) =>
+                weight === "__original"
+                  ? restoreNative(
+                      draft.languageMode === "en" ? "englishWeight" : "weight",
+                    )
+                  : update(
+                      draft.languageMode === "en"
+                        ? { englishWeight: Number(weight) }
+                        : { weight: Number(weight) },
+                    )
+              }
+              options={[
+                ...(activeAnimation
+                  ? [{ value: "__original", label: t("Original design") }]
+                  : []),
+                ...(
+                  fonts.find(
+                    (f) =>
+                      f.id ===
+                      (draft.languageMode === "en"
+                        ? (draft.englishFont ?? draft.font)
+                        : draft.font),
+                  )?.weights ?? [400, 700]
+                ).map((w) => ({ value: String(w), label: String(w) })),
+              ]}
             />
           </label>
           {draft.languageMode === "th-en" && (
             <>
-              <label className="control-row">
+              <label className="control-row caption-font-row">
                 <span>{t("English font")}</span>
                 <Select
                   label="English caption font"
-                  value={draft.englishFont ?? draft.font}
-                  onValueChange={(englishFont) =>
-                    update({
-                      englishFont,
-                      englishWeight: supportedWeight(
-                        fonts.find((f) => f.id === englishFont),
-                        draft.englishWeight ?? 600,
-                      ),
-                    })
+                  value={
+                    nativeOriginal("englishFont")
+                      ? "__original"
+                      : (draft.englishFont ?? draft.font)
                   }
-                  options={fonts
-                    .filter(
-                      (f) =>
-                        f.languages.includes("en") &&
-                        f.name.toLowerCase().includes(fontSearch.toLowerCase()),
-                    )
-                    .map((f) => ({
-                      value: f.id,
-                      label: f.name + (f.custom ? " · Imported" : ""),
-                    }))}
+                  onValueChange={(englishFont) =>
+                    englishFont === "__original"
+                      ? restoreNative("englishFont", "englishWeight")
+                      : update({
+                          englishFont,
+                          englishWeight: supportedWeight(
+                            fonts.find((f) => f.id === englishFont),
+                            draft.englishWeight ?? 600,
+                          ),
+                        })
+                  }
+                  options={[
+                    ...(activeAnimation
+                      ? [{ value: "__original", label: t("Original design") }]
+                      : []),
+                    ...fonts
+                      .filter(
+                        (f) =>
+                          f.languages.includes("en") &&
+                          (f.name
+                            .toLowerCase()
+                            .includes(fontSearch.toLowerCase()) ||
+                            f.id === (draft.englishFont ?? draft.font)),
+                      )
+                      .map((f) => ({
+                        value: f.id,
+                        label: f.name + (f.custom ? " · Imported" : ""),
+                      })),
+                  ]}
                 />
               </label>
               <label className="control-row">
                 <span>{t("English weight")}</span>
                 <Select
                   label="English font weight"
-                  value={String(draft.englishWeight ?? draft.weight)}
-                  onValueChange={(weight) =>
-                    update({ englishWeight: Number(weight) })
+                  value={
+                    nativeOriginal("englishWeight")
+                      ? "__original"
+                      : String(draft.englishWeight ?? draft.weight)
                   }
-                  options={(
-                    fonts.find(
-                      (f) => f.id === (draft.englishFont ?? draft.font),
-                    )?.weights ?? [400, 700]
-                  ).map((w) => ({ value: String(w), label: String(w) }))}
+                  onValueChange={(weight) =>
+                    weight === "__original"
+                      ? restoreNative("englishWeight")
+                      : update({ englishWeight: Number(weight) })
+                  }
+                  options={[
+                    ...(activeAnimation
+                      ? [{ value: "__original", label: t("Original design") }]
+                      : []),
+                    ...(
+                      fonts.find(
+                        (f) => f.id === (draft.englishFont ?? draft.font),
+                      )?.weights ?? [400, 700]
+                    ).map((w) => ({ value: String(w), label: String(w) })),
+                  ]}
                 />
               </label>
               <label className="slider-control">
                 <span>
-                  {t("English size")} <b>{draft.englishSize ?? 38}px</b>
+                  {t(activeAnimation ? "English scale" : "English size")}{" "}
+                  <b>
+                    {activeAnimation
+                      ? Math.round((shownSize(true) / 38) * 100) + "%"
+                      : (draft.englishSize ?? 38) + "px"}
+                  </b>
                 </span>
                 <Slider
                   label="English font size"
                   min={18}
                   max={100}
-                  value={draft.englishSize ?? 38}
+                  value={shownSize(true)}
                   onValueChange={(englishSize) => update({ englishSize })}
                 />
               </label>
@@ -819,20 +1148,19 @@ export function CaptionInspector() {
           )}
           <label className="slider-control">
             <span>
-              {t("Font size")}
+              {t(activeAnimation ? "Text scale" : "Font size")}
               <b>
-                {draft.languageMode === "en"
-                  ? (draft.englishSize ?? draft.size)
-                  : draft.size}
-                px
+                {activeAnimation
+                  ? Math.round(
+                      (shownSize(draft.languageMode === "en") /
+                        (draft.languageMode === "en" ? 38 : 48)) *
+                        100,
+                    ) + "%"
+                  : shownSize(draft.languageMode === "en") + "px"}
               </b>
             </span>
             <Slider
-              value={
-                draft.languageMode === "en"
-                  ? (draft.englishSize ?? draft.size)
-                  : draft.size
-              }
+              value={shownSize(draft.languageMode === "en")}
               min={24}
               max={100}
               label="Font size"
@@ -845,7 +1173,7 @@ export function CaptionInspector() {
               }
             />
           </label>
-          <div className="check-controls">
+          <div className="check-controls" hidden={Boolean(activeAnimation)}>
             <Checkbox
               checked={draft.shadow}
               label={t("Shadow")}
@@ -863,7 +1191,7 @@ export function CaptionInspector() {
           hidden={studioTab !== "layout"}
         >
           <h3>{t("Layout")}</h3>
-          <label className="slider-control">
+          <label className="slider-control" hidden={scope === "cue"}>
             <span>
               {t("Words per caption")}
               <b>{draft.maxWords}</b>
@@ -876,7 +1204,7 @@ export function CaptionInspector() {
               onValueChange={(maxWords) => update({ maxWords })}
             />
           </label>
-          <label className="slider-control">
+          <label className="slider-control" hidden={Boolean(activeAnimation)}>
             <span>
               {t("Bottom margin")}
               <b>{Math.round(draft.bottomMargin * 100)}%</b>
@@ -903,14 +1231,17 @@ export function CaptionInspector() {
               }
               options={["bottom", "middle", "top"].map((value) => ({
                 value,
-                label: value[0].toUpperCase() + value.slice(1),
+                label:
+                  activeAnimation && value === "bottom"
+                    ? t("Original position")
+                    : value[0].toUpperCase() + value.slice(1),
               }))}
             />
           </label>
         </div>
         <button
           className="advanced-toggle"
-          hidden={studioTab !== "layout"}
+          hidden={studioTab !== "layout" || Boolean(activeAnimation)}
           onClick={() => setAdvanced(!advanced)}
         >
           <SlidersHorizontal size={14} />
@@ -920,7 +1251,7 @@ export function CaptionInspector() {
             style={{ transform: advanced ? "rotate(180deg)" : "" }}
           />
         </button>
-        {advanced && studioTab === "layout" && (
+        {advanced && studioTab === "layout" && !activeAnimation && (
           <div className="inspector-control-section advanced-controls">
             <label className="slider-control">
               <span>
@@ -947,20 +1278,6 @@ export function CaptionInspector() {
                 step={0.01}
                 label="Maximum width"
                 onValueChange={(maxWidth) => update({ maxWidth })}
-              />
-            </label>
-            <label className="slider-control">
-              <span>
-                {t("Animation intensity")}
-                <b>{Math.round(draft.intensity * 100)}%</b>
-              </span>
-              <Slider
-                value={draft.intensity}
-                min={0}
-                max={1}
-                step={0.05}
-                label="Animation intensity"
-                onValueChange={(intensity) => update({ intensity })}
               />
             </label>
             <label className="control-row">
@@ -1003,7 +1320,7 @@ export function CaptionInspector() {
                 onValueChange={(letterSpacing) => update({ letterSpacing })}
               />
             </label>
-            <label className="slider-control">
+            <label className="slider-control" hidden={scope === "cue"}>
               <span>
                 {t("Caption duration")}
                 <b>{draft.durationPreference}s</b>

@@ -1,0 +1,305 @@
+{
+  "commit": "38cfcdd56cdc1a8125a8e68a3604357a23ce819f",
+  "revision": 1,
+  "styles": [
+    "caption-pill-karaoke",
+    "caption-highlight",
+    "mk-callout-highlight",
+    "caption-clip-wipe",
+    "caption-weight-shift",
+    "caption-editorial-emphasis",
+    "caption-gradient-fill",
+    "caption-kinetic-slam",
+    "caption-camera-follow",
+    "caption-parallax-layers",
+    "caption-emoji-pop",
+    "caption-neon-accent",
+    "caption-neon-glow",
+    "caption-particle-burst",
+    "caption-matrix-decode",
+    "caption-glitch-rgb",
+    "caption-texture"
+  ],
+  "files": [
+    {
+      "file": "sources/caption-pill-karaoke/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-pill-karaoke/registry-item.json",
+      "sha256": "80dea198e8b91a1f77693eee30ba45632fa4974444d9ff866e082bff30253390"
+    },
+    {
+      "file": "sources/caption-pill-karaoke/caption-pill-karaoke.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-pill-karaoke/caption-pill-karaoke.html",
+      "sha256": "cdbbc72af7fbac440c0bf5750cf9e3d4ded20f26588b00ac79399342ca60b3e3"
+    },
+    {
+      "file": "sources/caption-highlight/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-highlight/registry-item.json",
+      "sha256": "2fb0608086d69fb08198dda6dafff91b9844c67015359fa836fd3b0f681ff8ce"
+    },
+    {
+      "file": "sources/caption-highlight/caption-highlight.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-highlight/caption-highlight.html",
+      "sha256": "77f877ddcef85e787453daa6724cec5e85a0678fcb098fe94f9b86ce0ef5f2f4"
+    },
+    {
+      "file": "sources/mk-callout-highlight/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/blocks/mk-callout-highlight/registry-item.json",
+      "sha256": "8f31105590e9c0577eb8027d45fd36b0d2f7496fa028f0d3e40de0fd249a36fa"
+    },
+    {
+      "file": "sources/mk-callout-highlight/mk-callout-highlight.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/blocks/mk-callout-highlight/mk-callout-highlight.html",
+      "sha256": "ab80d94b07373fd1bb136c3560183e916876e9318729202698fd26c2e999dd46"
+    },
+    {
+      "file": "sources/caption-clip-wipe/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-clip-wipe/registry-item.json",
+      "sha256": "4f0abcb99a83ff6f3ae3680f82449f0b20ddba96d92e2b683698b32edd98ce2d"
+    },
+    {
+      "file": "sources/caption-clip-wipe/caption-clip-wipe.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-clip-wipe/caption-clip-wipe.html",
+      "sha256": "8b9e06353df3ea3bc0113a9c7ef3e480293a6ed75bee46744b053bf5e02dc5f6"
+    },
+    {
+      "file": "sources/caption-weight-shift/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-weight-shift/registry-item.json",
+      "sha256": "c1b03669adc8d0185bf12b770833a91f694963b009152ce35cf02d8946a7ddb1"
+    },
+    {
+      "file": "sources/caption-weight-shift/caption-weight-shift.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-weight-shift/caption-weight-shift.html",
+      "sha256": "8a5294debec3eadeb7ca0a8688c31a6e8c517ebb1c55ff410aa81df3807daa55"
+    },
+    {
+      "file": "sources/caption-editorial-emphasis/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-editorial-emphasis/registry-item.json",
+      "sha256": "9ddbc86a0cec3b22fdd2ae9600b4d4d7e06822dda7ad730358924a92b33c243c"
+    },
+    {
+      "file": "sources/caption-editorial-emphasis/caption-editorial-emphasis.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-editorial-emphasis/caption-editorial-emphasis.html",
+      "sha256": "6144571b6c73dbdec282284fe2277d3c958e15cddaf362295ba9cca02e705d1c"
+    },
+    {
+      "file": "sources/caption-gradient-fill/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-gradient-fill/registry-item.json",
+      "sha256": "26e4f723880efee64fd4543ade423c1540dd0252ec7eb373bde8e08f1db9a732"
+    },
+    {
+      "file": "sources/caption-gradient-fill/caption-gradient-fill.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-gradient-fill/caption-gradient-fill.html",
+      "sha256": "6d08dc0a9f54d25b25590721ec579a3521a0079c70f32b292bd93697384c60ff"
+    },
+    {
+      "file": "sources/caption-kinetic-slam/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-kinetic-slam/registry-item.json",
+      "sha256": "ef8502a2ef9e3fac339fffcf03c5d25322aeb17ffff854d08c598f49dac3b848"
+    },
+    {
+      "file": "sources/caption-kinetic-slam/caption-kinetic-slam.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-kinetic-slam/caption-kinetic-slam.html",
+      "sha256": "86b7a54e045f626d1375636a2f1cde19c2f3cbdad1df1d7d0204fe6b4452044a"
+    },
+    {
+      "file": "sources/caption-camera-follow/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-camera-follow/registry-item.json",
+      "sha256": "9a231316fbc229723242d30bfda8d74fd32f7d45a7237b2cd67bf0e6986660e6"
+    },
+    {
+      "file": "sources/caption-camera-follow/caption-camera-follow.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-camera-follow/caption-camera-follow.html",
+      "sha256": "4a0da1ba065882e95274468c8f3e36f1094fc598c3c93be1fc63182e9e42953c"
+    },
+    {
+      "file": "sources/caption-parallax-layers/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-parallax-layers/registry-item.json",
+      "sha256": "9cf38d8c11a6cfc742fe3ee328de180a6f30f05a31389d71a06296ce5bdd76be"
+    },
+    {
+      "file": "sources/caption-parallax-layers/caption-parallax-layers.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-parallax-layers/caption-parallax-layers.html",
+      "sha256": "e1c14eb380fa7d7b8c84798e40530e946ed140547c61d2e6f5111d712cb72d78"
+    },
+    {
+      "file": "sources/caption-emoji-pop/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-emoji-pop/registry-item.json",
+      "sha256": "7b685666cb8a02874faf983dda83e1f15619d6640212ac16b2979b499976d486"
+    },
+    {
+      "file": "sources/caption-emoji-pop/caption-emoji-pop.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-emoji-pop/caption-emoji-pop.html",
+      "sha256": "79e7cad5cf54dec70e7af59c8d0583531017bacca6bc9ee057bfad386904eb9b"
+    },
+    {
+      "file": "sources/caption-neon-accent/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-neon-accent/registry-item.json",
+      "sha256": "6477256a631f78741eaebe4561f338d278deaba4f43caa4ad6a48100febe4b72"
+    },
+    {
+      "file": "sources/caption-neon-accent/caption-neon-accent.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-neon-accent/caption-neon-accent.html",
+      "sha256": "1c4af30ab35c6e3f754157cce2c364c75386f37059d47fa52446bca19200339d"
+    },
+    {
+      "file": "sources/caption-neon-glow/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-neon-glow/registry-item.json",
+      "sha256": "55e7a98b63ce6681c08eb403371492925932ab908fc5149fbc9da62edeb38b10"
+    },
+    {
+      "file": "sources/caption-neon-glow/caption-neon-glow.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-neon-glow/caption-neon-glow.html",
+      "sha256": "dc9d43d58879e1422837c213aa7f8921ca43b58f4e9c77f8463232585e05034c"
+    },
+    {
+      "file": "sources/caption-particle-burst/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-particle-burst/registry-item.json",
+      "sha256": "9ad5bd5d2bfc666f44bbfcbe0082c9e7d203d0dd0f8b6e594ce7b1e76f0a68c5"
+    },
+    {
+      "file": "sources/caption-particle-burst/caption-particle-burst.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-particle-burst/caption-particle-burst.html",
+      "sha256": "48ec0a000e9c40cff891c2ca0e66ed4cf33c358bbeb2ca76fb3bdc8288bf5936"
+    },
+    {
+      "file": "sources/caption-matrix-decode/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-matrix-decode/registry-item.json",
+      "sha256": "c2a64808f92f99475f48267a28d392aecc43296e210eec8714d5b7051dc92a53"
+    },
+    {
+      "file": "sources/caption-matrix-decode/caption-matrix-decode.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-matrix-decode/caption-matrix-decode.html",
+      "sha256": "c8f703cbe6e8dd547107f2e6298f27c287a9d08b133ceab128e874ce88d36e78"
+    },
+    {
+      "file": "sources/caption-glitch-rgb/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-glitch-rgb/registry-item.json",
+      "sha256": "b1baebf7de475a4f0ce46a2eba4af4fce4fc9a0c15b468bb517826e778729bcf"
+    },
+    {
+      "file": "sources/caption-glitch-rgb/caption-glitch-rgb.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-glitch-rgb/caption-glitch-rgb.html",
+      "sha256": "65e588d27515cde0e361cddd6034a3dad647a86f50c02847c6cc453619d58648"
+    },
+    {
+      "file": "sources/caption-texture/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-texture/registry-item.json",
+      "sha256": "a517bab95a57639c70c98d8be43e4f59a01a5a7ccce7a811d44900ddfa80765f"
+    },
+    {
+      "file": "sources/caption-texture/caption-texture.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-texture/caption-texture.html",
+      "sha256": "dcd2c9c9ba068507c559171264748c129981253fd61ce933c5d0f461431b0d7f"
+    },
+    {
+      "file": "textures/lava.png",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-texture/lava.png",
+      "sha256": "a921282ec9f570e2e2d7591dd72c284ff054613fa370f8981090332924e2ce5c"
+    },
+    {
+      "file": "textures/marble-012.png",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-texture/marble-012.png",
+      "sha256": "a0429791f03a0ee265ede7c11f802db3e3077fd783d5e7e1061c7e3da770a018"
+    },
+    {
+      "file": "textures/metal-046-b.png",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-texture/metal-046-b.png",
+      "sha256": "8d2f2ff3544fa96155f4bb89d376953f11b1723f13d3110af6f9af07c659ab1b"
+    },
+    {
+      "file": "textures/wood-066.png",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-texture/wood-066.png",
+      "sha256": "ee2b237151cebee29c18aba3deea089592be20e92694c5a84f4b6e086df1689d"
+    },
+    {
+      "file": "textures/concrete-042-a.png",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-texture/concrete-042-a.png",
+      "sha256": "8ee5f31943e9ada8286b2e847eeb9a64a4bff3a8732efff54776bc5c1c6b8176"
+    },
+    {
+      "file": "textures/rock-058.png",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/registry/components/caption-texture/rock-058.png",
+      "sha256": "e3da7340588b79b7772b0b9fa13c2458038467e9c0b3b0d62c9536db92c95e6d"
+    },
+    {
+      "file": "LICENSE",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/38cfcdd56cdc1a8125a8e68a3604357a23ce819f/LICENSE",
+      "sha256": "4259155fb06f127687ee7b0a8a3682d45132db0f2da26cbc0b7a2d1e796436b8"
+    },
+    {
+      "file": "emoji/2728.svg",
+      "url": "https://raw.githubusercontent.com/twitter/twemoji/v14.0.2/assets/svg/2728.svg",
+      "sha256": "9271962e9fc8257ce9e008bde83ac1408a2f196db6142548769f290873b70b93"
+    },
+    {
+      "file": "emoji/1f525.svg",
+      "url": "https://raw.githubusercontent.com/twitter/twemoji/v14.0.2/assets/svg/1f525.svg",
+      "sha256": "4fa646a4dbc10513ddeb70561789483638faf456e15186f4eb7291c5c455cbb6"
+    },
+    {
+      "file": "emoji/2764.svg",
+      "url": "https://raw.githubusercontent.com/twitter/twemoji/v14.0.2/assets/svg/2764.svg",
+      "sha256": "09a743ee0c32ca57c9be64b13b29c396310d1dd309cb4d7d3be722e47db95f27"
+    },
+    {
+      "file": "emoji/2b50.svg",
+      "url": "https://raw.githubusercontent.com/twitter/twemoji/v14.0.2/assets/svg/2b50.svg",
+      "sha256": "2bf5907894a70b877089c24817fcc65db655cfed28840aa16c8f3810cd412620"
+    },
+    {
+      "file": "emoji/1f44f.svg",
+      "url": "https://raw.githubusercontent.com/twitter/twemoji/v14.0.2/assets/svg/1f44f.svg",
+      "sha256": "9c38198544d25668f7e68c0fbd77a35cb3dfa6ae38df6760ab7616c111a7e007"
+    },
+    {
+      "file": "LICENSE-TWEMOJI-GRAPHICS",
+      "url": "https://raw.githubusercontent.com/twitter/twemoji/v14.0.2/LICENSE-GRAPHICS",
+      "sha256": "8ae9438818c26e4873b91d8c6ad620526c011e27e125677f13031eda903f007c"
+    },
+    {
+      "file": "fonts/Gabarito[wght].ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/gabarito/Gabarito%5Bwght%5D.ttf",
+      "sha256": "8650e2bd7747f7d74619fd7aecbcb0309e6f37b7964024f3fb15ae4833b67ca5"
+    },
+    {
+      "file": "fonts/gabarito-OFL.txt",
+      "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/gabarito/OFL.txt",
+      "sha256": "21506cc7106bbfd4aa1c40371f33f9f4296182a8e4bb46658e99af24feb4bfca"
+    },
+    {
+      "file": "fonts/InstrumentSerif-Regular.ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/instrumentserif/InstrumentSerif-Regular.ttf",
+      "sha256": "498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88"
+    },
+    {
+      "file": "fonts/InstrumentSerif-Italic.ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/instrumentserif/InstrumentSerif-Italic.ttf",
+      "sha256": "08939b8bdf534afec24ae0ef5e03f948940cd9a8fe08e7fecbad040e62327385"
+    },
+    {
+      "file": "fonts/instrumentserif-OFL.txt",
+      "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/instrumentserif/OFL.txt",
+      "sha256": "129ed7618959716959f2941fdd5b49e0ad6e6c1d78726761786a00253d865521"
+    },
+    {
+      "file": "fonts/SpaceGrotesk[wght].ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/spacegrotesk/SpaceGrotesk%5Bwght%5D.ttf",
+      "sha256": "acad6de1fc93436f5c0f1f4137751ef04f1aea3063e7036535970ffcfbd79f72"
+    },
+    {
+      "file": "fonts/spacegrotesk-OFL.txt",
+      "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/spacegrotesk/OFL.txt",
+      "sha256": "564ce565c371c5e5bbf286006565a7c9aa55a9f56e7ca58d56e05d649dd61a72"
+    },
+    {
+      "file": "fonts/PlayfairDisplay-Italic[wght].ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/playfairdisplay/PlayfairDisplay-Italic%5Bwght%5D.ttf",
+      "sha256": "a5e26dc5e2e77fb2803a0bf02fd4f81ee136ec8dea863ccdb0c59a263b21378b"
+    },
+    {
+      "file": "fonts/playfairdisplay-OFL.txt",
+      "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/playfairdisplay/OFL.txt",
+      "sha256": "566be814f8e96e93dfa16101331557eb6b5467e9e03f627c0910fe93ca12300e"
+    }
+  ]
+}

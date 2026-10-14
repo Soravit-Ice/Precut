@@ -163,6 +163,13 @@ export function buildCaptionScenes(
     const placement = [...(snap.captionPlacements ?? [])]
       .reverse()
       .find((p) => p.startUs <= sourceStartUs && p.endUs > sourceStartUs);
+    const overrides = [...(snap.captionStyleOverrides ?? [])].reverse();
+    // Stable word identity wins if retiming moves a word into another cue's range.
+    const override =
+      overrides.find((p) => p.wordIds?.includes(source[0].id)) ??
+      overrides.find(
+        (p) => p.startUs <= sourceStartUs && p.endUs > sourceStartUs,
+      );
     const result: CaptionScene = {
       ...scene,
       id,
@@ -171,6 +178,15 @@ export function buildCaptionScenes(
       sourceHash,
       anchor: placement?.anchor,
       lines,
+      style: override
+        ? {
+            ...override.style,
+            maxWords: snap.captionStyle.maxWords,
+            durationPreference: snap.captionStyle.durationPreference,
+            languageMode: snap.captionStyle.languageMode,
+          }
+        : snap.captionStyle,
+      styleOverrideId: override?.id,
     };
     if (!output) {
       const delta = sourceStartUs - scene.startUs;
@@ -282,6 +298,7 @@ export function renderCaption(
   scene: CaptionScene | undefined,
   timeUs: number,
   style: CaptionStyle,
+  paint = true,
 ): CaptionBounds | undefined {
   if (!scene || timeUs < scene.startUs || timeUs >= scene.endUs) return;
   const blocks = (
@@ -363,22 +380,23 @@ export function renderCaption(
     Math.min(height - blockHeight / 2 - margin / 2, desiredY),
   );
   let y = centerY - blockHeight / 2;
-  for (const block of blocks) {
-    renderSingleCaption(
-      ctx,
-      width,
-      height,
-      { ...scene, words: block.words },
-      timeUs,
-      {
-        ...block.local,
-        size: (block.size * 1080) / height,
-        anchor: { x: centerX / width, y: (y + block.height / 2) / height },
-        preset: block.line.words ? style.preset : "clean",
-      },
-    );
-    y += block.height + gap;
-  }
+  if (paint)
+    for (const block of blocks) {
+      renderSingleCaption(
+        ctx,
+        width,
+        height,
+        { ...scene, words: block.words },
+        timeUs,
+        {
+          ...block.local,
+          size: (block.size * 1080) / height,
+          anchor: { x: centerX / width, y: (y + block.height / 2) / height },
+          preset: block.line.words ? style.preset : "clean",
+        },
+      );
+      y += block.height + gap;
+    }
   return {
     x: centerX - blockWidth / 2,
     y: centerY - blockHeight / 2 - margin / 2,

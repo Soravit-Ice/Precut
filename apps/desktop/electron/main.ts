@@ -1,5 +1,8 @@
 import { projectFonts, validateCaptionFonts } from "./fonts";
-import { captionLanguageStyle } from "../../../packages/shared/src/fonts";
+import {
+  captionLanguageStyle,
+  bundledFonts,
+} from "../../../packages/shared/src/fonts";
 import { missingCaptionTranslations } from "../../../packages/core/src/captions";
 import {
   app,
@@ -50,6 +53,15 @@ import { modelDefinitions, type EngineTask } from "./engine";
 // development runner to Precut.app. The OS bundle and UI still display Precut.
 app.setName("@t2e/precut");
 protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "precut-caption",
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: true,
+    },
+  },
   {
     scheme: "precut-media",
     privileges: {
@@ -153,6 +165,9 @@ async function taskFor(
     nativeRoot,
     modelsRoot,
     fontsRoot,
+    captionRuntimeRoot: existsSync(join(__dirname, "renderer", "hyperframes"))
+      ? join(__dirname, "renderer", "hyperframes")
+      : join(appRoot, "apps", "desktop", "public", "hyperframes"),
     projectRoot: join(projectsRoot, job.projectId),
     settings: await db.call<Settings>("settings.get"),
     ...extra,
@@ -483,7 +498,7 @@ async function handle(
     case "captions.style":
     case "captions.correct":
     case "captions.correctMany": {
-      if (method === "captions.style")
+      if (method === "captions.style" && input.style)
         validateCaptionFonts(
           input.style as Snapshot["captionStyle"],
           await snapshot(input.projectId as string),
@@ -886,6 +901,52 @@ if (primary) {
       await db.call("recovery");
       for (const job of await db.call<Job[]>("jobs.list"))
         jobs.set(job.id, job);
+      // Only explicitly bundled assets are available to the opaque caption iframe.
+      // This protocol carries no IPC and never accepts an arbitrary filesystem path.
+      const captionFiles = new Map<string, string>();
+      const captionRoot = existsSync(join(__dirname, "renderer", "hyperframes"))
+        ? join(__dirname, "renderer", "hyperframes")
+        : join(appRoot, "apps", "desktop", "public", "hyperframes");
+      for (const name of ["caption-runtime.js", "hyperframe.runtime.iife.js"])
+        captionFiles.set("runtime/" + name, join(captionRoot, name));
+      for (const folder of ["emoji", "textures", "fonts"])
+        for (const name of await readdir(join(captionRoot, folder)))
+          captionFiles.set(
+            "runtime/" + folder + "/" + name,
+            join(captionRoot, folder, name),
+          );
+      for (const font of bundledFonts)
+        for (const file of font.files) {
+          const path = file.file;
+          captionFiles.set("fonts/" + path, join(fontsRoot, path));
+        }
+      protocol.handle("precut-caption", async (request) => {
+        const url = new URL(request.url);
+        const file = captionFiles.get(
+          url.hostname + decodeURIComponent(url.pathname),
+        );
+        if (!file || request.method !== "GET")
+          return new Response(null, { status: 404 });
+        try {
+          return new Response(await readFile(file), {
+            headers: {
+              "Content-Type":
+                (
+                  {
+                    ".js": "text/javascript",
+                    ".svg": "image/svg+xml",
+                    ".png": "image/png",
+                    ".ttf": "font/ttf",
+                    ".otf": "font/otf",
+                  } as Record<string, string>
+                )[extname(file)] ?? "application/octet-stream",
+              "Access-Control-Allow-Origin": "*",
+            },
+          });
+        } catch {
+          return new Response(null, { status: 404 });
+        }
+      });
       protocol.handle("precut-media", async (request) => {
         try {
           const url = new URL(request.url);

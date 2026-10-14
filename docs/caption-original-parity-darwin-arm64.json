@@ -1,0 +1,113 @@
+{
+  "date": "2026-10-14T12:39:53.989618+00:00",
+  "platform": "darwin",
+  "arch": "arm64",
+  "registryCommit": "38cfcdd56cdc1a8125a8e68a3604357a23ce819f",
+  "runtimeSha256": "15eb1b83cf39161742fc974fe9fa8fa1cbb1ddb87aad900cfde4c8bc1cfc92f0",
+  "comparison": "Unmodified upstream HTML/CSS/GSAP against the actual export-rendered original demos at the same 30 fps frame. Local pinned font faces.",
+  "results": [
+    {
+      "id": "caption-pill-karaoke",
+      "time": 3.8,
+      "visible": 174433,
+      "changed": 0
+    },
+    {
+      "id": "caption-highlight",
+      "time": 4.233333333333333,
+      "visible": 128555,
+      "changed": 0
+    },
+    {
+      "id": "mk-callout-highlight",
+      "time": 3.8,
+      "visible": 20983,
+      "changed": 0
+    },
+    {
+      "id": "caption-clip-wipe",
+      "time": 4.233333333333333,
+      "visible": 50570,
+      "changed": 0
+    },
+    {
+      "id": "caption-weight-shift",
+      "time": 4.233333333333333,
+      "visible": 27771,
+      "changed": 0
+    },
+    {
+      "id": "caption-editorial-emphasis",
+      "time": 4.4,
+      "visible": 155893,
+      "changed": 0
+    },
+    {
+      "id": "caption-gradient-fill",
+      "time": 4.233333333333333,
+      "visible": 26190,
+      "changed": 0
+    },
+    {
+      "id": "caption-kinetic-slam",
+      "time": 4.233333333333333,
+      "visible": 152968,
+      "changed": 0
+    },
+    {
+      "id": "caption-camera-follow",
+      "time": 4.1,
+      "visible": 1515335,
+      "changed": 0
+    },
+    {
+      "id": "caption-parallax-layers",
+      "time": 3.066666666666667,
+      "visible": 434726,
+      "changed": 0
+    },
+    {
+      "id": "caption-emoji-pop",
+      "time": 4.233333333333333,
+      "visible": 59700,
+      "changed": 0
+    },
+    {
+      "id": "caption-neon-accent",
+      "time": 4.233333333333333,
+      "visible": 159807,
+      "changed": 0
+    },
+    {
+      "id": "caption-neon-glow",
+      "time": 4.233333333333333,
+      "visible": 152675,
+      "changed": 0
+    },
+    {
+      "id": "caption-particle-burst",
+      "time": 4.233333333333333,
+      "visible": 43244,
+      "changed": 0
+    },
+    {
+      "id": "caption-matrix-decode",
+      "time": 4.233333333333333,
+      "visible": 31556,
+      "changed": 0
+    },
+    {
+      "id": "caption-glitch-rgb",
+      "time": 4.233333333333333,
+      "visible": 2073600,
+      "changed": 0
+    },
+    {
+      "id": "caption-texture",
+      "time": 4.233333333333333,
+      "visible": 244930,
+      "changed": 0
+    }
+  ],
+  "passed": true
+}

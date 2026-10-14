@@ -22,6 +22,13 @@ type State = {
   transcriptTool: "cleanup" | "captions";
   captionCueId?: string;
   captionScope?: "project" | "cue";
+  captionAnimationPreview?: {
+    projectId: string;
+    style: Snapshot["captionStyle"];
+    scope: "project" | "cue";
+    startUs?: number;
+    endUs?: number;
+  };
   set: (patch: Partial<Omit<State, "set">>) => void;
 };
 export const useStore = create<State>((set) => ({

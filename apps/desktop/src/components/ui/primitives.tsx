@@ -4,7 +4,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import * as SliderPrimitive from "@radix-ui/react-slider";
-import { Check, ChevronDown, X } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, X } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -130,38 +130,83 @@ export function Select({
   label: string;
   disabled?: boolean;
 }) {
+  const viewportRef = React.useRef<HTMLDivElement>(null);
+  const selectedLabel = options.find((option) => option.value === value)?.label;
   return (
     <SelectPrimitive.Root
       value={value}
       onValueChange={onValueChange}
       disabled={disabled}
     >
-      <SelectPrimitive.Trigger className="select-trigger" aria-label={label}>
+      <SelectPrimitive.Trigger
+        className="select-trigger"
+        aria-label={label}
+        title={selectedLabel}
+      >
         <SelectPrimitive.Value />
-        <SelectPrimitive.Icon>
+        <SelectPrimitive.Icon className="select-chevron">
           <ChevronDown size={14} />
         </SelectPrimitive.Icon>
       </SelectPrimitive.Trigger>
       <SelectPrimitive.Portal>
         <SelectPrimitive.Content
           position="popper"
-          sideOffset={5}
+          sideOffset={6}
+          collisionPadding={12}
+          hideWhenDetached
           className="select-content"
+          aria-label={label}
+          onKeyDown={(event) => {
+            if (event.key !== "PageDown" && event.key !== "PageUp") return;
+            const viewport = viewportRef.current;
+            if (!viewport) return;
+            const items = Array.from(
+              viewport.querySelectorAll<HTMLElement>(
+                '[role="option"]:not([data-disabled])',
+              ),
+            );
+            const current = items.indexOf(
+              document.activeElement as HTMLElement,
+            );
+            const rowHeight = items[current]?.offsetHeight || 36;
+            const step = Math.max(
+              1,
+              Math.floor(viewport.clientHeight / rowHeight) - 1,
+            );
+            const next = Math.min(
+              items.length - 1,
+              Math.max(0, current + (event.key === "PageDown" ? step : -step)),
+            );
+            event.preventDefault();
+            items[next]?.focus({ preventScroll: true });
+            items[next]?.scrollIntoView({ block: "nearest" });
+          }}
         >
-          <SelectPrimitive.Viewport>
+          <SelectPrimitive.ScrollUpButton className="select-scroll-button">
+            <ChevronUp size={15} />
+          </SelectPrimitive.ScrollUpButton>
+          <SelectPrimitive.Viewport
+            ref={viewportRef}
+            className="select-viewport"
+          >
             {options.map((o) => (
               <SelectPrimitive.Item
                 key={o.value}
                 value={o.value}
                 className="select-item"
               >
-                <SelectPrimitive.ItemText>{o.label}</SelectPrimitive.ItemText>
-                <SelectPrimitive.ItemIndicator>
+                <SelectPrimitive.ItemText className="select-item-text">
+                  {o.label}
+                </SelectPrimitive.ItemText>
+                <SelectPrimitive.ItemIndicator className="select-item-indicator">
                   <Check size={14} />
                 </SelectPrimitive.ItemIndicator>
               </SelectPrimitive.Item>
             ))}
           </SelectPrimitive.Viewport>
+          <SelectPrimitive.ScrollDownButton className="select-scroll-button">
+            <ChevronDown size={15} />
+          </SelectPrimitive.ScrollDownButton>
         </SelectPrimitive.Content>
       </SelectPrimitive.Portal>
     </SelectPrimitive.Root>

@@ -145,7 +145,10 @@ test("direct positioning, per-cue overrides, bilingual export and project font p
   expect(
     (await call<Snapshot>("projects.open", { id })).captionStyle.anchor,
   ).toEqual(moved);
-  await page.getByRole("button", { name: "This caption", exact: true }).click();
+  await page
+    .getByRole("group", { name: "Caption position scope", exact: true })
+    .getByRole("button", { name: "This caption", exact: true })
+    .click();
   await drag(-60, -25);
   await expect
     .poll(
@@ -157,7 +160,10 @@ test("direct positioning, per-cue overrides, bilingual export and project font p
   const cue = (await call<Snapshot>("projects.open", { id }))
     .captionPlacements![0];
   expect(cue.anchor.x).toBeLessThan(moved.x);
-  await page.getByRole("button", { name: "Whole clip", exact: true }).click();
+  await page
+    .getByRole("group", { name: "Caption position scope", exact: true })
+    .getByRole("button", { name: "Whole clip", exact: true })
+    .click();
   await drag(20, 20);
   snap = await call<Snapshot>("projects.open", { id });
   expect(snap.captionPlacements![0].anchor.x).toBeGreaterThan(cue.anchor.x);
@@ -216,7 +222,10 @@ test("direct positioning, per-cue overrides, bilingual export and project font p
   await expect
     .poll(() => page.evaluate(() => !!document.fullscreenElement))
     .toBe(false);
-  await page.getByRole("button", { name: "This caption", exact: true }).click();
+  await page
+    .getByRole("group", { name: "Caption position scope", exact: true })
+    .getByRole("button", { name: "This caption", exact: true })
+    .click();
   await page
     .getByRole("button", { name: "Reset position", exact: true })
     .click();
@@ -235,6 +244,10 @@ test("direct positioning, per-cue overrides, bilingual export and project font p
     });
   }, resolve("apps/desktop/public/fonts/inter/Inter[opsz,wght].ttf"));
   await page
+    .locator(".caption-style-scope")
+    .getByRole("button", { name: "Whole clip", exact: true })
+    .click();
+  await page
     .locator(".caption-studio-tabs")
     .getByRole("button", { name: "Layout", exact: true })
     .click();
@@ -250,7 +263,13 @@ test("direct positioning, per-cue overrides, bilingual export and project font p
     .toBe(1);
   snap = await call<Snapshot>("projects.open", { id });
   const imported = snap.captionFonts![0];
-  expect(snap.captionStyle.englishFont).toBe(imported.id);
+  await expect
+    .poll(
+      async () =>
+        (await call<Snapshot>("projects.open", { id })).captionStyle
+          .englishFont,
+    )
+    .toBe(imported.id);
   await expect
     .poll(() =>
       page.evaluate(() =>

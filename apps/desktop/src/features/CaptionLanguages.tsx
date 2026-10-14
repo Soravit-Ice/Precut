@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Button, Input } from "../components/ui/primitives";
+import { Button, Input, Select } from "../components/ui/primitives";
 import {
   useStore,
   call,
@@ -162,27 +162,23 @@ export function CaptionLanguages({
             <>
               <label className="caption-field">
                 <span>{t("Edit caption text")}</span>
-                <select
-                  aria-label={t("Caption segment")}
+                <Select
+                  label={t("Caption segment")}
                   value={scene.id}
-                  onChange={(e) => {
-                    const next = scenes.find((s) => s.id === e.target.value);
+                  onValueChange={(id) => {
+                    const next = scenes.find((s) => s.id === id);
                     if (next) {
                       useStore.getState().set({ captionCueId: next.id });
                       clock.seek?.(next.startUs);
                     }
                   }}
-                >
-                  {scenes.map((s, i) => (
-                    <option key={s.id} value={s.id}>
-                      {i + 1} ·{" "}
-                      {s.words
-                        .map((w) => w.text)
-                        .join(" ")
-                        .slice(0, 42)}
-                    </option>
-                  ))}
-                </select>
+                  options={scenes.map((s, i) => ({
+                    value: s.id,
+                    label: `${i + 1} · ${s.styleOverrideId ? "✦ " : ""}${s.words
+                      .map((w) => w.text)
+                      .join(" ")}`,
+                  }))}
+                />
               </label>
               {scene.lines?.map((line) => (
                 <CaptionText

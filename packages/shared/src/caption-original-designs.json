@@ -1,0 +1,152 @@
+[
+  {
+    "id": "caption-pill-karaoke",
+    "duration": 8,
+    "fonts": [
+      "Poppins"
+    ],
+    "sourceSha256": "cdbbc72af7fbac440c0bf5750cf9e3d4ded20f26588b00ac79399342ca60b3e3",
+    "posterTime": 3.8
+  },
+  {
+    "id": "caption-highlight",
+    "duration": 8,
+    "fonts": [
+      "Montserrat"
+    ],
+    "sourceSha256": "77f877ddcef85e787453daa6724cec5e85a0678fcb098fe94f9b86ce0ef5f2f4",
+    "posterTime": 4.25
+  },
+  {
+    "id": "mk-callout-highlight",
+    "duration": 8,
+    "fonts": [],
+    "sourceSha256": "ab80d94b07373fd1bb136c3560183e916876e9318729202698fd26c2e999dd46",
+    "posterTime": 3.8
+  },
+  {
+    "id": "caption-clip-wipe",
+    "duration": 8,
+    "fonts": [
+      "Poppins"
+    ],
+    "sourceSha256": "8b9e06353df3ea3bc0113a9c7ef3e480293a6ed75bee46744b053bf5e02dc5f6",
+    "posterTime": 4.25
+  },
+  {
+    "id": "caption-weight-shift",
+    "duration": 8,
+    "fonts": [
+      "Montserrat"
+    ],
+    "sourceSha256": "8a5294debec3eadeb7ca0a8688c31a6e8c517ebb1c55ff410aa81df3807daa55",
+    "posterTime": 4.25
+  },
+  {
+    "id": "caption-editorial-emphasis",
+    "duration": 8,
+    "fonts": [
+      "Inter",
+      "Playfair Display"
+    ],
+    "sourceSha256": "6144571b6c73dbdec282284fe2277d3c958e15cddaf362295ba9cca02e705d1c",
+    "posterTime": 4.4
+  },
+  {
+    "id": "caption-gradient-fill",
+    "duration": 8,
+    "fonts": [
+      "Montserrat"
+    ],
+    "sourceSha256": "6d08dc0a9f54d25b25590721ec579a3521a0079c70f32b292bd93697384c60ff",
+    "posterTime": 4.25
+  },
+  {
+    "id": "caption-kinetic-slam",
+    "duration": 8,
+    "fonts": [
+      "Anton"
+    ],
+    "sourceSha256": "86b7a54e045f626d1375636a2f1cde19c2f3cbdad1df1d7d0204fe6b4452044a",
+    "posterTime": 4.25
+  },
+  {
+    "id": "caption-camera-follow",
+    "duration": 9,
+    "fonts": [],
+    "sourceSha256": "4a0da1ba065882e95274468c8f3e36f1094fc598c3c93be1fc63182e9e42953c",
+    "posterTime": 4.1
+  },
+  {
+    "id": "caption-parallax-layers",
+    "duration": 8,
+    "fonts": [
+      "Instrument Serif"
+    ],
+    "sourceSha256": "e1c14eb380fa7d7b8c84798e40530e946ed140547c61d2e6f5111d712cb72d78",
+    "posterTime": 3.08
+  },
+  {
+    "id": "caption-emoji-pop",
+    "duration": 8,
+    "fonts": [
+      "Gabarito"
+    ],
+    "sourceSha256": "79e7cad5cf54dec70e7af59c8d0583531017bacca6bc9ee057bfad386904eb9b",
+    "posterTime": 4.25
+  },
+  {
+    "id": "caption-neon-accent",
+    "duration": 8,
+    "fonts": [
+      "Montserrat"
+    ],
+    "sourceSha256": "1c4af30ab35c6e3f754157cce2c364c75386f37059d47fa52446bca19200339d",
+    "posterTime": 4.25
+  },
+  {
+    "id": "caption-neon-glow",
+    "duration": 8,
+    "fonts": [
+      "Outfit"
+    ],
+    "sourceSha256": "dc9d43d58879e1422837c213aa7f8921ca43b58f4e9c77f8463232585e05034c",
+    "posterTime": 4.25
+  },
+  {
+    "id": "caption-particle-burst",
+    "duration": 8,
+    "fonts": [
+      "Outfit"
+    ],
+    "sourceSha256": "48ec0a000e9c40cff891c2ca0e66ed4cf33c358bbeb2ca76fb3bdc8288bf5936",
+    "posterTime": 4.25
+  },
+  {
+    "id": "caption-matrix-decode",
+    "duration": 8,
+    "fonts": [
+      "Space Grotesk"
+    ],
+    "sourceSha256": "c8f703cbe6e8dd547107f2e6298f27c287a9d08b133ceab128e874ce88d36e78",
+    "posterTime": 4.25
+  },
+  {
+    "id": "caption-glitch-rgb",
+    "duration": 8,
+    "fonts": [
+      "Space Grotesk"
+    ],
+    "sourceSha256": "65e588d27515cde0e361cddd6034a3dad647a86f50c02847c6cc453619d58648",
+    "posterTime": 4.25
+  },
+  {
+    "id": "caption-texture",
+    "duration": 8,
+    "fonts": [
+      "Anton"
+    ],
+    "sourceSha256": "dcd2c9c9ba068507c559171264748c129981253fd61ce933c5d0f461431b0d7f",
+    "posterTime": 4.25
+  }
+]

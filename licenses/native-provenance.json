@@ -94,10 +94,19 @@
     {
       "path": "lib/libx265.217.dylib",
       "sha256": "eaccf2fa6d6df5a813e517b1ce99a1f923022d110118c12a1a63159520c2fc81"
+    },
+    {
+      "path": "translation/bin/llama-server",
+      "sha256": "06893a92c2c8a362c5cd920efb04d1c74a24dc3027b81e6c7aae6e50670b3a87"
     }
   ],
   "speechProtocol": 1,
   "whisperVersion": "1.9.5",
   "speechPatchSha256": "f13345a8d2b1026d808ab53a4652cdbeaf740d5bd0eb5c5690358edb4f703ed4",
+  "translation": {
+    "version": "v0.6.0",
+    "commit": "d81235049384534c167caea52b85a694f6103d14",
+    "sourceSha256": "6b58785f0a82898f4c3442417ff962e2d4b231b1bee5d033902ad90b27901e14"
+  },
   "ffmpegBuildConfiguration": "\n  configuration:\n    --prefix=/opt/homebrew/Cellar/ffmpeg/9.0.2\n    --enable-shared\n    --enable-pthreads\n    --enable-version3\n    --cc=clang\n    --host-cflags=\n    --host-ldflags=\n    --enable-ffplay\n    --enable-gpl\n    --enable-libsvtav1\n    --enable-libopus\n    --enable-libx264\n    --enable-libmp3lame\n    --enable-libdav1d\n    --enable-libvmaf\n    --enable-libvpx\n    --enable-libx265\n    --enable-openssl\n    --enable-videotoolbox\n    --enable-audiotoolbox\n    --enable-neon\n\nExiting with exit code 0\n"
 }

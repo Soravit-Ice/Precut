@@ -5,6 +5,10 @@ Precut application code and branding belong to T2ETECH. Third-party components r
 | Component | Version | Licence / source |
 |---|---|---|
 | Electron | 44.6.0 | MIT; Chromium notices, https://www.electronjs.org/ |
+| HyperFrames Core, Player and Engine | 0.8.156 | Apache 2.0; caption catalog sources pinned in `vendor/hyperframes/manifest.json`, https://github.com/heygen-com/hyperframes. |
+| Chrome Headless Shell | 152.0.7977.30 | Chromium notices bundled with the caption browser, https://googlechromelabs.github.io/chrome-for-testing/. |
+| GSAP | 3.14.2 | Standard licence included in the package notices, https://gsap.com/standard-license/. |
+| Twemoji graphics | 14.0.2 | Graphics by Twitter and contributors, CC BY 4.0; bundled sparkle, fire, heart, star and clap SVGs, https://github.com/twitter/twemoji. |
 | FFmpeg / FFprobe | 9.0.2 | This candidate bundles a GPL-enabled build including x264. Source: https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz; build configuration and binary inventory in `native/…/manifest.json` and `docs/native-provenance.json`. |
 | whisper.cpp | 1.9.5 | MIT, https://github.com/ggml-org/whisper.cpp/tree/v1.9.5 |
 | Whisper base multilingual weights | ggml-base | MIT, https://github.com/openai/whisper, distributed by https://huggingface.co/ggerganov/whisper.cpp |
@@ -20,3 +24,5 @@ Precut application code and branding belong to T2ETECH. Third-party components r
 The supplied installer is an internal unsigned test candidate. Before public distribution, retain the complete notices and publish the exact corresponding source/build materials for the GPL-enabled native distribution. The FFmpeg executable is invoked as a separate process; no FFmpeg library is linked into Precut application code.
 
 Development speech fixtures are excluded from installers. The Thai test recording comes from Google FLEURS (CC BY 4.0), https://huggingface.co/datasets/google/fleurs. The JFK sample is a United States federal recording distributed with whisper.cpp. Fixture transformations are recorded in `scripts/prepare-fixtures.mjs`.
+
+Original caption designs are compiled from the pinned HyperFrames registry sources in `vendor/hyperframes/sources`; their CSS, typography, and GSAP choreography are retained. Additional Gabarito, Instrument Serif, Playfair Display italic, and Space Grotesk font faces are distributed under the bundled SIL Open Font Licenses in `licenses/caption-fonts`.

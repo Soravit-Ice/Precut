@@ -81,6 +81,92 @@ const fixture = (): Snapshot => ({
   redoAvailable: false,
 });
 describe("language and persistent cue workspace", () => {
+  it("keeps the original cue's style when word timing moves into another override", () => {
+    const snap = fixture();
+    snap.captionStyle.maxWords = 1;
+    const first = snap.words[0];
+    const style = {
+      ...snap.captionStyle,
+      animation: {
+        templateId: "caption-pill-karaoke" as const,
+        revision: 1 as const,
+      },
+    };
+    snap.captionStyleOverrides = [
+      {
+        id: "first",
+        startUs: first.startUs,
+        endUs: first.endUs,
+        wordIds: [first.id],
+        style,
+      },
+      {
+        id: "later",
+        startUs: 1500000,
+        endUs: 2200000,
+        wordIds: ["different-word"],
+        style: { ...snap.captionStyle, color: "#FF0000" },
+      },
+    ];
+    first.startUs = 1600000;
+    first.endUs = 1900000;
+    snap.words = [first];
+    expect(buildCaptionScenes(snap, false)[0].styleOverrideId).toBe("first");
+  });
+  it("keeps source-anchored animation overrides and translations through cuts and global style changes", () => {
+    const snap = fixture(),
+      original = buildCaptionScenes(snap)[0];
+    const style = {
+      ...snap.captionStyle,
+      animation: {
+        templateId: "caption-gradient-fill" as const,
+        revision: 1 as const,
+      },
+    };
+    snap.captionStyleOverrides = [
+      { id: "override", startUs: 0, endUs: 2.2e6, style },
+    ];
+    snap.captionTranslations = [
+      {
+        id: original.id,
+        language: "en",
+        text: "Every word matters.",
+        sourceHash: original.sourceHash!,
+      },
+    ];
+    snap.captionStyle = {
+      ...snap.captionStyle,
+      animation: { templateId: "caption-pill-karaoke", revision: 1 },
+    };
+    expect(buildCaptionScenes(snap)[0].id).toBe(original.id);
+    expect(buildCaptionScenes(snap)[0].style?.animation?.templateId).toBe(
+      "caption-gradient-fill",
+    );
+    expect(buildCaptionScenes(snap)[0].lines?.[1].text).toBe(
+      "Every word matters.",
+    );
+    snap.captionStyle.maxWords = 2;
+    snap.suggestions = [
+      {
+        id: "cut",
+        startUs: 600000,
+        endUs: 1800000,
+        category: "manual",
+        status: "accepted",
+        level: "high",
+        confidence: 1,
+        reason: "",
+        wordIds: [],
+      },
+    ];
+    const output = buildCaptionScenes(snap),
+      source = buildCaptionScenes(snap, false);
+    expect(output.every((s) => s.styleOverrideId === "override")).toBe(true);
+    expect(source.map((s) => s.style?.animation?.templateId)).toEqual(
+      output.map((s) => s.style?.animation?.templateId),
+    );
+    expect(srt(output)).not.toContain("animation");
+  });
   it("keeps legacy project text and activates missing translations only on selecting a mode", () => {
     const snap = fixture();
     delete snap.captionStyle.languageMode;

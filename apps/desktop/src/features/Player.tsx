@@ -1,4 +1,8 @@
 import { CaptionPosition } from "./CaptionPosition";
+import {
+  HyperframeCaptionSurface,
+  type CaptionSurfaceHandle,
+} from "./HyperframeCaptionSurface";
 import { loadCaptionFonts } from "../lib/caption-fonts";
 import { useEffect, useRef, useState, useMemo } from "react";
 import {
@@ -26,6 +30,9 @@ import {
 } from "../../../../packages/core/src/captions";
 export function Player() {
   const snap = useStore((s) => s.snapshot)!;
+  const animationPreview = useStore((s) => s.captionAnimationPreview);
+  const hyperframe = useRef<CaptionSurfaceHandle>(null);
+  const nativeBounds = useRef<{ id?: string; bounds?: CaptionBounds }>({});
   const captionEditing = useStore((s) => s.view) === "transcript";
   const [activeCaption, setActiveCaption] = useState<{
     scene: import("../../../../packages/shared/src/contracts").CaptionScene;
@@ -59,19 +66,34 @@ export function Player() {
     [asset?.durationUs, snap.suggestions],
   );
   const scenes = useMemo(
-    () => buildCaptionScenes(snap, false),
+    () =>
+      buildCaptionScenes(snap, false).map((scene) =>
+        animationPreview?.projectId === snap.project.id &&
+        (animationPreview.scope === "project"
+          ? !scene.styleOverrideId
+          : scene.sourceStartUs! >= animationPreview.startUs! &&
+            scene.sourceStartUs! < animationPreview.endUs!)
+          ? { ...scene, style: animationPreview.style }
+          : scene,
+      ),
     [
       snap.words,
       snap.captionStyle,
       snap.suggestions,
       snap.captionTranslations,
       snap.captionPlacements,
+      snap.captionStyleOverrides,
+      animationPreview,
       snap.translationGlossary,
     ],
   );
   const mediaURL = asset
     ? `precut-media://asset/${asset.id}${proxy && asset.proxyPath ? "?kind=proxy" : ""}`
     : "";
+  const animatedScenes = useMemo(
+    () => scenes.filter((s) => s.style?.animation),
+    [scenes],
+  );
   const second = snap.assets[1],
     track = second && snap.tracks.find((t) => t.assetId === second.id);
   useEffect(() => {
@@ -185,10 +207,22 @@ export function Player() {
         scene && draft && (draft.scope === "project" || draft.id === scene.id)
           ? { ...scene, anchor: draft.anchor }
           : scene;
+      const style = displayScene?.style ?? snap.captionStyle;
       const bounds =
-        captions && !removed
-          ? renderCaption(ctx, w, h, displayScene, us, snap.captionStyle)
-          : undefined;
+        style.animation && nativeBounds.current.id === scene?.id
+          ? nativeBounds.current.bounds
+          : captions && !removed
+            ? renderCaption(
+                ctx,
+                w,
+                h,
+                displayScene,
+                us,
+                style,
+                !style.animation,
+              )
+            : undefined;
+      if (style.animation) ctx.clearRect(0, 0, w, h);
       if (captionEditing)
         setActiveCaption((previous) => {
           if (!scene || !bounds) return previous ? undefined : previous;
@@ -203,7 +237,14 @@ export function Player() {
     redraw.current = draw;
     const unsub = clock.subscribe(draw);
     let disposed = false;
-    void loadCaptionFonts(snap.captionStyle, snap.captionFonts, snap.project.id)
+    void Promise.all(
+      [
+        snap.captionStyle,
+        ...(snap.captionStyleOverrides ?? []).map((p) => p.style),
+      ].map((style) =>
+        loadCaptionFonts(style, snap.captionFonts, snap.project.id),
+      ),
+    )
       .then(() => {
         if (!disposed) draw();
       })
@@ -312,6 +353,21 @@ export function Player() {
           className="caption-canvas"
           aria-label={t("Caption preview")}
         />
+        {captions && animatedScenes.length > 0 && (
+          <HyperframeCaptionSurface
+            ref={hyperframe}
+            scenes={animatedScenes}
+            style={snap.captionStyle}
+            width={asset?.width || 1920}
+            height={asset?.height || 1080}
+            durationUs={asset?.durationUs ?? 1}
+            clockDriven
+            onBounds={(bounds, id) => {
+              nativeBounds.current = { id, bounds };
+              redraw.current();
+            }}
+          />
+        )}
         {captionEditing && (
           <CaptionPosition
             stage={container}
@@ -323,6 +379,9 @@ export function Player() {
               positionDraft.current = anchor
                 ? { anchor, scope, id }
                 : undefined;
+              hyperframe.current?.position(
+                anchor ? { anchor, scope, id } : undefined,
+              );
               redraw.current();
             }}
           />

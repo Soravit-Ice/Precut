@@ -180,7 +180,11 @@ test("word correction, atomic replacement, caption preview, colours and reversib
   await expect(
     page.getByText("Live style preview", { exact: true }),
   ).toBeVisible();
-  await expect(page.locator(".caption-preset-grid canvas")).toHaveCount(6);
+  await page
+    .getByRole("button", { name: "Choose a style", exact: true })
+    .click();
+  await expect(page.locator(".gallery-style-card")).toHaveCount(23);
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await page
     .locator(".caption-studio-tabs")
     .getByRole("button", { name: "Colors", exact: true })
@@ -195,7 +199,13 @@ test("word correction, atomic replacement, caption preview, colours and reversib
     .getByRole("button", { name: "Styles", exact: true })
     .click();
   await page
+    .getByRole("button", { name: "Choose a style", exact: true })
+    .click();
+  await page
     .getByRole("button", { name: "Caption preset Karaoke", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Use this style", exact: true })
     .click();
   // Leaving inside autosave's debounce must retain the last style and both colours.
   await page
@@ -314,13 +324,13 @@ test("word correction, atomic replacement, caption preview, colours and reversib
     .click();
   await page.getByRole("tab", { name: "คำบรรยาย", exact: true }).click();
   await expect(page.getByText("ตัวอย่างสไตล์", { exact: true })).toBeVisible();
-  await expect(page.locator(".caption-preset-grid .preset-card")).toHaveCount(
-    6,
-  );
+  await page.getByRole("button", { name: "เลือกสไตล์", exact: true }).click();
+  await expect(page.locator(".gallery-style-card")).toHaveCount(23);
   await page.screenshot({
     path: "docs/screenshots/editor-caption-studio-th-dark.png",
     animations: "disabled",
   });
+  await page.getByRole("button", { name: "ยกเลิก", exact: true }).click();
   await page
     .locator(".caption-studio-tabs")
     .getByRole("button", { name: "สี", exact: true })

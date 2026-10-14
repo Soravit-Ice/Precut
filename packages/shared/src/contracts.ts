@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { captionAnimationIds } from "./caption-animations";
 export const Id = z.string().uuid();
 export const PresetId = z.enum([
   "clean",
@@ -136,6 +137,36 @@ export type CaptionTranslation = {
 export const CaptionStyleSchema = z
   .object({
     preset: PresetId,
+    animation: z
+      .object({
+        templateId: z.enum(captionAnimationIds),
+        revision: z.literal(1),
+        customizations: z
+          .array(
+            z.enum([
+              "font",
+              "englishFont",
+              "weight",
+              "englishWeight",
+              "size",
+              "englishSize",
+              "color",
+              "activeColor",
+              "intensity",
+              "maxWidth",
+              "outline",
+              "shadow",
+              "radius",
+            ]),
+          )
+          .optional(),
+        texture: z
+          .enum(["lava", "marble", "metal", "wood", "concrete", "rock"])
+          .optional(),
+        emoji: z.enum(["sparkles", "fire", "heart", "star", "clap"]).optional(),
+      })
+      .strict()
+      .optional(),
     font: FontNameSchema,
     weight: z.number().int().min(100).max(1000),
     languageMode: z.enum(["th", "th-en", "en"]).optional(),
@@ -161,6 +192,13 @@ export const CaptionStyleSchema = z
   })
   .strict();
 export type CaptionStyle = z.infer<typeof CaptionStyleSchema>;
+export type CaptionStyleOverride = {
+  id: string;
+  startUs: number;
+  endUs: number;
+  wordIds?: string[];
+  style: CaptionStyle;
+};
 export type CaptionScene = {
   id: string;
   startUs: number;
@@ -171,6 +209,8 @@ export type CaptionScene = {
   sourceEndUs?: number;
   sourceHash?: string;
   anchor?: CaptionAnchor;
+  style?: CaptionStyle;
+  styleOverrideId?: string;
   lines?: {
     language: "th" | "en";
     text: string;
@@ -220,6 +260,7 @@ export type Snapshot = {
   segments: TranscriptSegment[];
   suggestions: Suggestion[];
   captionStyle: CaptionStyle;
+  captionStyleOverrides?: CaptionStyleOverride[];
   captionPlacements?: CaptionPlacement[];
   captionTranslations?: CaptionTranslation[];
   captionFonts?: import("./fonts").CaptionFont[];
@@ -391,8 +432,21 @@ export const schemas = {
   "edits.undo": z.object({ projectId: Id }).strict(),
   "edits.redo": z.object({ projectId: Id }).strict(),
   "captions.style": z
-    .object({ projectId: Id, style: CaptionStyleSchema })
-    .strict(),
+    .object({
+      projectId: Id,
+      style: CaptionStyleSchema.nullable(),
+      scope: z.enum(["project", "cue"]).optional(),
+      startUs: z.number().int().nonnegative().optional(),
+      endUs: z.number().int().positive().optional(),
+    })
+    .strict()
+    .refine((x) =>
+      x.scope === "cue"
+        ? x.startUs !== undefined &&
+          x.endUs !== undefined &&
+          x.endUs > x.startUs
+        : x.style !== null,
+    ),
   "captions.position": z
     .object({
       projectId: Id,

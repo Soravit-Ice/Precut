@@ -5,6 +5,21 @@ import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 import { requiredSpeechLibraries } from "./windows-speech-libraries.mjs";
 const target = `native/${process.platform}-${process.arch}`;
+const captionBrowser = JSON.parse(
+  await readFile(`${target}/caption-browser/manifest.json`, "utf8"),
+);
+if (captionBrowser.buildId !== "152.0.7977.30")
+  throw new Error(
+    "Prepare the pinned caption browser with captions:browser before packaging.",
+  );
+for (const file of captionBrowser.files) {
+  if (
+    createHash("sha256")
+      .update(await readFile(`${target}/caption-browser/${file.path}`))
+      .digest("hex") !== file.sha256
+  )
+    throw new Error("Caption browser integrity mismatch: " + file.path);
+}
 const native = JSON.parse(await readFile(`${target}/manifest.json`, "utf8"));
 if (
   native.platform !== process.platform ||

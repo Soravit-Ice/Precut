@@ -125,7 +125,13 @@ test("real import → speech → safe review → captions → all exports → re
     )
     .toBe("en");
   await page
+    .getByRole("button", { name: "Choose a style", exact: true })
+    .click();
+  await page
     .getByRole("button", { name: "Caption preset Karaoke", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Use this style", exact: true })
     .click();
   await expect
     .poll(
@@ -148,7 +154,13 @@ test("real import → speech → safe review → captions → all exports → re
     dialog.showSaveDialog = async () => ({ canceled: false, filePath: output });
   }, immediateOutput);
   await page
+    .getByRole("button", { name: "Choose a style", exact: true })
+    .click();
+  await page
     .getByRole("button", { name: "Caption preset Punch", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Use this style", exact: true })
     .click();
   await page
     .locator(".main-navigation")
@@ -176,7 +188,13 @@ test("real import → speech → safe review → captions → all exports → re
     .click();
   await page.getByRole("tab", { name: "Captions", exact: true }).click();
   await page
+    .getByRole("button", { name: "Choose a style", exact: true })
+    .click();
+  await page
     .getByRole("button", { name: "Caption preset Karaoke", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Use this style", exact: true })
     .click();
   await expect
     .poll(

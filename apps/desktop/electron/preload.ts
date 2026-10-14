@@ -23,4 +23,4 @@ const api: PrecutAPI = {
   },
   platform: process.platform as PrecutAPI["platform"],
 };
-contextBridge.exposeInMainWorld("precut", api);
+if (process.isMainFrame) contextBridge.exposeInMainWorld("precut", api);

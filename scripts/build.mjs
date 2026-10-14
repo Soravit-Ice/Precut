@@ -2,6 +2,7 @@ import { build } from "esbuild";
 import { build as viteBuild } from "vite";
 import { mkdir, copyFile } from "node:fs/promises";
 await import("./verify-fonts.mjs");
+await import("./build-caption-runtime.mjs");
 await import("./generate-icons.mjs");
 await mkdir("dist", { recursive: true });
 for (const entry of ["main", "preload", "database", "engine"])
@@ -12,7 +13,13 @@ for (const entry of ["main", "preload", "database", "engine"])
     platform: "node",
     format: "cjs",
     target: "node24",
-    external: ["electron", "better-sqlite3", "skia-canvas", "onnxruntime-node"],
+    external: [
+      "electron",
+      "better-sqlite3",
+      "skia-canvas",
+      "onnxruntime-node",
+      "@hyperframes/engine",
+    ],
     sourcemap: true,
     define: { "process.env.NODE_ENV": '"production"' },
     logLevel: "info",

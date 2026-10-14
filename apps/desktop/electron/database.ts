@@ -127,6 +127,7 @@ function db(id: string) {
   database.prepare("INSERT OR IGNORE INTO caption_workspace VALUES(1,?)").run(
     JSON.stringify({
       captionPlacements: [],
+      captionStyleOverrides: [],
       captionTranslations: [],
       captionFonts: [],
       translationGlossary: "",
@@ -266,6 +267,7 @@ function snapshot(id: string): Snapshot {
 type CaptionWorkspace = Pick<
   Snapshot,
   | "captionPlacements"
+  | "captionStyleOverrides"
   | "captionTranslations"
   | "captionFonts"
   | "translationGlossary"
@@ -1093,6 +1095,56 @@ export async function dispatch(
       return snapshot(id);
     }
     case "captions.style": {
+      if (args.scope === "cue") {
+        const startUs = args.startUs as number,
+          endUs = args.endUs as number;
+        if (endUs > getProject(id)!.durationUs)
+          throw new Error("Invalid caption range");
+        const before = workspace(id);
+        const words = snapshot(id).words;
+        const idsIn = (start: number, end: number) =>
+          words
+            .filter((w) => w.startUs >= start && w.startUs < end)
+            .map((w) => w.id);
+        const overrides = (before.captionStyleOverrides ?? []).flatMap((p) =>
+          p.endUs <= startUs || p.startUs >= endUs
+            ? [p]
+            : [
+                ...(p.startUs < startUs
+                  ? [
+                      {
+                        ...p,
+                        endUs: startUs,
+                        wordIds: idsIn(p.startUs, startUs),
+                      },
+                    ]
+                  : []),
+                ...(p.endUs > endUs
+                  ? [
+                      {
+                        ...p,
+                        id: randomUUID(),
+                        startUs: endUs,
+                        wordIds: idsIn(endUs, p.endUs),
+                      },
+                    ]
+                  : []),
+              ],
+        );
+        if (args.style)
+          overrides.push({
+            id: randomUUID(),
+            startUs,
+            endUs,
+            wordIds: idsIn(startUs, endUs),
+            style: args.style as CaptionStyle,
+          });
+        command(id, "caption-workspace", before, {
+          ...before,
+          captionStyleOverrides: overrides,
+        });
+        return snapshot(id);
+      }
       const old = snapshot(id).captionStyle;
       command(id, "style", old, args.style);
       return snapshot(id);

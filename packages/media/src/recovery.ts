@@ -19,6 +19,48 @@ export async function stopOrphanedSidecars(
       continue;
     const folder = join(projectsRoot, project.name, "export-cache");
     const files = await readdir(folder).catch(() => []);
+    for (const file of files.filter((f) =>
+      f.endsWith(".caption-browser.json"),
+    )) {
+      const journal = join(folder, file);
+      try {
+        const state = JSON.parse(await readFile(journal, "utf8")) as {
+          pid: number;
+          executable: string;
+          profile?: string;
+        };
+        if (
+          Number.isSafeInteger(state.pid) &&
+          state.pid > 0 &&
+          state.executable.startsWith(
+            join(nativeRoot, "caption-browser") +
+              (process.platform === "win32" ? "\\" : "/"),
+          ) &&
+          state.profile
+        ) {
+          const { stdout } =
+            process.platform === "win32"
+              ? await exec("powershell.exe", [
+                  "-NoProfile",
+                  "-NonInteractive",
+                  "-Command",
+                  "(Get-CimInstance Win32_Process -Filter 'ProcessId = " +
+                    state.pid +
+                    "').CommandLine",
+                ])
+              : await exec("ps", ["-p", String(state.pid), "-o", "command="]);
+          const command = stdout.replaceAll('"', "");
+          if (
+            command.includes(state.executable) &&
+            command.includes("--user-data-dir=" + state.profile)
+          )
+            terminate(state.pid);
+        }
+      } catch {
+        /* Never stop a process without matching its browser and unique profile. */
+      }
+      await rm(journal, { force: true });
+    }
     for (const file of files.filter((file) => file.endsWith(".native.json"))) {
       const journal = join(folder, file);
       try {

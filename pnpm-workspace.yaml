@@ -10,3 +10,9 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - '@electron/rebuild@4.2.1'
   - electron@44.6.0
+  - '@hyperframes/core@0.8.156'
+  - '@hyperframes/engine@0.8.156'
+  - '@hyperframes/lint@0.8.156'
+  - '@hyperframes/parsers@0.8.156'
+  - '@hyperframes/player@0.8.156'
+  - '@hyperframes/studio-server@0.8.156'

@@ -49,7 +49,9 @@ export function run(
     });
     let tail = "",
       stdout = "",
-      settled = false;
+      settled = false,
+      childClosed = false;
+    let inputDone: Promise<void> | undefined, inputError: Error | undefined;
     const abort = () => child.pid && terminate(child.pid);
     options.signal.addEventListener("abort", abort, { once: true });
     if (child.pid) options.onSpawn?.(child.pid);
@@ -69,22 +71,35 @@ export function run(
       if (error) reject(error);
       else resolve(stdout);
     };
-    child.on("error", finish);
+    const finishAfterInput = async (error?: Error) => {
+      // An async frame source owns its own browser/session. Wait for its
+      // finally block before reporting completion or allowing the worker to exit.
+      await inputDone;
+      finish(inputError ?? error);
+    };
+    child.on("error", (error) => {
+      childClosed = true;
+      abort();
+      void finishAfterInput(error);
+    });
     child.on("close", (code) => {
-      if (options.signal.aborted) finish(new Error("Cancelled"));
+      childClosed = true;
+      if (options.signal.aborted) void finishAfterInput(new Error("Cancelled"));
       else if (code)
-        finish(
+        void finishAfterInput(
           new Error(
             `Media process failed (${code}): ${tail.replace(/\/.+?(?=\s)/g, "[local path]").slice(-2000)}`,
           ),
         );
-      else finish();
+      else void finishAfterInput();
     });
     if (options.input) {
-      void (async () => {
+      inputDone = (async () => {
         try {
           for await (const frame of options.input!) {
             options.signal.throwIfAborted();
+            if (childClosed || child.stdin.destroyed)
+              throw new Error("Export pipe closed");
             if (!child.stdin.write(frame))
               await new Promise<void>((res, rej) => {
                 const drain = () => {
@@ -112,11 +127,10 @@ export function run(
           child.stdin.end();
         } catch (error) {
           abort();
-          finish(
+          inputError =
             error instanceof Error
               ? error
-              : new Error("Caption rendering failed"),
-          );
+              : new Error("Caption rendering failed");
         }
       })();
     } else child.stdin.end();

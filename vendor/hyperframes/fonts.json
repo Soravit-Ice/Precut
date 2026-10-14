@@ -1,0 +1,82 @@
+{
+  "revision": "bd8f81ddb5c74d5c8897b36ad88b440266245103",
+  "faces": [
+    {
+      "family": "Gabarito",
+      "file": "fonts/Gabarito[wght].ttf",
+      "weight": "100 900",
+      "style": "normal"
+    },
+    {
+      "family": "Instrument Serif",
+      "file": "fonts/InstrumentSerif-Regular.ttf",
+      "weight": "400",
+      "style": "normal"
+    },
+    {
+      "family": "Instrument Serif",
+      "file": "fonts/InstrumentSerif-Italic.ttf",
+      "weight": "400",
+      "style": "italic"
+    },
+    {
+      "family": "Space Grotesk",
+      "file": "fonts/SpaceGrotesk[wght].ttf",
+      "weight": "100 900",
+      "style": "normal"
+    },
+    {
+      "family": "Playfair Display",
+      "file": "fonts/PlayfairDisplay-Italic[wght].ttf",
+      "weight": "100 900",
+      "style": "italic"
+    }
+  ],
+  "files": [
+    {
+      "file": "fonts/Gabarito[wght].ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/gabarito/Gabarito%5Bwght%5D.ttf",
+      "sha256": "8650e2bd7747f7d74619fd7aecbcb0309e6f37b7964024f3fb15ae4833b67ca5"
+    },
+    {
+      "file": "fonts/gabarito-OFL.txt",
+      "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/gabarito/OFL.txt",
+      "sha256": "21506cc7106bbfd4aa1c40371f33f9f4296182a8e4bb46658e99af24feb4bfca"
+    },
+    {
+      "file": "fonts/InstrumentSerif-Regular.ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/instrumentserif/InstrumentSerif-Regular.ttf",
+      "sha256": "498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88"
+    },
+    {
+      "file": "fonts/InstrumentSerif-Italic.ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/instrumentserif/InstrumentSerif-Italic.ttf",
+      "sha256": "08939b8bdf534afec24ae0ef5e03f948940cd9a8fe08e7fecbad040e62327385"
+    },
+    {
+      "file": "fonts/instrumentserif-OFL.txt",
+      "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/instrumentserif/OFL.txt",
+      "sha256": "129ed7618959716959f2941fdd5b49e0ad6e6c1d78726761786a00253d865521"
+    },
+    {
+      "file": "fonts/SpaceGrotesk[wght].ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/spacegrotesk/SpaceGrotesk%5Bwght%5D.ttf",
+      "sha256": "acad6de1fc93436f5c0f1f4137751ef04f1aea3063e7036535970ffcfbd79f72"
+    },
+    {
+      "file": "fonts/spacegrotesk-OFL.txt",
+      "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/spacegrotesk/OFL.txt",
+      "sha256": "564ce565c371c5e5bbf286006565a7c9aa55a9f56e7ca58d56e05d649dd61a72"
+    },
+    {
+      "file": "fonts/PlayfairDisplay-Italic[wght].ttf",
+      "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/playfairdisplay/PlayfairDisplay-Italic%5Bwght%5D.ttf",
+      "sha256": "a5e26dc5e2e77fb2803a0bf02fd4f81ee136ec8dea863ccdb0c59a263b21378b"
+    },
+    {
+      "file": "fonts/playfairdisplay-OFL.txt",
+      "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/playfairdisplay/OFL.txt",
+      "sha256": "566be814f8e96e93dfa16101331557eb6b5467e9e03f627c0910fe93ca12300e"
+    }
+  ]
+}

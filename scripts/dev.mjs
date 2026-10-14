@@ -3,6 +3,7 @@ import { createServer } from "vite";
 import { context } from "esbuild";
 import electron from "electron";
 await import("./generate-icons.mjs");
+await import("./build-caption-runtime.mjs");
 const server = await createServer({ server: { strictPort: false } });
 await server.listen();
 const rendererUrl = server.resolvedUrls?.local[0];
@@ -17,7 +18,13 @@ for (const name of ["main", "preload", "database", "engine"]) {
     platform: "node",
     format: "cjs",
     target: "node24",
-    external: ["electron", "better-sqlite3", "skia-canvas", "onnxruntime-node"],
+    external: [
+      "electron",
+      "better-sqlite3",
+      "skia-canvas",
+      "onnxruntime-node",
+      "@hyperframes/engine",
+    ],
     sourcemap: true,
   });
   await ctx.rebuild();

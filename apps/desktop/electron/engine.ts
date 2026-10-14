@@ -1,6 +1,7 @@
 import { runTranslation, TRANSLATION_MODEL } from "./translation";
 import { finishAutoEditCaptions } from "./auto-edit-captions";
 import { registerCaptionFonts, importCaptionFont } from "./fonts";
+import { createCaptionAnimationExport } from "./caption-animation-export";
 import {
   mkdir,
   readFile,
@@ -58,6 +59,7 @@ export type EngineTask = {
   nativeRoot: string;
   modelsRoot: string;
   fontsRoot: string;
+  captionRuntimeRoot?: string;
   projectRoot: string;
   settings: Settings;
   snapshot?: Snapshot;
@@ -839,27 +841,58 @@ async function exportMedia(task: EngineTask, ctx: Context) {
           "0:a",
         );
         frames = (async function* () {
-          let sceneIndex = 0;
-          for (let i = 0; i < count; i++) {
-            ctx.signal.throwIfAborted();
-            const timeUs = Math.round((i / fps) * 1e6);
-            while (
-              sceneIndex < scenes.length - 1 &&
-              scenes[sceneIndex].endUs <= timeUs
-            )
-              sceneIndex++;
-            ctx2.clearRect(0, 0, width, h);
-            renderCaption(
-              ctx2 as unknown as CanvasRenderingContext2D,
-              width,
-              h,
-              scenes[sceneIndex],
-              timeUs,
-              snap.captionStyle,
-            );
-            yield await canvas.toBuffer("raw", { colorType: "rgba" });
-            if (i % 30 === 0)
-              ctx.stage("Rendering captions", 0.7 + (0.28 * i) / count);
+          const { loadImage } = await import("skia-canvas");
+          const animation = scenes.some(
+            (s) => (s.style ?? snap.captionStyle).animation,
+          )
+            ? await createCaptionAnimationExport(
+                task,
+                ctx,
+                scenes,
+                width,
+                h,
+                duration,
+              )
+            : undefined;
+          try {
+            let sceneIndex = 0;
+            for (let i = 0; i < count; i++) {
+              ctx.signal.throwIfAborted();
+              const timeUs = Math.round((i / fps) * 1e6);
+              while (
+                sceneIndex < scenes.length - 1 &&
+                scenes[sceneIndex].endUs <= timeUs
+              )
+                sceneIndex++;
+              ctx2.clearRect(0, 0, width, h);
+              const scene = scenes[sceneIndex],
+                style = scene.style ?? snap.captionStyle;
+              if (
+                style.animation &&
+                timeUs >= scene.startUs &&
+                timeUs < scene.endUs &&
+                animation
+              ) {
+                ctx2.drawImage(
+                  await loadImage(await animation.capture(i, timeUs)),
+                  0,
+                  0,
+                );
+              } else
+                renderCaption(
+                  ctx2 as unknown as CanvasRenderingContext2D,
+                  width,
+                  h,
+                  scenes[sceneIndex],
+                  timeUs,
+                  style,
+                );
+              yield await canvas.toBuffer("raw", { colorType: "rgba" });
+              if (i % 30 === 0)
+                ctx.stage("Rendering captions", 0.7 + (0.28 * i) / count);
+            }
+          } finally {
+            await animation?.close();
           }
         })();
       } else args.push("-map", "0:v", "-map", "0:a");

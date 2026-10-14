@@ -1,7 +1,11 @@
 import { loadCaptionFonts } from "../lib/caption-fonts";
 import { useStore } from "../lib/store";
 import { useEffect, useRef } from "react";
+import { useMemo } from "react";
+import { HyperframeCaptionSurface } from "./HyperframeCaptionSurface";
+import { sampleCaptionScene } from "../../../../packages/core/src/caption-composition";
 import { renderCaption } from "../../../../packages/core/src/captions";
+import { originalDesign } from "../../../../packages/shared/src/caption-original-designs";
 import type {
   CaptionStyle,
   Word,
@@ -13,14 +17,52 @@ export function CaptionPreview({
   text,
   animated = false,
   compact = false,
+  original = false,
+  framed = false,
 }: {
   style: CaptionStyle;
   text: string;
   animated?: boolean;
   compact?: boolean;
+  original?: boolean;
+  framed?: boolean;
 }) {
   const snapshot = useStore((s) => s.snapshot);
   const canvas = useRef<HTMLCanvasElement>(null);
+  const sampleStyle = useMemo(
+    () => ({
+      ...style,
+      size: style.animation ? style.size : style.size * (compact ? 3.4 : 1.65),
+      englishSize:
+        (style.englishSize ?? style.size * 0.8) *
+        (style.animation ? 1 : compact ? 3.4 : 1.65),
+      anchor: undefined,
+      position: compact ? ("middle" as const) : style.position,
+      maxWidth: compact ? 0.9 : style.maxWidth,
+    }),
+    [style, compact],
+  );
+  const sample = useMemo(() => {
+    const scene = sampleCaptionScene(
+      text || "ทุกคำ มีความหมาย",
+      /\p{Script=Thai}/u.test(text) ? "th" : "en",
+    );
+    scene.style = sampleStyle;
+    if (style.languageMode === "en")
+      scene.lines = [{ language: "en", text, words: scene.words }];
+    if (style.languageMode === "th-en")
+      scene.lines = /\p{Script=Thai}/u.test(text)
+        ? [
+            { language: "th", text, words: scene.words },
+            { language: "en", text: "Every word matters." },
+          ]
+        : [
+            { language: "th", text: "ทุกคำ มีความหมาย" },
+            { language: "en", text, words: scene.words },
+          ];
+    return scene;
+  }, [text, style, sampleStyle]);
+  const sampleScenes = useMemo(() => [sample], [sample]);
   useEffect(() => {
     const surface = canvas.current;
     if (!surface) return;
@@ -104,6 +146,43 @@ export function CaptionPreview({
       cancelAnimationFrame(frame);
     };
   }, [style, text, animated, compact]);
+  if (style.animation) {
+    const surface = (
+      <HyperframeCaptionSurface
+        scenes={sampleScenes}
+        style={sampleStyle}
+        width={1920}
+        height={1080}
+        durationUs={
+          original
+            ? originalDesign(style.animation.templateId).duration * 1e6
+            : sample.endUs
+        }
+        animated={animated}
+        catalogDemo={original ? style.animation.templateId : undefined}
+      />
+    );
+    if (!original || !framed) return surface;
+    const id = style.animation.templateId;
+    const framing =
+      id === "mk-callout-highlight"
+        ? "callout"
+        : id === "caption-editorial-emphasis"
+          ? "editorial"
+          : [
+                "caption-camera-follow",
+                "caption-parallax-layers",
+                "caption-kinetic-slam",
+                "caption-texture",
+              ].includes(id)
+            ? "full"
+            : "lower";
+    return (
+      <div className={"caption-original-demo framing-" + framing}>
+        {surface}
+      </div>
+    );
+  }
   return (
     <canvas
       ref={canvas}

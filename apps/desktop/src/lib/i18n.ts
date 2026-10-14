@@ -1,5 +1,13 @@
 import { useStore } from "./store";
 const th: Record<string, string> = {
+  "Text scale": "ขนาดข้อความ",
+  "English scale": "ขนาดข้อความอังกฤษ",
+  "Original design": "ดีไซน์ต้นฉบับ",
+  "Original position": "ตำแหน่งต้นฉบับ",
+  "Original colors are used until you customize them.":
+    "ใช้สีต้นฉบับของสไตล์ จนกว่าคุณจะเลือกปรับเอง",
+  "This style follows caption timing automatically.":
+    "สไตล์นี้เคลื่อนไหวตามเวลาของซับไตเติลโดยอัตโนมัติ",
   "Awaiting translation model": "รอโมเดลแปล",
   "Transcript tools": "เครื่องมือในบทถอดเสียง",
   "Auto Edit creates your chosen subtitles. Edit text, fonts and position in Transcript.":
@@ -162,6 +170,37 @@ const th: Record<string, string> = {
   styles: "สไตล์",
   Colors: "สี",
   Styles: "สไตล์",
+  Motion: "การเคลื่อนไหว",
+  "Subtitle animation studio": "สตูดิโอสไตล์คำบรรยาย",
+  "Find the right motion. Try it on your footage.":
+    "เลือกจังหวะที่ใช่ แล้วทดลองกับวิดีโอของคุณ",
+  "Search caption styles": "ค้นหาสไตล์คำบรรยาย",
+  "Style categories": "หมวดสไตล์",
+  "All styles": "ทั้งหมด",
+  Readable: "อ่านง่าย",
+  Emphasis: "เน้นคำ",
+  Effects: "เอฟเฟกต์",
+  "Use this style": "ใช้สไตล์นี้",
+  "Preview and export work offline.": "ดูตัวอย่างและส่งออกได้ออฟไลน์",
+  "Caption style scope": "ขอบเขตสไตล์คำบรรยาย",
+  "Custom subtitle style": "ตั้งสไตล์แยกไว้",
+  "Use whole clip style": "ใช้สไตล์ทั้งคลิป",
+  "Only this subtitle will use the selected style.":
+    "ใช้สไตล์นี้เฉพาะคำบรรยายที่เลือก",
+  "Captions with their own style keep that style.":
+    "คำบรรยายที่ตั้งสไตล์แยกไว้จะคงสไตล์เดิม",
+  "animated styles": "สไตล์เคลื่อนไหว",
+  "classic styles": "สไตล์เดิม",
+  "Try every style on your own video before applying.":
+    "ทดลองทุกสไตล์บนวิดีโอจริงก่อนกดใช้",
+  Texture: "พื้นผิว",
+  Emoji: "อีโมจิ",
+  lava: "ลาวา",
+  marble: "หินอ่อน",
+  metal: "โลหะ",
+  wood: "ไม้",
+  concrete: "คอนกรีต",
+  rock: "หิน",
   "Caption controls": "ปรับแต่งคำบรรยาย",
   "Reset colors": "คืนค่าสี",
   "Active word color": "สีคำที่กำลังพูด",

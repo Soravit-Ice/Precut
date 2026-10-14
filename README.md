@@ -6,6 +6,8 @@
 
 ## Try it on this Mac
 
+**Subtitle Animation Studio:** In **Transcript → Captions → Choose a style**, try 17 HyperFrames animations on your video, then apply to the whole clip or one subtitle. Local previews and MP4 export share a composition; SRT keeps text and timing. See [the implementation and acceptance guide](docs/CAPTION_ANIMATION_STUDIO.md). Before packaging on a new machine, run `pnpm captions:browser` to prepare the pinned offline render browser.
+
 Double-click [`scripts/open-preview.command`](scripts/open-preview.command). It uses the included local Node 24 runtime and starts the Electron development app. The development export adapter applies only to unconfigured development sessions. Installed applications always require the real Precut product configuration for export.
 
 The rebuilt Apple Silicon application is `out/mac-arm64/Precut.app`. Build a fresh installer from the current source with `pnpm package`. See the detailed Thai guide [`docs/RELEASE_TO_STORE_TH.md`](docs/RELEASE_TO_STORE_TH.md) for Store setup, native CI inputs, repository binding, first publication and future updates. The caption update’s actual packaged-app check is recorded in `docs/caption-package-qa.json`. macOS Intel and Windows x64 workflow targets are supplied; those platforms have not been built or certified on this host.
