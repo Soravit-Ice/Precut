@@ -1,2 +1,12 @@
-# Vendored resources are verified by raw-byte SHA-256 on every platform.
+# Cross-platform builds must verify the exact signed vendor manifest bytes.
+* text=auto eol=lf
+vendor/manifest.json -text
+vendor/manifest.sig -text
+*.tgz -text
+*.png -text
+*.ico -text
+*.icns -text
+*.ttf -text
+
+# Caption resources retain exact bytes for raw SHA-256 integrity checks.
 vendor/hyperframes/** -text
