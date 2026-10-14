@@ -7,6 +7,7 @@ allowBuilds:
   skia-canvas: true
   onnxruntime-node: true
   electron-winstaller: false
+  puppeteer: false
 minimumReleaseAgeExclude:
   - '@electron/rebuild@4.2.1'
   - electron@44.6.0
