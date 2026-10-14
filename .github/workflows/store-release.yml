@@ -55,23 +55,44 @@ jobs:
         run: |
           node --input-type=module -e 'import { writeFileSync } from "node:fs"; const config = JSON.parse(process.env.PRECUT_PRODUCT_CONFIG_JSON); writeFileSync("product.config.json", JSON.stringify(config, null, 2));'
       - run: pnpm release:check
+      - name: Verify caption resources before native preparation
+        run: node scripts/build-caption-runtime.mjs
+      - name: Restore verified native runtime cache
+        id: native-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            native/${{ matrix.platform }}-${{ matrix.arch }}
+            native/models
+          key: precut-native-node24-v1-${{ matrix.platform }}-${{ matrix.arch }}-${{ vars[matrix.bundle_sha] || 'source' }}-${{ hashFiles('pnpm-lock.yaml', 'scripts/bootstrap-native.mjs', 'scripts/fetch-native-bundle.mjs', 'scripts/build-translation-native.mjs', 'scripts/prepare-models.mjs', 'scripts/prepare-caption-browser.mjs') }}
       - name: Restore pinned native bundle
-        if: ${{ !matrix.build_native }}
+        if: ${{ !matrix.build_native && steps.native-cache.outputs.cache-hit != 'true' }}
         run: node scripts/fetch-native-bundle.mjs
         env:
           PRECUT_NATIVE_BUNDLE_URL: ${{ vars[matrix.bundle_url] }}
           PRECUT_NATIVE_BUNDLE_SHA256: ${{ vars[matrix.bundle_sha] }}
           PRECUT_NATIVE_BUNDLE_TOKEN: ${{ github.token }}
       - name: Build pinned native tools for this platform
-        if: ${{ matrix.build_native }}
+        if: ${{ matrix.build_native && steps.native-cache.outputs.cache-hit != 'true' }}
         run: node scripts/bootstrap-native.mjs
       - name: Build pinned offline translation runtime
+        if: ${{ steps.native-cache.outputs.cache-hit != 'true' }}
         run: pnpm native:translation
       - run: pnpm models:prepare
+        if: ${{ steps.native-cache.outputs.cache-hit != 'true' }}
       - name: Bundle pinned offline caption browser
-        run: |
-          pnpm captions:browser
-          node scripts/build-caption-runtime.mjs
+        if: ${{ steps.native-cache.outputs.cache-hit != 'true' }}
+        run: pnpm captions:browser
+      - name: Verify prepared native binaries and models
+        run: pnpm native:verify
+      - name: Save verified native runtime cache
+        if: ${{ steps.native-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            native/${{ matrix.platform }}-${{ matrix.arch }}
+            native/models
+          key: ${{ steps.native-cache.outputs.cache-primary-key }}
       - name: Test Windows native CPU speech before packaging
         if: ${{ matrix.platform == 'win32' }}
         run: |

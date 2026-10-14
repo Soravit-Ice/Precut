@@ -1,5 +1,14 @@
 import { it, expect } from "vitest";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
+import { createCaptionAnimationExport } from "../../apps/desktop/electron/caption-animation-export";
+import { sampleCaptionScene } from "../../packages/core/src/caption-composition";
+import { presets } from "../../packages/core/src/captions";
+import {
+  defaultSettings,
+  type Snapshot,
+  type CaptionScene,
+} from "../../packages/shared/src/contracts";
+import type { EngineTask } from "../../apps/desktop/electron/engine";
 import { createServer } from "node:http";
 import { readFile, mkdir, mkdtemp, rm } from "node:fs/promises";
 import { resolve, join } from "node:path";
@@ -189,9 +198,64 @@ it("matches the unmodified upstream CSS and GSAP demos for all 17 designs", asyn
           { id, time },
         );
         const reference = await page.screenshot({ omitBackground: true });
-        const actual = await readFile(
+        // Compare the upstream demo and the production exporter on this OS.
+        // The shipped poster is a separately hashed asset captured on macOS;
+        // native font rasterization cannot serve as a cross-OS pixel baseline.
+        const poster = await readFile(
           "vendor/hyperframes/previews/" + id + ".png",
         );
+        expect(createHash("sha256").update(poster).digest("hex")).toBe(
+          previews.files.find(
+            (file: { file: string }) => file.file === id + ".png",
+          )!.sha256,
+        );
+        const projectId = randomUUID();
+        const durationUs = design.duration * 1e6;
+        const scene: CaptionScene = {
+          ...sampleCaptionScene("Original HyperFrames", "en"),
+          endUs: durationUs,
+          style: {
+            ...presets[0].style,
+            animation: { templateId: id, revision: 1 },
+          },
+        };
+        const task: EngineTask = {
+          id: projectId,
+          projectId,
+          type: "export",
+          projectRoot: root,
+          nativeRoot,
+          modelsRoot: "unused",
+          fontsRoot: resolve("apps/desktop/public/fonts"),
+          captionRuntimeRoot: resolve("apps/desktop/public/hyperframes"),
+          settings: defaultSettings,
+          snapshot: {
+            project: { id: projectId },
+            captionStyle: presets[0].style,
+            captionFonts: [],
+            assets: [{ fps: { numerator: 30, denominator: 1 } }],
+          } as unknown as Snapshot,
+        };
+        const exporter = await createCaptionAnimationExport(
+          task,
+          {
+            signal: new AbortController().signal,
+            spawn: () => {},
+            stage: () => {},
+            db: async <T>() => undefined as T,
+          },
+          [scene],
+          1920,
+          1080,
+          durationUs,
+          id,
+        );
+        let actual: Buffer;
+        try {
+          actual = await exporter.capture(0, time * 1e6);
+        } finally {
+          await exporter.close();
+        }
         const canvas = new Canvas(1920, 1080);
         canvas.gpu = false;
         const ctx = canvas.getContext("2d");
