@@ -46,9 +46,13 @@ test.beforeAll(async () => {
   page = await app.firstWindow();
   page.on("pageerror", (e) => errors.push(e.message));
   await page.getByRole("heading", { name: "Projects", exact: true }).waitFor();
-  await app.evaluate(({ BrowserWindow }) =>
-    BrowserWindow.getAllWindows()[0].setSize(1440, 1000),
-  );
+  await app.evaluate(({ app, BrowserWindow }) => {
+    app.focus({ steal: true });
+    const window = BrowserWindow.getAllWindows()[0];
+    window.show();
+    window.focus();
+    window.setSize(1440, 1000);
+  });
 });
 test.afterAll(async () => {
   await app?.close();

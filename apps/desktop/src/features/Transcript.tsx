@@ -64,11 +64,15 @@ export function Transcript() {
     activeClipId = useStore((s) => s.activeClipId),
     sharedSelection = useStore((s) => s.selection);
   useLayoutEffect(() => {
-    setSelected([]);
-    setCorrecting(undefined);
+    setSelected((prev) =>
+      prev.filter((w) => snap.words.some((sw) => sw.id === w.id)),
+    );
+    setCorrecting((prev) =>
+      prev && snap.words.some((sw) => sw.id === prev.id) ? prev : undefined,
+    );
     setTime(clock.currentUs);
     return () => clearTimeout(listenTimer.current);
-  }, [activeClipId]);
+  }, [activeClipId, snap.words]);
   useEffect(() => {
     if (!full || !activeClipId || sharedSelection?.kind !== "range") {
       clearTimeout(listenTimer.current);
@@ -316,11 +320,14 @@ export function Transcript() {
             value={activeClipId}
             onChange={(event) => {
               const id = event.target.value;
+              const fullSnap = useStore.getState().projectSnapshot ?? full;
               useStore.getState().set({
                 activeClipId: id,
                 selection: { kind: "clip", clipId: id },
               });
-              const first = sequenceEntries(full).find((e) => e.clipId === id);
+              const first = fullSnap
+                ? sequenceEntries(fullSnap).find((e) => e.clipId === id)
+                : undefined;
               if (first) sequenceClock.seek?.(first.startUs);
             }}
           >
@@ -545,7 +552,10 @@ export function Transcript() {
                                 if (wordDrag.current?.moved) return;
                                 select(w, e.shiftKey);
                                 if (editMode && !e.shiftKey) beginCorrection(w);
-                                else if (!e.shiftKey && e.detail === 1) {
+                                else if (e.detail >= 2) {
+                                  clearTimeout(listenTimer.current);
+                                  beginCorrection(w);
+                                } else if (!e.shiftKey && e.detail === 1) {
                                   clearTimeout(listenTimer.current);
                                   listenTimer.current = setTimeout(
                                     () =>

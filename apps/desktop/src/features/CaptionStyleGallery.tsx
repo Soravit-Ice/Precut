@@ -195,6 +195,7 @@ export function CaptionStyleGallery({
       style.animation?.templateId ?? style.preset,
     ),
     [hovered, setHovered] = useState<string>(),
+    [focused, setFocused] = useState<string>(),
     [category, setCategory] = useState("all"),
     [search, setSearch] = useState(""),
     [playing, setPlaying] = useState(false),
@@ -243,6 +244,10 @@ export function CaptionStyleGallery({
     })),
   ];
   useEffect(() => {
+    if (!open) {
+      setHovered(undefined);
+      setFocused(undefined);
+    }
     if (open) {
       setSelected(style.animation?.templateId ?? style.preset);
       setPlaying(false);
@@ -371,16 +376,11 @@ export function CaptionStyleGallery({
                         setReplay((n) => n + 1);
                       }}
                       onMouseEnter={() => setHovered(item.id)}
-                      onMouseLeave={(event) => {
-                        if (
-                          !event.currentTarget.contains(document.activeElement)
-                        )
-                          setHovered(undefined);
-                      }}
-                      onFocus={() => setHovered(item.id)}
+                      onMouseLeave={() => setHovered(undefined)}
+                      onFocus={() => setFocused(item.id)}
                       onBlur={(event) => {
-                        if (!event.currentTarget.matches(":hover"))
-                          setHovered(undefined);
+                        if (!event.currentTarget.contains(event.relatedTarget))
+                          setFocused(undefined);
                       }}
                     >
                       <div
@@ -418,7 +418,7 @@ export function CaptionStyleGallery({
                               alt=""
                               loading="lazy"
                             />
-                            {hovered === item.id && (
+                            {(hovered === item.id || focused === item.id) && (
                               <CaptionPreview
                                 style={galleryStyle(style, item.id)}
                                 text={t("Make it count.")}
@@ -433,7 +433,9 @@ export function CaptionStyleGallery({
                             style={galleryStyle(style, item.id)}
                             text={t("Make it count.")}
                             compact
-                            animated={hovered === item.id}
+                            animated={
+                              hovered === item.id || focused === item.id
+                            }
                           />
                         )}
                         {selected === item.id && (

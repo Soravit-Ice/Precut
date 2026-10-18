@@ -192,7 +192,8 @@ test("direct positioning, per-cue overrides, bilingual export and project font p
     )
     .toBeGreaterThan(cue.anchor.x);
   await page.getByRole("button", { name: "Undo", exact: true }).click();
-  await app.evaluate(({ BrowserWindow }) => {
+  await app.evaluate(({ app, BrowserWindow }) => {
+    app.focus({ steal: true });
     const window = BrowserWindow.getAllWindows()[0];
     window.show();
     window.focus();

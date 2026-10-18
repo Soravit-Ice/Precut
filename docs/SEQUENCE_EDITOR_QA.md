@@ -2,14 +2,14 @@
 
 Executed locally on **macOS / Apple Silicon**, using Node 24.21.0, Electron 44.6.0, the bundled native media tools, HyperFrames 0.8.156 and the pinned Chrome Headless Shell 152.0.7977.30. The existing installed/package output is separate from this source update.
 
-| Check | Result |
-| --- | --- |
-| `pnpm typecheck` | Passed |
-| `pnpm build` | Passed, including signed SDK and 44 bundled font-family verification |
-| `pnpm test` | **222 passed, 2 skipped**, across 32 files |
-| `pnpm exec playwright test` | **15 passed** in the complete Electron suite |
-| Prettier for changed source files | Passed |
-| `git diff --check` | Passed |
+| Check                             | Result                                                               |
+| --------------------------------- | -------------------------------------------------------------------- |
+| `pnpm typecheck`                  | Passed                                                               |
+| `pnpm build`                      | Passed, including signed SDK and 44 bundled font-family verification |
+| `pnpm test`                       | **222 passed, 2 skipped**, across 32 files                           |
+| `pnpm exec playwright test`       | **15 passed** in the complete Electron suite                         |
+| Prettier for changed source files | Passed                                                               |
+| `git diff --check`                | Passed                                                               |
 
 The two skipped tests require `PRECUT_TEST_TRANSLATION_MODEL` pointing to the optional offline translation model; that model was not configured for this run. Translation contracts, source hashes, editing, persistence and recovery tests ran. Native translation-model acceptance remains a separate check. Vite reports its existing advisory about chunks larger than 500 kB; the build completes.
 
@@ -43,3 +43,5 @@ This local source-verification record alone does not certify Intel macOS or Wind
 The [2.7.0 native CI candidate](https://github.com/Soravit-Ice/Precut/actions/runs/39132067759) failed acceptance and was not submitted to Store. It exposed a missing long-media fixture, a passive clip-reset/editing race, lazy GPU input canvases in the Intel unit fixture, and an open SQLite handle during Windows test cleanup. Candidate 2.7.1 generates the 120-minute fixture on a clean checkout, resets transcript state before paint, materializes CPU input canvases matching the export worker, and closes database handles before cleanup. All assertions and publication gates remain enabled.
 
 Candidate 2.7.1 still exposed an asynchronous seek / inline-focus failure on hosted Apple Silicon. Candidate 2.7.2 commits the clip and timeline clock synchronously, guards stale media seeks before changing decoded time, and focuses the inline input before paint with no scroll. The repeated source-switch regression now runs under fourfold renderer CPU throttling and checks that input focus survives completion of the pending video seek. Publication remains gated on all three native targets.
+
+The Windows 2.7.1 Electron run passed sequence editing but exposed loss of a focused gallery preview after pointer movement. Candidate 2.7.2 exposed an intermittent inline word focus failure during rapid clip switches under CPU throttling when an unconditional layout effect cleared active word correction. Candidate 2.7.3 retains active word editing across clip changes when the word belongs to the newly selected clip's transcript, adds resilient entry on double-click detail, clears interaction state when closing the gallery, and brings the native test application window forward. No rendering or focus assertions were removed.

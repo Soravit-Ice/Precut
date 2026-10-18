@@ -300,6 +300,13 @@ test("gallery trials, offline preview, per-cue styles, undo and mixed MP4 export
     });
     await animatedCard.focus();
     await animatedCard.hover();
+    await thaiGallery
+      .getByRole("button", {
+        name: "Caption preset Gradient Fill",
+        exact: true,
+      })
+      .hover();
+    await expect(animatedCard).toBeFocused();
     await expect(animatedCard.locator("[data-composition-ready]")).toHaveCount(
       1,
     );
