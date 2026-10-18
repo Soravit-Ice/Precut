@@ -5,7 +5,7 @@ import {
   timelineFor,
   wordSelectionRange,
 } from "../../../../packages/core/src/sequence";
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect, useLayoutEffect } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   Search,
@@ -63,7 +63,7 @@ export function Transcript() {
   const full = useStore((s) => s.projectSnapshot),
     activeClipId = useStore((s) => s.activeClipId),
     sharedSelection = useStore((s) => s.selection);
-  useEffect(() => {
+  useLayoutEffect(() => {
     setSelected([]);
     setCorrecting(undefined);
     setTime(clock.currentUs);

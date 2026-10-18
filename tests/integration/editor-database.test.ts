@@ -80,7 +80,8 @@ it("backs up legacy data and preserves word, caption and timeline history across
       JSON.stringify([{ id: wordId, text: "แก้ไว้แล้ว" }]),
     );
   legacy.close();
-  const { dispatch } = await import("../../apps/desktop/electron/database");
+  const { dispatch, closeDatabases } =
+    await import("../../apps/desktop/electron/database");
   const open = () =>
     dispatch("projects.open", { id: projectId }) as Promise<Snapshot>;
   try {
@@ -190,6 +191,7 @@ it("backs up legacy data and preserves word, caption and timeline history across
     expect(timelineFor(await open()).clips).toHaveLength(2);
     expect((await open()).words[0].text).toBe("แก้ไว้แล้ว");
   } finally {
+    closeDatabases();
     delete process.env.PRECUT_DATA_ROOT;
     rmSync(root, { recursive: true, force: true });
   }

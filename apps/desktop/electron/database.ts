@@ -58,6 +58,11 @@ catalog
   .prepare("INSERT OR IGNORE INTO settings VALUES(1,?)")
   .run(JSON.stringify(defaultSettings));
 const cache = new Map<string, Database.Database>();
+export function closeDatabases() {
+  for (const database of cache.values()) if (database.open) database.close();
+  cache.clear();
+  if (catalog.open) catalog.close();
+}
 const getProject = (id: string) =>
   catalog
     .prepare("SELECT * FROM projects WHERE id=? AND archived=0")

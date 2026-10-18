@@ -92,8 +92,20 @@ test("multi-source transcript, inline Thai correction, scoped editing, graphics 
     .getByLabel("Transcript clip")
     .selectOption(snap.timeline!.clips[1].id);
   const word = source.words[0];
-  await page.locator(".transcript-word").first().dblclick();
   const input = page.locator(".inline-word-editor input");
+  // Changing sources must finish resetting the draft before the next interaction.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await page
+      .getByLabel("Transcript clip")
+      .selectOption(snap.timeline!.clips[0].id);
+    await page
+      .getByLabel("Transcript clip")
+      .selectOption(snap.timeline!.clips[1].id);
+    await page.locator(".transcript-word").first().dblclick();
+    await expect(input).toBeFocused();
+    await input.press("Escape");
+  }
+  await page.locator(".transcript-word").first().dblclick();
   await input.fill("สวัสดี");
   await input.dispatchEvent("compositionstart");
   await input.press("Enter");

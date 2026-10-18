@@ -294,12 +294,16 @@ describe("speech-preserving picture transitions", () => {
       const a = new Canvas(48, 32),
         b = new Canvas(48, 32),
         out = new Canvas(48, 32);
+      // Match the export worker's CPU canvas and fully materialized input frames.
+      out.gpu = false;
       for (const [c, color] of [
         [a, "#ff0000"],
         [b, "#0000ff"],
       ] as const) {
+        c.gpu = false;
         c.getContext("2d").fillStyle = color;
         c.getContext("2d").fillRect(0, 0, 48, 32);
+        c.getContext("2d").getImageData(0, 0, 1, 1);
       }
       const ctx = out.getContext("2d") as unknown as CanvasRenderingContext2D;
       const capture = (p: number) => {
@@ -317,7 +321,8 @@ describe("speech-preserving picture transitions", () => {
       const middle = capture(0.4);
       capture(0.9);
       expect(capture(0.4)).toEqual(middle);
-      expect(capture(0)).not.toEqual(capture(1));
+      expect(capture(0).slice(0, 3)).toEqual([255, 0, 0]);
+      expect(capture(1).slice(0, 3)).toEqual([0, 0, 255]);
     },
   );
 });

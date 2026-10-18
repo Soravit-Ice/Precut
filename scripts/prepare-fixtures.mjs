@@ -1,4 +1,4 @@
-import { mkdir, copyFile, writeFile, readFile } from "node:fs/promises";
+import { mkdir, copyFile, writeFile, readFile, rename } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -98,6 +98,42 @@ await exec(ff, [
   "aac",
   `${folder}/vfr.mp4`,
 ]);
+// Keep the long-recording acceptance reproducible on a clean native CI checkout.
+if (!existsSync(`${folder}/120-minutes.mp4`)) {
+  await exec(ff, [
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-y",
+    "-f",
+    "lavfi",
+    "-i",
+    "color=c=0x20242b:size=160x90:rate=30",
+    "-f",
+    "lavfi",
+    "-i",
+    "anullsrc=r=16000:cl=mono",
+    "-t",
+    "7200",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "ultrafast",
+    "-crf",
+    "40",
+    "-c:a",
+    "aac",
+    "-b:a",
+    "16k",
+    "-movflags",
+    "+faststart",
+    `${folder}/120-minutes.creating.mp4`,
+  ]);
+  await rename(
+    `${folder}/120-minutes.creating.mp4`,
+    `${folder}/120-minutes.mp4`,
+  );
+}
 await writeFile(
   `${folder}/sources.json`,
   JSON.stringify(
@@ -113,4 +149,4 @@ await writeFile(
     2,
   ),
 );
-console.log("English, HEVC, ProRes and VFR fixtures ready");
+console.log("English, HEVC, ProRes, VFR and 120-minute fixtures ready");
