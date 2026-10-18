@@ -38,6 +38,16 @@ export const HyperframeCaptionSurface = forwardRef<
     clockDriven?: boolean;
     timeUs?: number;
     catalogDemo?: CaptionAnimationId;
+    textLayers?: import("../../../../packages/shared/src/editor").TextLayer[];
+    onTextBounds?: (
+      bounds: {
+        id: string;
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      }[],
+    ) => void;
     onBounds?: (bounds: CaptionBounds | undefined, sceneId?: string) => void;
   }
 >(
@@ -52,6 +62,8 @@ export const HyperframeCaptionSurface = forwardRef<
       clockDriven = false,
       timeUs,
       catalogDemo,
+      textLayers,
+      onTextBounds,
       onBounds,
     },
     handle,
@@ -60,6 +72,8 @@ export const HyperframeCaptionSurface = forwardRef<
     const player = useRef<HyperframesPlayer | null>(null);
     const latestTime = useRef(timeUs);
     const boundsCallback = useRef(onBounds);
+    const textBoundsCallback = useRef(onTextBounds);
+    textBoundsCallback.current = onTextBounds;
     const previousComposition = useRef("");
     boundsCallback.current = onBounds;
     latestTime.current = timeUs;
@@ -73,6 +87,7 @@ export const HyperframeCaptionSurface = forwardRef<
         "Noto Sans Thai",
         "Inter",
       ]);
+      for (const layer of textLayers ?? []) names.add(layer.font);
       for (const scene of scenes) {
         if (scene.style) {
           names.add(scene.style.font);
@@ -125,6 +140,7 @@ export const HyperframeCaptionSurface = forwardRef<
           ? { numerator: 30, denominator: 1 }
           : snapshot?.assets[0]?.fps,
         catalogDemo,
+        textLayers,
       });
     }, [
       scenes,
@@ -136,6 +152,7 @@ export const HyperframeCaptionSurface = forwardRef<
       snapshot?.project.id,
       base,
       catalogDemo,
+      textLayers,
     ]);
     useImperativeHandle(
       handle,
@@ -169,6 +186,13 @@ export const HyperframeCaptionSurface = forwardRef<
           event.data?.source !== "precut-caption"
         )
           return;
+        if (
+          event.data.type === "text-bounds" &&
+          Array.isArray(event.data.bounds)
+        ) {
+          textBoundsCallback.current?.(event.data.bounds);
+          return;
+        }
         if (event.data.type === "ready") {
           sample();
           setCompositionReady(true);

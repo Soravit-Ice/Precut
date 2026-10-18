@@ -1,5 +1,18 @@
 import { z } from "zod";
 import { captionAnimationIds } from "./caption-animations";
+import {
+  editorSchemas,
+  type TimelineDocument,
+  type SourceDocument,
+} from "./editor";
+export type {
+  TimelineDocument,
+  TimelineClip,
+  TextLayer,
+  ClipTransition,
+  SourceDocument,
+  EditorSelection,
+} from "./editor";
 export const Id = z.string().uuid();
 export const PresetId = z.enum([
   "clean",
@@ -23,6 +36,8 @@ export type Category = z.infer<typeof Category>;
 export type Confidence = "high" | "medium" | "low";
 export type Rational = { numerator: number; denominator: number };
 export type MediaAsset = {
+  role?: "source" | "external";
+  ownerAssetId?: string;
   id: string;
   projectId: string;
   name: string;
@@ -44,6 +59,7 @@ export type MediaAsset = {
   missing: boolean;
   proxyPath?: string;
   thumbnailPath?: string;
+  storyboardPath?: string;
 };
 export type AudioTrack = {
   id: string;
@@ -253,6 +269,9 @@ export type Project = {
   revision: number;
 };
 export type Snapshot = {
+  editorContext?: { assetId: string; clipId: string };
+  timeline?: TimelineDocument;
+  sourceDocuments?: SourceDocument[];
   project: Project;
   assets: MediaAsset[];
   tracks: AudioTrack[];
@@ -360,7 +379,42 @@ export const PrecutOAuthCallbackSchema = z
       return false;
     }
   }, "Paste the complete Precut return link from the browser.");
+const editor = editorSchemas(CaptionStyleSchema);
+export const TimelineDocumentSchema = editor.Document;
+export const TimelineCommandSchema = editor.Command;
 export const schemas = {
+  "timeline.command": z
+    .object({
+      projectId: Id,
+      command: editor.Command,
+      expectedRevision: z.number().int().nonnegative().optional(),
+    })
+    .strict(),
+  "timeline.preview": z
+    .object({ projectId: Id, command: editor.Command })
+    .strict(),
+  "captions.projectStyle": z
+    .object({ projectId: Id, style: CaptionStyleSchema })
+    .strict(),
+  "sources.command": z
+    .object({
+      projectId: Id,
+      assetId: Id,
+      method: z.enum([
+        "edits.decide",
+        "edits.safe",
+        "edits.manual",
+        "edits.trim",
+        "captions.correct",
+        "captions.correctMany",
+        "captions.style",
+        "captions.position",
+        "captions.translation",
+        "projects.speech",
+      ]),
+      input: z.record(z.string(), z.unknown()),
+    })
+    .strict(),
   "projects.list": z.object({}).strict(),
   "projects.listRemoved": z.object({}).strict(),
   "projects.create": z
@@ -374,13 +428,18 @@ export const schemas = {
     .strict(),
   "projects.speech": z.object({ projectId: Id, speech: SpeechSchema }).strict(),
   "media.choose": z
-    .object({ projectId: Id, external: z.boolean().default(false) })
+    .object({
+      projectId: Id,
+      external: z.boolean().default(false),
+      ownerAssetId: Id.optional(),
+    })
     .strict(),
   "media.import": z
     .object({
       projectId: Id,
       path: z.string().min(1).max(4096),
       external: z.boolean().default(false),
+      ownerAssetId: Id.optional(),
     })
     .strict(),
   "media.relink": z.object({ projectId: Id, assetId: Id }).strict(),
@@ -394,6 +453,7 @@ export const schemas = {
   "jobs.analyze": z
     .object({
       projectId: Id,
+      assetId: Id.optional(),
       options: CleanupSchema,
       speech: SpeechSchema.optional(),
       captionLanguage: z.enum(["th", "th-en", "en"]).optional(),
@@ -467,6 +527,8 @@ export const schemas = {
   "captions.translate": z
     .object({
       projectId: Id,
+      assetId: Id.optional(),
+      clipId: Id.optional(),
       glossary: z.string().trim().max(4000).default(""),
     })
     .strict(),

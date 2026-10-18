@@ -1,8 +1,12 @@
 # Precut
 
-**Skip the boring first edit.** An offline desktop first-cut editor for Thai, English and mixed speech. The current desktop build is **2.6.4**, with a real media engine and the verified T2ETECH licence SDK. Made by t2etech.
+**Skip the boring first edit.** An offline desktop first-cut editor for Thai, English and mixed speech. The current source version is **2.7.0**, with a real media engine and the verified T2ETECH licence SDK. Made by t2etech.
 
-![Precut workspace](docs/screenshots/workspace.png)
+![Precut sequence editor](docs/screenshots/sequence-editor-light.png)
+
+## Sequence editor update
+
+The current source includes a new four-panel editor with multiple clips, inline transcript correction, linked audio/captions, independent text layers and six speech-preserving transitions. See the [editing and architecture guide](docs/SEQUENCE_EDITOR.md) and [current validation record](docs/SEQUENCE_EDITOR_QA.md). Existing packaged builds and previous cross-platform acceptance records predate this change.
 
 ## Try it on this Mac
 

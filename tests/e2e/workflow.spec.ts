@@ -1,3 +1,4 @@
+import { seekTimeline } from "./editor-helpers";
 import {
   test,
   expect,
@@ -139,11 +140,10 @@ test("real import → speech → safe review → captions → all exports → re
         (await call<Snapshot>("projects.open", { id })).captionStyle.preset,
     )
     .toBe("karaoke");
-  await page.evaluate(() => {
-    const video = document.querySelector("video")!;
-    video.currentTime = 5;
-  });
-  await expect(page.locator("video")).toHaveJSProperty("readyState", 4);
+  await seekTimeline(page, 5e6);
+  await expect(
+    page.locator("video.sequence-media-source").first(),
+  ).toHaveJSProperty("readyState", 4);
   await mkdir("docs/screenshots", { recursive: true });
   await page.screenshot({ path: "docs/screenshots/workspace.png" });
   const outputs = join(dataRoot, "outputs");

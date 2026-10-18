@@ -1,5 +1,21 @@
 import { useStore } from "./store";
 const th: Record<string, string> = {
+  "Cut boundaries": "ปรับขอบช่วงตัด",
+  "Source waveform around cut": "คลื่นเสียงรอบช่วงตัด",
+  "Cut start handle": "ลากปรับต้นช่วงตัด",
+  "Cut end handle": "ลากปรับท้ายช่วงตัด",
+  "Cut start": "ต้นช่วงตัด",
+  "Cut end": "ท้ายช่วงตัด",
+  "Listen to original": "ฟังเสียงต้นฉบับ",
+  "Apply cut": "บันทึกช่วงตัด",
+
+  "Find & replace selected words": "ค้นหาและแทนที่คำที่เลือก",
+  "Replace text throughout this source. All changes share one Undo step.":
+    "แทนที่คำในไฟล์ต้นฉบับนี้ ย้อนคืนทั้งหมดได้ในครั้งเดียว",
+  "Use project caption style": "ใช้สไตล์คำบรรยายของโปรเจกต์",
+  "This timeline contains multiple sources or graphics that XML cannot represent. Export MP4 to preserve the complete edit.":
+    "Timeline นี้มีหลายไฟล์หรือเอฟเฟกต์ที่ XML รองรับไม่ครบ เลือก MP4 เพื่อเก็บงานตัดต่อทั้งหมด",
+
   "Text scale": "ขนาดข้อความ",
   "English scale": "ขนาดข้อความอังกฤษ",
   "Original design": "ดีไซน์ต้นฉบับ",
@@ -127,6 +143,12 @@ const th: Record<string, string> = {
   "Edit text": "แก้ข้อความ",
   "Edit word": "แก้คำ",
   "Select word": "เลือกคำ",
+  "Cut word": "ตัดคำนี้",
+  "Cut selected words · Delete / Backspace":
+    "ตัดคำที่เลือก · Delete / Backspace",
+  "Clear the word and press Enter to cut it. Escape cancels.":
+    "ลบข้อความให้ว่างแล้วกด Enter เพื่อตัดคำ กด Escape เพื่อยกเลิก",
+  "Word cut · Undo available": "ตัดคำแล้ว · กดเลิกทำได้",
   "Edit words in this sentence": "แก้คำในประโยคนี้",
   "Click any word to change it. Your audio timing stays the same.":
     "คลิกคำที่ต้องการแก้ แล้วพิมพ์คำใหม่ เวลาเสียงยังคงเดิม",
@@ -489,6 +511,58 @@ const th: Record<string, string> = {
   "Words come alive as you speak": "เติมชีวิตให้คำตามเสียงพูด",
   "Short phrases. Strong delivery.": "วลีสั้น สื่อสารชัด",
   "Quiet, documentary style": "เรียบง่ายในแบบสารคดี",
+  Preview: "ตัวอย่าง",
+  Text: "ข้อความ",
+  Review: "ตรวจงาน",
+  Transitions: "เปลี่ยนฉาก",
+  "Editing tools": "เครื่องมือตัดต่อ",
+  Clip: "คลิป",
+  "Transcript clip": "บทพูดของคลิป",
+  "Selected words": "คำที่เลือก",
+  words: "คำ",
+  Listen: "ฟัง",
+  Cut: "ตัด",
+  Edit: "แก้ไข",
+  "Add clip": "เพิ่มคลิป",
+  "Select range": "เลือกช่วง",
+  "Picture and sound stay linked": "ภาพและเสียงผูกกัน",
+  "Drag clips to reorder · Drag edges to trim · ⌘/Ctrl B to split":
+    "ลากเพื่อเรียงคลิป · ลากขอบเพื่อปรับช่วง · ⌘/Ctrl B เพื่อแบ่ง",
+  "Titles and lower thirds for your story.":
+    "หัวเรื่องและข้อความแนะนำตัวสำหรับวิดีโอของคุณ",
+  "Search text styles": "ค้นหาสไตล์ข้อความ",
+  "Lower thirds": "ข้อความแนะนำตัว",
+  Titles: "หัวเรื่อง",
+  Favorites: "รายการโปรด",
+  "No matching styles": "ไม่พบสไตล์ที่ค้นหา",
+  "Text content": "เนื้อหาข้อความ",
+  "Subtitle / role": "ข้อความรอง / ตำแหน่ง",
+  Accent: "สีเน้น",
+  Anchor: "ผูกกับ",
+  "Follow clip": "ตามคลิป",
+  "Pin to timeline": "ตรึงกับไทม์ไลน์",
+  "Duration (s)": "ระยะ (วินาที)",
+  "Add text": "เพิ่มข้อความ",
+  "Save text": "บันทึกข้อความ",
+  "Remove text": "ลบข้อความ",
+  "A clean handoff. Your audio stays in place.":
+    "เปลี่ยนภาพอย่างนุ่มนวล โดยรักษาจังหวะเสียงเดิม",
+  "Search transitions": "ค้นหาเอฟเฟกต์เปลี่ยนฉาก",
+  "Select a join between two clips on the timeline.":
+    "เลือกรอยต่อระหว่างคลิปบนไทม์ไลน์",
+  "Available picture handles": "เฟรมเผื่อที่ใช้ได้",
+  "Not enough picture handles. Trim the clips, shorten the transition, or use Fade black.":
+    "เฟรมเผื่อไม่เพียงพอ ปรับขอบคลิป ลดระยะ หรือเลือก Fade black",
+  "Use Fade black": "ใช้ Fade black",
+  "Apply transition": "ใช้การเปลี่ยนฉาก",
+  "None · Hard cut": "ไม่มี · ตัดตรง",
+  "Apply to": "ใช้กับ",
+  "This clip": "คลิปนี้",
+  "Whole project": "ทั้งโปรเจกต์",
+  "Preparing preview": "กำลังเตรียมตัวอย่าง",
+  "Preparing transition preview": "กำลังเตรียมตัวอย่างเปลี่ยนฉาก",
+  "Video preview": "ตัวอย่างวิดีโอ",
+  "Move text on video": "ย้ายข้อความบนวิดีโอ",
 };
 export function useT() {
   const language = useStore((s) => s.settings.language);

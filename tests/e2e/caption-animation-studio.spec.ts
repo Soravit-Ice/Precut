@@ -1,3 +1,8 @@
+import {
+  displayedProject,
+  seekTimeline,
+  chooseCaptionScope,
+} from "./editor-helpers";
 import { test, expect, _electron } from "@playwright/test";
 import { mkdir, mkdtemp, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -20,10 +25,16 @@ test("gallery trials, offline preview, per-cue styles, undo and mixed MP4 export
       errors: string[] = [];
     page.on("pageerror", (e) => errors.push(String(e)));
     const call = <T>(method: string, input: unknown = {}) =>
-      page.evaluate(
-        ({ method, input }) => window.precut.call(method as never, input),
-        { method, input },
-      ) as Promise<T>;
+      page
+        .evaluate(
+          ({ method, input }) => window.precut.call(method as never, input),
+          { method, input },
+        )
+        .then((result) =>
+          method === "projects.open"
+            ? displayedProject(result as Snapshot)
+            : result,
+        ) as Promise<T>;
     const finished = async (job: Job) => {
       await expect
         .poll(
@@ -71,10 +82,7 @@ test("gallery trials, offline preview, per-cue styles, undo and mixed MP4 export
       .getByRole("button", { name: "Transcript", exact: true })
       .click();
     await page.getByRole("tab", { name: "Captions", exact: true }).click();
-    await page.locator("video").evaluate((v: HTMLVideoElement, us) => {
-      v.pause();
-      v.currentTime = us / 1e6;
-    }, cues[0].startUs + 500000);
+    await seekTimeline(page, cues[0].startUs + 500000);
     await page
       .getByRole("button", { name: "Choose a style", exact: true })
       .click();
@@ -182,10 +190,7 @@ test("gallery trials, offline preview, per-cue styles, undo and mixed MP4 export
             ?.templateId,
       )
       .toBe("caption-pill-karaoke");
-    await page
-      .locator(".caption-style-scope")
-      .getByRole("button", { name: "This caption", exact: true })
-      .click();
+    await chooseCaptionScope(page, "This caption");
     await page
       .getByRole("button", { name: "Choose a style", exact: true })
       .click();
@@ -232,7 +237,8 @@ test("gallery trials, offline preview, per-cue styles, undo and mixed MP4 export
       .poll(() =>
         page
           .locator(".player-section")
-          .locator("video")
+          .locator("video.sequence-media-source")
+          .first()
           .evaluate((v: HTMLVideoElement) => v.readyState),
       )
       .toBeGreaterThanOrEqual(2);
@@ -292,6 +298,7 @@ test("gallery trials, offline preview, per-cue styles, undo and mixed MP4 export
       name: "Caption preset Pill Karaoke",
       exact: true,
     });
+    await animatedCard.focus();
     await animatedCard.hover();
     await expect(animatedCard.locator("[data-composition-ready]")).toHaveCount(
       1,

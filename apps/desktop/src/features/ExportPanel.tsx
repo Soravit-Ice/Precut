@@ -11,6 +11,11 @@ import { Button, Select, Checkbox } from "../components/ui/primitives";
 import { useStore, call, safe, flushCaptionSave } from "../lib/store";
 import { useT } from "../lib/i18n";
 import { SignInButton } from "./SignInDialog";
+import {
+  sequenceEntries,
+  sequenceDuration,
+  timelineFor,
+} from "../../../../packages/core/src/sequence";
 import type {
   ExportOptions,
   Job,
@@ -22,7 +27,7 @@ import {
   formatTime,
 } from "../../../../packages/core/src/timeline";
 export function ExportPanel() {
-  const snap = useStore((s) => s.snapshot)!,
+  const snap = useStore((s) => s.projectSnapshot ?? s.snapshot)!,
     t = useT();
   const jobs = useStore((s) => s.jobs),
     licence = useStore((s) => s.licence);
@@ -44,9 +49,13 @@ export function ExportPanel() {
   const job = jobs
     .filter((j) => j.projectId === snap.project.id && j.type === "export")
     .at(-1);
-  const duration = outputDuration(
-    keepRegions(snap.project.durationUs, snap.suggestions, snap.assets[0]?.fps),
-  );
+  const entries = sequenceEntries(snap),
+    document = timelineFor(snap),
+    duration = sequenceDuration(entries);
+  const xmlUnsupported =
+    new Set(entries.map((e) => e.assetId)).size > 1 ||
+    document.textLayers.length > 0 ||
+    document.transitions.length > 0;
   const start = () =>
     safe(async () => {
       if (choosing) return;
@@ -100,6 +109,7 @@ export function ExportPanel() {
         </button>
         <button
           className={destination === "editor" ? "selected" : ""}
+          disabled={xmlUnsupported}
           onClick={() => setDestination("editor")}
         >
           <ArrowUpRight size={18} />
@@ -110,6 +120,13 @@ export function ExportPanel() {
           <i />
         </button>
       </div>
+      {xmlUnsupported && (
+        <p className="editor-inline-notice">
+          {t(
+            "Export MP4 to preserve multiple sources, text and transitions. XML is available for compatible timelines.",
+          )}
+        </p>
+      )}
       {destination === "video" ? (
         <div className="export-controls">
           <label className="control-row">

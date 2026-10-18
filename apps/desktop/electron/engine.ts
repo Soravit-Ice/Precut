@@ -2,6 +2,16 @@ import { runTranslation, TRANSLATION_MODEL } from "./translation";
 import { finishAutoEditCaptions } from "./auto-edit-captions";
 import { registerCaptionFonts, importCaptionFont } from "./fonts";
 import { createCaptionAnimationExport } from "./caption-animation-export";
+import { renderTransitionPreview, transitionPictures } from "./editor-render";
+import { transitionWindow } from "../../../packages/core/src/editor-render";
+import {
+  timelineFor,
+  sequenceEntries,
+  sequenceCaptionScenes,
+  sequenceDuration,
+  sourceSnapshot,
+  textRange,
+} from "../../../packages/core/src/sequence";
 import {
   mkdir,
   readFile,
@@ -53,9 +63,19 @@ import type {
   SpeechConfig,
 } from "../../../packages/shared/src/contracts";
 export type EngineTask = {
+  assetId?: string;
+  ownerAssetId?: string;
   id: string;
   projectId: string;
-  type: "import" | "analyze" | "proxy" | "export" | "model" | "translate";
+  type:
+    | "import"
+    | "analyze"
+    | "proxy"
+    | "export"
+    | "model"
+    | "translate"
+    | "preview";
+  transition?: import("../../../packages/shared/src/contracts").ClipTransition;
   nativeRoot: string;
   modelsRoot: string;
   fontsRoot: string;
@@ -222,9 +242,10 @@ async function importMedia(task: EngineTask, ctx: Context) {
     projectId: task.projectId,
     asset,
     external: task.external,
+    ownerAssetId: task.ownerAssetId,
   });
   if (asset.hasVideo) {
-    const path = join(task.projectRoot, "thumbnail.jpg");
+    const path = join(task.projectRoot, "proxy", `${asset.id}-thumbnail.jpg`);
     await run(
       binary(task.nativeRoot, "ffmpeg"),
       [
@@ -245,13 +266,36 @@ async function importMedia(task: EngineTask, ctx: Context) {
       { signal: ctx.signal, onSpawn: ctx.spawn },
     );
     asset.thumbnailPath = path;
+    const storyboard = join(
+      task.projectRoot,
+      "proxy",
+      `${asset.id}-storyboard.jpg`,
+    );
+    await run(
+      binary(task.nativeRoot, "ffmpeg"),
+      [
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-y",
+        "-i",
+        asset.path,
+        "-vf",
+        `fps=${12 / Math.max(0.1, asset.durationUs / 1e6)},scale=160:-2,tile=6x2`,
+        "-frames:v",
+        "1",
+        storyboard,
+      ],
+      { signal: ctx.signal, onSpawn: ctx.spawn },
+    );
+    asset.storyboardPath = storyboard;
     await ctx.db("assets.update", { projectId: task.projectId, asset });
   }
   if (asset.hasAudio) {
     const wav = await audio(task, asset, ctx);
     if (!task.external) {
       ctx.stage("Building waveform", 0.6);
-      await waveform(wav, join(task.projectRoot, "waveform"), ctx);
+      await waveform(wav, join(task.projectRoot, "waveform", asset.id), ctx);
       await ctx.db("waveform.ready", { projectId: task.projectId });
     }
   }
@@ -617,19 +661,49 @@ async function syncDirectory(path: string) {
 async function exportMedia(task: EngineTask, ctx: Context) {
   const snap = task.snapshot!,
     options = task.exportOptions!,
-    asset = snap.assets[0];
+    document = timelineFor(snap),
+    entries = sequenceEntries(snap),
+    sourceAsset = snap.assets.find((a) => a.id === entries[0]?.assetId),
+    asset = sourceAsset && {
+      ...sourceAsset,
+      width: document.width,
+      height: document.height,
+      fps: document.fps,
+    };
   if (!asset || asset.missing)
     throw new Error("Locate the original source before exporting.");
-  const regions = keepRegions(asset.durationUs, snap.suggestions, asset.fps);
+  for (const e of entries)
+    if (snap.assets.find((a) => a.id === e.assetId)?.missing)
+      throw new Error(
+        "Locate every source used on the timeline before exporting.",
+      );
+  const regions = entries.map((e) => ({
+    startUs: e.sourceStartUs,
+    endUs: e.sourceEndUs,
+    outputStartUs: e.startUs,
+    assetId: e.assetId,
+  }));
   if (!regions.length)
     throw new Error(
       "The whole source is removed. Restore a region before exporting.",
     );
-  const scenes = buildCaptionScenes(snap);
+  const scenes = sequenceCaptionScenes(snap);
+  const textLayers = document.textLayers
+    .filter((l) => l.enabled)
+    .map((l) => ({ ...l, ...textRange(l, entries), clipId: undefined }));
+  if (
+    !["mp4", "srt"].includes(options.format) &&
+    (new Set(entries.map((e) => e.assetId)).size > 1 ||
+      document.textLayers.length ||
+      document.transitions.length)
+  )
+    throw new Error(
+      "This timeline contains multiple sources or graphics that XML cannot represent. Export MP4 to preserve the complete edit.",
+    );
   if (
     (options.format === "srt" ||
       (options.format === "mp4" && (options.captions || options.sidecar))) &&
-    missingCaptionTranslations(snap).length
+    scenes.some((scene) => scene.lines?.some((line) => line.missing))
   )
     throw new Error(
       "Translate the selected caption language before exporting.",
@@ -655,6 +729,9 @@ async function exportMedia(task: EngineTask, ctx: Context) {
           artifacts,
           projectRevision: snap.project.revision,
           sourceFingerprint: asset.fingerprint,
+          sourceFingerprints: [...new Set(entries.map((e) => e.assetId))].map(
+            (id) => snap.assets.find((a) => a.id === id)!.fingerprint,
+          ),
           format: options.format,
           updatedAt: new Date().toISOString(),
         }),
@@ -717,7 +794,7 @@ async function exportMedia(task: EngineTask, ctx: Context) {
       );
     } else {
       const { Canvas } = await import("skia-canvas");
-      if (options.captions && scenes.length)
+      if ((options.captions && scenes.length) || textLayers.length)
         await registerCaptionFonts(snap, task.fontsRoot, task.projectRoot);
       const duration = outputDuration(regions),
         fps = asset.fps.numerator / asset.fps.denominator;
@@ -731,20 +808,22 @@ async function exportMedia(task: EngineTask, ctx: Context) {
       const h = Math.round(height / 2) * 2;
       const stage = join(task.projectRoot, "export-cache", task.id);
       await mkdir(stage, { recursive: true });
-      const ext = snap.assets[1],
-        track = ext && snap.tracks.find((t) => t.assetId === ext.id);
-      const sourceAudio = ext ?? asset;
-      const offset = ext ? (track?.offsetUs ?? 0) : 0;
       const crf = { high: "16", balanced: "20", small: "25" }[options.quality];
       const files: string[] = [];
       for (let i = 0; i < regions.length; i++) {
         ctx.signal.throwIfAborted();
         const region = regions[i],
+          inputAsset = snap.assets.find((a) => a.id === region.assetId)!,
+          source = sourceSnapshot(snap, inputAsset.id),
+          ext = source.assets[1],
+          track = ext && source.tracks.find((t) => t.assetId === ext.id),
+          sourceAudio = ext ?? inputAsset,
+          offset = ext ? (track?.offsetUs ?? 0) : 0,
           path = join(stage, `part-${i}.mov`),
           len = region.endUs - region.startUs;
         const args = ["-hide_banner", "-loglevel", "error", "-y"];
-        if (asset.hasVideo)
-          args.push("-ss", seconds(region.startUs), "-i", asset.path);
+        if (inputAsset.hasVideo)
+          args.push("-ss", seconds(region.startUs), "-i", inputAsset.path);
         else
           args.push(
             "-f",
@@ -752,14 +831,14 @@ async function exportMedia(task: EngineTask, ctx: Context) {
             "-i",
             `color=c=0x07111f:s=${width}x${h}:r=${asset.fps.numerator}/${asset.fps.denominator}`,
           );
-        if (ext || !asset.hasVideo) {
+        if (ext || !inputAsset.hasVideo) {
           const seek = Math.max(0, region.startUs - offset);
           args.push("-ss", seconds(seek), "-i", sourceAudio.path);
         }
         let audioFilter = "";
         if (sourceAudio.hasAudio) {
           const delay = Math.max(0, offset - region.startUs) / 1000;
-          audioFilter = `[${ext || !asset.hasVideo ? 1 : 0}:a]aresample=48000${delay ? `,adelay=${delay}:all=1` : ""},apad,atrim=duration=${seconds(len)},afade=t=in:d=0.005,afade=t=out:st=${seconds(Math.max(0, len - 5000))}:d=0.005[a]`;
+          audioFilter = `[${ext || !inputAsset.hasVideo ? 1 : 0}:a]aresample=48000,aformat=channel_layouts=stereo${track ? `,volume=${track.enabled ? track.gain : 0}` : ""}${delay ? `,adelay=${delay}:all=1` : ""},apad,atrim=duration=${seconds(len)},afade=t=in:d=0.005,afade=t=out:st=${seconds(Math.max(0, len - 5000))}:d=0.005[a]`;
         } else
           audioFilter = `anullsrc=r=48000:cl=stereo,atrim=duration=${seconds(len)}[a]`;
         args.push(
@@ -772,7 +851,7 @@ async function exportMedia(task: EngineTask, ctx: Context) {
           "-t",
           seconds(len),
           "-vf",
-          `scale=${width}:${h},fps=${asset.fps.numerator}/${asset.fps.denominator}`,
+          `scale=${width}:${h}:force_original_aspect_ratio=decrease,pad=${width}:${h}:(ow-iw)/2:(oh-ih)/2:color=0x0b0b0d,setsar=1,fps=${asset.fps.numerator}/${asset.fps.denominator}`,
           "-c:v",
           "libx264",
           "-preset",
@@ -817,7 +896,11 @@ async function exportMedia(task: EngineTask, ctx: Context) {
         list,
       ];
       let frames: AsyncIterable<Buffer> | undefined;
-      if (options.captions && scenes.length) {
+      if (
+        (options.captions && scenes.length) ||
+        textLayers.length ||
+        document.transitions.length
+      ) {
         const canvas = new Canvas(width, h),
           ctx2 = canvas.getContext("2d");
         canvas.gpu = false;
@@ -842,54 +925,101 @@ async function exportMedia(task: EngineTask, ctx: Context) {
         );
         frames = (async function* () {
           const { loadImage } = await import("skia-canvas");
-          const animation = scenes.some(
-            (s) => (s.style ?? snap.captionStyle).animation,
-          )
-            ? await createCaptionAnimationExport(
-                task,
-                ctx,
-                scenes,
-                width,
-                h,
-                duration,
-              )
-            : undefined;
-          try {
-            let sceneIndex = 0;
-            for (let i = 0; i < count; i++) {
-              ctx.signal.throwIfAborted();
-              const timeUs = Math.round((i / fps) * 1e6);
-              while (
-                sceneIndex < scenes.length - 1 &&
-                scenes[sceneIndex].endUs <= timeUs
-              )
-                sceneIndex++;
-              ctx2.clearRect(0, 0, width, h);
-              const scene = scenes[sceneIndex],
-                style = scene.style ?? snap.captionStyle;
-              if (
-                style.animation &&
-                timeUs >= scene.startUs &&
-                timeUs < scene.endUs &&
-                animation
-              ) {
-                ctx2.drawImage(
-                  await loadImage(await animation.capture(i, timeUs)),
-                  0,
-                  0,
-                );
-              } else
-                renderCaption(
-                  ctx2 as unknown as CanvasRenderingContext2D,
+          const animation =
+            textLayers.length ||
+            (options.captions &&
+              scenes.some((s) => (s.style ?? snap.captionStyle).animation))
+              ? await createCaptionAnimationExport(
+                  task,
+                  ctx,
+                  options.captions ? scenes : [],
                   width,
                   h,
-                  scenes[sceneIndex],
-                  timeUs,
-                  style,
+                  duration,
+                  undefined,
+                  textLayers,
+                )
+              : undefined;
+          try {
+            let sceneIndex = 0;
+            let picture:
+              Awaited<ReturnType<typeof transitionPictures>> | undefined;
+            let pictureId: string | undefined;
+            const windows = document.transitions.map((transition) => ({
+              transition,
+              ...transitionWindow(snap, transition, entries),
+            }));
+            try {
+              for (let i = 0; i < count; i++) {
+                ctx.signal.throwIfAborted();
+                const timeUs = Math.round((i / fps) * 1e6);
+                while (
+                  sceneIndex < scenes.length - 1 &&
+                  scenes[sceneIndex].endUs <= timeUs
+                )
+                  sceneIndex++;
+                ctx2.clearRect(0, 0, width, h);
+                const window = windows.find(
+                  (w) => timeUs >= w.startUs && timeUs < w.endUs,
                 );
-              yield await canvas.toBuffer("raw", { colorType: "rgba" });
-              if (i % 30 === 0)
-                ctx.stage("Rendering captions", 0.7 + (0.28 * i) / count);
+                if (window && window.transition.id !== pictureId) {
+                  await picture?.close();
+                  picture = await transitionPictures(
+                    task,
+                    ctx,
+                    snap,
+                    window.transition,
+                    width,
+                    h,
+                    join(stage, "transition-frames"),
+                  );
+                  pictureId = window.transition.id;
+                }
+                if (window && picture) {
+                  const rendered = await picture.draw(
+                    Math.round(((timeUs - window.startUs) / 1e6) * fps),
+                  );
+                  ctx2.drawImage(rendered, 0, 0);
+                } else if (picture) {
+                  await picture.close();
+                  picture = undefined;
+                  pictureId = undefined;
+                }
+                const scene = scenes[sceneIndex],
+                  style = scene?.style ?? snap.captionStyle;
+                if (
+                  animation &&
+                  (textLayers.some(
+                    (l) =>
+                      timeUs >= l.startUs && timeUs < l.startUs + l.durationUs,
+                  ) ||
+                    (options.captions &&
+                      scene &&
+                      style.animation &&
+                      timeUs >= scene.startUs &&
+                      timeUs < scene.endUs))
+                ) {
+                  ctx2.drawImage(
+                    await loadImage(await animation.capture(i, timeUs)),
+                    0,
+                    0,
+                  );
+                }
+                if (options.captions && scene && !style.animation)
+                  renderCaption(
+                    ctx2 as unknown as CanvasRenderingContext2D,
+                    width,
+                    h,
+                    scenes[sceneIndex],
+                    timeUs,
+                    style,
+                  );
+                yield await canvas.toBuffer("raw", { colorType: "rgba" });
+                if (i % 30 === 0)
+                  ctx.stage("Rendering captions", 0.7 + (0.28 * i) / count);
+              }
+            } finally {
+              await picture?.close();
             }
           } finally {
             await animation?.close();
@@ -973,6 +1103,14 @@ async function exportMedia(task: EngineTask, ctx: Context) {
   }
 }
 export async function execute(task: EngineTask, ctx: Context) {
+  if (task.assetId) {
+    const db = ctx.db;
+    ctx = {
+      ...ctx,
+      db: (method, args) =>
+        db(method, { ...(args as object), assetId: task.assetId }),
+    };
+  }
   await mkdir(task.projectRoot, { recursive: true });
   for (const folder of [
     "audio",
@@ -1003,6 +1141,8 @@ export async function execute(task: EngineTask, ctx: Context) {
     }
     case "export":
       return exportMedia(task, ctx);
+    case "preview":
+      return renderTransitionPreview(task, ctx);
     case "model":
       return downloadModel(task, ctx);
     case "translate":

@@ -1,3 +1,4 @@
+import { clock } from "../lib/source-clock";
 import { CaptionLanguages } from "./CaptionLanguages";
 import {
   bundledFonts,
@@ -28,9 +29,9 @@ import {
 } from "../components/ui/primitives";
 import {
   useStore,
+  call,
   mutate,
   safe,
-  clock,
   pendingCaptionSaves,
   flushCaptionSave,
 } from "../lib/store";
@@ -507,28 +508,22 @@ export function CaptionInspector() {
         };
     }
     setDraft(style);
+    const context = snap.editorContext
+      ? {
+          ...snap.editorContext,
+          applicationScope: useStore.getState().captionApplicationScope,
+        }
+      : undefined;
     useStore.getState().set({
-      snapshot:
-        target === "project"
-          ? { ...useStore.getState().snapshot!, captionStyle: style }
-          : {
-              ...useStore.getState().snapshot!,
-              captionStyleOverrides: [
-                ...(
-                  useStore.getState().snapshot!.captionStyleOverrides ?? []
-                ).filter(
-                  (p) =>
-                    p.endUs <= selectedCue!.sourceStartUs! ||
-                    p.startUs >= selectedCue!.sourceEndUs!,
-                ),
-                {
-                  id: "draft",
-                  startUs: selectedCue!.sourceStartUs!,
-                  endUs: selectedCue!.sourceEndUs!,
-                  style,
-                },
-              ],
-            },
+      captionStylePreview: {
+        projectId: snap.project.id,
+        clipId: snap.editorContext?.clipId ?? "",
+        scope:
+          target === "cue" ? "cue" : (context?.applicationScope ?? "project"),
+        startUs: selectedCue?.sourceStartUs,
+        endUs: selectedCue?.sourceEndUs,
+        style,
+      },
       saving: true,
     });
     clearTimeout(timer.current);
@@ -537,29 +532,37 @@ export function CaptionInspector() {
       (work ??= (async () => {
         clearTimeout(timer.current);
         try {
-          const result = await window.precut.call<
+          const result = await call<
             import("../../../../packages/shared/src/contracts").Snapshot
-          >("captions.style", {
-            projectId: snap.project.id,
-            style,
-            scope: target,
-            ...(target === "cue"
-              ? {
-                  startUs: selectedCue!.sourceStartUs,
-                  endUs: selectedCue!.sourceEndUs,
-                }
-              : {}),
-          });
+          >(
+            "captions.style",
+            {
+              projectId: snap.project.id,
+              style,
+              scope: target,
+              ...(target === "cue"
+                ? {
+                    startUs: selectedCue!.sourceStartUs,
+                    endUs: selectedCue!.sourceEndUs,
+                  }
+                : {}),
+            },
+            context,
+          );
           const state = useStore.getState();
-          if (
-            state.snapshot?.project.id === snap.project.id &&
-            (target === "project"
-              ? state.snapshot.captionStyle === style
-              : state.snapshot.captionStyleOverrides?.some(
-                  (p) => p.style === style,
-                ))
-          )
-            state.set({ snapshot: result, saving: false });
+          if (state.snapshot?.project.id === snap.project.id)
+            state.set({
+              snapshot: result,
+              saving: false,
+              ...(state.captionStylePreview?.style === style
+                ? { captionStylePreview: undefined }
+                : {}),
+            });
+        } catch (error) {
+          const state = useStore.getState();
+          if (state.captionStylePreview?.style === style)
+            state.set({ saving: false, captionStylePreview: undefined });
+          throw error;
         } finally {
           if (pendingCaptionSaves.get(snap.project.id) === save)
             pendingCaptionSaves.delete(snap.project.id);

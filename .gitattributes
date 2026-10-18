@@ -10,3 +10,4 @@ vendor/manifest.sig -text
 
 # Caption resources retain exact bytes for raw SHA-256 integrity checks.
 vendor/hyperframes/** -text
+vendor/hyperframes-editor/** -text

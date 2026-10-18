@@ -19,6 +19,25 @@ import type {
 import { defaultSettings } from "../../../packages/shared/src/contracts";
 import { presets } from "../../../packages/core/src/captions";
 import { preserveCorrections } from "../../../packages/speech/src/analysis";
+import {
+  prepareEditorDatabase,
+  applyEditorChange,
+  editSource,
+} from "./editor-database";
+import {
+  timelineFor,
+  applyTimelineCommand,
+  sourceSnapshot,
+  sourceAssets,
+  sequenceEntries,
+  sequenceDuration,
+} from "../../../packages/core/src/sequence";
+import {
+  schemas,
+  TimelineDocumentSchema,
+  type TimelineDocument,
+  type SourceDocument,
+} from "../../../packages/shared/src/contracts";
 const root = process.env.PRECUT_DATA_ROOT!;
 mkdirSync(root, { recursive: true });
 const catalog = new Database(join(root, "catalog.sqlite"));
@@ -93,6 +112,7 @@ function db(id: string) {
  INSERT OR IGNORE INTO migrations VALUES(2,datetime('now'));
  INSERT OR IGNORE INTO migrations VALUES(1,datetime('now'));
  `);
+  prepareEditorDatabase(database, folder);
   database.transaction(() => {
     const migrateManual = !database!
       .prepare("SELECT 1 FROM migrations WHERE version=3")
@@ -138,6 +158,14 @@ function db(id: string) {
     .run(JSON.stringify(presets[1].style));
   cache.set(id, database);
   return database;
+}
+function primaryDuration(id: string) {
+  return jsonRows<MediaAsset>(db(id), "media_assets")[0]?.durationUs ?? 0;
+}
+function updateDuration(id: string) {
+  catalog
+    .prepare("UPDATE projects SET durationUs=? WHERE id=?")
+    .run(sequenceDuration(sequenceEntries(snapshot(id))), id);
 }
 function touch(id: string, status?: Project["status"]) {
   catalog
@@ -196,7 +224,18 @@ function snapshot(id: string): Snapshot {
   try {
     waveformLevels = JSON.parse(
       readFileSync(
-        join(root, "projects", id, "waveform", "peaks.json"),
+        existsSync(
+          join(
+            root,
+            "projects",
+            id,
+            "waveform",
+            assets[0]?.id ?? "",
+            "peaks.json",
+          ),
+        )
+          ? join(root, "projects", id, "waveform", assets[0].id, "peaks.json")
+          : join(root, "projects", id, "waveform", "peaks.json"),
         "utf8",
       ),
     );
@@ -204,6 +243,43 @@ function snapshot(id: string): Snapshot {
     if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
   }
   return {
+    timeline: (() => {
+      const row = database
+        .prepare("SELECT data FROM editor_timeline WHERE id=1")
+        .get() as { data: string } | undefined;
+      return row ? (JSON.parse(row.data) as TimelineDocument) : undefined;
+    })(),
+    sourceDocuments: jsonRows<SourceDocument>(database, "source_documents").map(
+      (document) => {
+        const path = join(
+          root,
+          "projects",
+          id,
+          "waveform",
+          document.assetId,
+          "peaks.json",
+        );
+        if (document.analysisSummary)
+          document.analysisSummary = {
+            ...document.analysisSummary,
+            reviewWords: document.words.filter(
+              (w) =>
+                w.reviewReason ||
+                (!w.corrected && w.confidence < 0.55) ||
+                w.timingQuality === "estimated",
+            ).length,
+          };
+        if (existsSync(path)) {
+          const levels = JSON.parse(readFileSync(path, "utf8")) as number[][];
+          return {
+            ...document,
+            waveform: levels[0] ?? [],
+            waveformLevels: levels,
+          };
+        }
+        return document;
+      },
+    ),
     project: getProject(id)!,
     assets,
     tracks: jsonRows<AudioTrack>(database, "audio_tracks"),
@@ -299,6 +375,20 @@ type Change = {
   >;
 };
 function apply(database: Database.Database, kind: string, changes: unknown) {
+  if (kind === "project-style") {
+    const value = changes as {
+      style: CaptionStyle;
+      documents: SourceDocument[];
+    };
+    apply(database, "style", value.style);
+    for (const document of value.documents)
+      applyEditorChange(database, "source-document", {
+        assetId: document.assetId,
+        document,
+      });
+    return;
+  }
+  if (applyEditorChange(database, kind, changes)) return;
   if (kind === "caption-layout") {
     const layout = changes as {
       style: CaptionStyle;
@@ -369,13 +459,78 @@ function command(id: string, kind: string, before: unknown, after: unknown) {
     apply(database, kind, after as Change[] | CaptionStyle);
   })();
   touch(id);
+  updateDuration(id);
 }
 export async function dispatch(
   method: string,
   args: Record<string, unknown>,
 ): Promise<unknown> {
   const id = args.projectId as string;
+  if (method === "sources.command") {
+    const operation = args.method as keyof typeof schemas;
+    const input = schemas[operation].parse({
+      ...(args.input as object),
+      projectId: id,
+    }) as Record<string, unknown>;
+    return dispatch(operation, { ...input, assetId: args.assetId });
+  }
+  if (args.assetId && method === "projects.open")
+    return sourceSnapshot(snapshot(args.id as string), args.assetId as string);
+  if (
+    args.assetId &&
+    id &&
+    args.assetId !== snapshot(id).assets[0]?.id &&
+    (method.startsWith("analysis.") ||
+      method.startsWith("captions.") ||
+      (method.startsWith("edits.") &&
+        !["edits.undo", "edits.redo"].includes(method)) ||
+      method === "projects.speech")
+  ) {
+    editSource(
+      db(id),
+      snapshot(id),
+      args.assetId as string,
+      method,
+      args,
+      (kind, before, after) => command(id, kind, before, after),
+    );
+    touch(id, method === "analysis.finish" ? "analyzed" : undefined);
+    return snapshot(id);
+  }
   switch (method) {
+    case "captions.projectStyle": {
+      const snap = snapshot(id),
+        documents = jsonRows<SourceDocument>(db(id), "source_documents");
+      command(
+        id,
+        "project-style",
+        { style: snap.captionStyle, documents },
+        {
+          style: args.style,
+          documents: documents.map(({ captionStyle, ...rest }) => rest),
+        },
+      );
+      return snapshot(id);
+    }
+    case "timeline.command": {
+      const snap = snapshot(id);
+      if (
+        args.expectedRevision !== undefined &&
+        args.expectedRevision !== snap.project.revision
+      )
+        throw new Error(
+          "The project changed during this edit. Please try again.",
+        );
+      const after = TimelineDocumentSchema.parse(
+        applyTimelineCommand(
+          snap,
+          args.command as import("../../../packages/core/src/sequence").TimelineCommand,
+          randomUUID,
+        ),
+      );
+      command(id, "timeline", snap.timeline ?? null, after);
+      return snapshot(id);
+    }
     case "projects.list":
       return catalog
         .prepare(
@@ -450,23 +605,48 @@ export async function dispatch(
       touch(id);
       return snapshot(id);
     case "assets.add": {
-      const asset = args.asset as MediaAsset;
+      const before = snapshot(id);
+      const asset = {
+        ...(args.asset as MediaAsset),
+        role: args.external ? ("external" as const) : ("source" as const),
+        ownerAssetId: args.external
+          ? ((args.ownerAssetId as string | undefined) ?? before.assets[0]?.id)
+          : undefined,
+      };
       const database = db(id);
       if (
-        !args.external &&
-        jsonRows<MediaAsset>(database, "media_assets").length
-      )
-        throw new Error("Use a new project for another primary source");
-      if (
         args.external &&
-        jsonRows<MediaAsset>(database, "media_assets").length !== 1
+        (!sourceAssets(before).some((a) => a.id === asset.ownerAssetId) ||
+          before.assets.some(
+            (a) =>
+              (a.role === "external" &&
+                a.ownerAssetId === asset.ownerAssetId) ||
+              (!a.role &&
+                !a.hasVideo &&
+                a.id !== before.assets[0]?.id &&
+                asset.ownerAssetId === before.assets[0]?.id),
+          ))
       )
         throw new Error(
-          "A project supports one primary source and one external audio recording.",
+          "Select a source with no external recording before importing external audio.",
         );
       database
         .prepare("INSERT OR REPLACE INTO media_assets VALUES(?,?)")
         .run(asset.id, JSON.stringify(asset));
+      if (!args.external && before.assets.length)
+        database
+          .prepare("INSERT OR REPLACE INTO source_documents VALUES(?,?)")
+          .run(
+            asset.id,
+            JSON.stringify({
+              assetId: asset.id,
+              words: [],
+              segments: [],
+              suggestions: [],
+              waveform: [],
+              waveformLevels: [],
+            } satisfies SourceDocument),
+          );
       if (asset.hasAudio) {
         const track: AudioTrack = {
           id: randomUUID(),
@@ -479,15 +659,40 @@ export async function dispatch(
           .prepare("INSERT INTO audio_tracks VALUES(?,?)")
           .run(track.id, JSON.stringify(track));
       }
-      if (!args.external)
+      if (!args.external) {
+        const timeline = structuredClone(timelineFor(before));
+        if (!timeline.clips.length && !before.assets.length) {
+          timeline.width = asset.width || 1920;
+          timeline.height = asset.height || 1080;
+          timeline.fps = asset.fps;
+        }
+        timeline.clips.push({
+          id: asset.id,
+          assetId: asset.id,
+          sourceStartUs: 0,
+          sourceEndUs: asset.durationUs,
+          removed: [],
+          decisions: {},
+        });
+        command(id, "timeline", timelineFor(before), timeline);
         catalog
           .prepare("UPDATE projects SET durationUs=?,status=? WHERE id=?")
-          .run(asset.durationUs, "ready", id);
+          .run(sequenceDuration(sequenceEntries(snapshot(id))), "ready", id);
+      }
       touch(id);
       return snapshot(id);
     }
     case "assets.update": {
-      const asset = args.asset as MediaAsset;
+      const incoming = args.asset as MediaAsset;
+      const previous = jsonRows<MediaAsset>(db(id), "media_assets").find(
+        (a) => a.id === incoming.id,
+      );
+      const asset = {
+        ...previous,
+        ...incoming,
+        role: previous?.role ?? incoming.role,
+        ownerAssetId: previous?.ownerAssetId ?? incoming.ownerAssetId,
+      };
       db(id)
         .prepare("UPDATE media_assets SET data=? WHERE id=?")
         .run(JSON.stringify(asset), asset.id);
@@ -878,7 +1083,7 @@ export async function dispatch(
     }
     case "edits.manual": {
       const project = getProject(id)!;
-      if ((args.endUs as number) > project.durationUs)
+      if ((args.endUs as number) > primaryDuration(id))
         throw new Error("Cut extends beyond the source");
       const suggestion: Suggestion = {
         id: randomUUID(),
@@ -919,7 +1124,7 @@ export async function dispatch(
       const s = snapshot(id).suggestions.find(
         (s) => s.id === args.suggestionId,
       );
-      if (!s || (args.endUs as number) > getProject(id)!.durationUs)
+      if (!s || (args.endUs as number) > primaryDuration(id))
         throw new Error("Invalid cut boundary");
       command(
         id,
@@ -959,6 +1164,7 @@ export async function dispatch(
             .run(undo ? 0 : 1, c.seq);
         })();
         touch(id);
+        updateDuration(id);
       }
       return snapshot(id);
     }
@@ -1000,7 +1206,7 @@ export async function dispatch(
       } else {
         const startUs = args.startUs as number,
           endUs = args.endUs as number;
-        if (endUs > snap.project.durationUs)
+        if (endUs > primaryDuration(id))
           throw new Error("Invalid caption range");
         const before = workspace(id);
         const placements = before.captionPlacements.flatMap((p) => {
@@ -1098,7 +1304,7 @@ export async function dispatch(
       if (args.scope === "cue") {
         const startUs = args.startUs as number,
           endUs = args.endUs as number;
-        if (endUs > getProject(id)!.durationUs)
+        if (endUs > primaryDuration(id))
           throw new Error("Invalid caption range");
         const before = workspace(id);
         const words = snapshot(id).words;
@@ -1154,7 +1360,7 @@ export async function dispatch(
       if (!word) throw new Error("Word not found");
       if (
         args.endUs !== undefined &&
-        (args.endUs as number) > getProject(id)!.durationUs
+        (args.endUs as number) > primaryDuration(id)
       )
         throw new Error("Word timing extends beyond the source.");
       command(
@@ -1273,6 +1479,9 @@ export async function dispatch(
               .run(job.id);
             projectDb
               .prepare("DELETE FROM analysis_runs WHERE id=?")
+              .run(job.id);
+            projectDb
+              .prepare("DELETE FROM source_analysis_runs WHERE runId=?")
               .run(job.id);
           }
         }

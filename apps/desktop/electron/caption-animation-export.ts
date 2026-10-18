@@ -26,6 +26,7 @@ export async function createCaptionAnimationExport(
   height: number,
   durationUs: number,
   catalogDemo?: CaptionAnimationId,
+  textLayers?: import("../../../packages/shared/src/editor").TextLayer[],
 ) {
   const snap = task.snapshot as Snapshot;
   const browserRoot = join(task.nativeRoot, "caption-browser");
@@ -66,6 +67,7 @@ export async function createCaptionAnimationExport(
         join(task.captionRuntimeRoot!, folder, file),
       );
   const used = new Set<string>(["Noto Sans Thai", "Inter"]);
+  for (const layer of textLayers ?? []) used.add(layer.font);
   for (const s of scenes) {
     const style = s.style ?? snap.captionStyle;
     used.add(style.font);
@@ -153,6 +155,7 @@ export async function createCaptionAnimationExport(
     runtimeBase: base + "runtime",
     fps: snap.assets[0].fps,
     catalogDemo,
+    textLayers,
   });
   const journal = join(
     task.projectRoot,

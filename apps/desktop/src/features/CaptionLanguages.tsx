@@ -1,13 +1,7 @@
+import { clock } from "../lib/source-clock";
 import { useState, useEffect } from "react";
 import { Button, Input, Select } from "../components/ui/primitives";
-import {
-  useStore,
-  call,
-  mutate,
-  safe,
-  clock,
-  flushCaptionSave,
-} from "../lib/store";
+import { useStore, call, mutate, safe, flushCaptionSave } from "../lib/store";
 import { useT } from "../lib/i18n";
 import {
   buildCaptionScenes,

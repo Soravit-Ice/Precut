@@ -67,10 +67,10 @@ import {
 } from "../../../packages/core/src/timeline";
 import { presets } from "../../../packages/core/src/captions";
 import { Resizer } from "./components/Resizer";
-import { Player } from "./features/Player";
-import { Timeline } from "./features/Timeline";
+import { Player } from "./features/SequencePlayer";
+import { Timeline } from "./features/EditorTimeline";
 import { Transcript } from "./features/Transcript";
-import { TranscriptInspector } from "./features/TranscriptInspector";
+import { EditorInspector } from "./features/EditorInspector";
 import { CaptionLanguageOptions } from "./features/CaptionLanguageOptions";
 import { ExportPanel } from "./features/ExportPanel";
 import { SignInDialog } from "./features/SignInDialog";
@@ -124,8 +124,8 @@ export default function App() {
       set,
     } = useStore(),
     t = useT();
-  const [inspectorWidth, setInspectorWidth] = useState(292),
-    [transcriptHeight, setTranscriptHeight] = useState(270),
+  const [inspectorWidth, setInspectorWidth] = useState(280),
+    [transcriptHeight, setTranscriptHeight] = useState(320),
     [renaming, setRenaming] = useState(false);
   const [newOpen, setNewOpen] = useState(false),
     [name, setName] = useState("Untitled project"),
@@ -140,6 +140,34 @@ export default function App() {
     undefined,
   );
   const id = snap?.project.id;
+  const inspectorOpen = useStore((s) => s.inspectorOpen);
+  const [timelineHeight, setTimelineHeight] = useState(290);
+  const editing = Boolean(snap && view !== "projects" && view !== "settings");
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.inputModality = "pointer";
+    const pointer = () => {
+      root.dataset.inputModality = "pointer";
+    };
+    const keyboard = (event: KeyboardEvent) => {
+      if (!event.metaKey && !event.ctrlKey && !event.altKey)
+        root.dataset.inputModality = "keyboard";
+    };
+    window.addEventListener("pointerdown", pointer, true);
+    window.addEventListener("keydown", keyboard, true);
+    return () => {
+      window.removeEventListener("pointerdown", pointer, true);
+      window.removeEventListener("keydown", keyboard, true);
+      delete root.dataset.inputModality;
+    };
+  }, []);
+  useEffect(() => {
+    const media = matchMedia("(max-width: 1200px)");
+    const apply = () => set({ inspectorOpen: !media.matches });
+    apply();
+    media.addEventListener("change", apply);
+    return () => media.removeEventListener("change", apply);
+  }, []);
   const [removing, setRemoving] = useState<Project>(),
     [removedProject, setRemovedProject] = useState<Project>(),
     [removalBusy, setRemovalBusy] = useState(false),
@@ -385,7 +413,7 @@ export default function App() {
       }
       if (modifier && e.key.toLowerCase() === "e") {
         e.preventDefault();
-        state.set({ view: "export" });
+        state.set({ view: "export", inspectorOpen: true });
       }
       const s =
         snapshot.suggestions.find((s) => s.id === state.reviewId) ??
@@ -483,8 +511,9 @@ export default function App() {
   return (
     <TooltipProvider delayDuration={400}>
       <div
-        className={`app-shell ${collapsed ? "sidebar-collapsed" : ""}`}
+        className={`app-shell ${editing ? "editing" : ""} ${collapsed ? "sidebar-collapsed" : ""}`}
         onDragOver={(e) => {
+          if (!e.dataTransfer.types.includes("Files")) return;
           e.preventDefault();
           setDragging(true);
         }}
@@ -500,6 +529,7 @@ export default function App() {
           <Button
             variant="outline"
             className="new-project-button"
+            aria-label={t("New project")}
             onClick={() => {
               setRenaming(false);
               setName("Untitled project");
@@ -507,26 +537,28 @@ export default function App() {
             }}
           >
             <Plus size={16} />
-            {!collapsed && t("New project")}
+            {!collapsed && !editing && t("New project")}
           </Button>
           <nav className="main-navigation">
             {nav.map((item) => (
               <button
                 key={item.id}
                 className={view === item.id ? "nav-item selected" : "nav-item"}
-                onClick={() => set({ view: item.id })}
+                aria-label={t(item.label)}
+                onClick={() => set({ view: item.id, inspectorOpen: true })}
                 disabled={item.id !== "projects" && !snap}
-                title={collapsed ? t(item.label) : undefined}
+                title={collapsed || editing ? t(item.label) : undefined}
               >
                 <item.icon size={17} />
-                {!collapsed && <span>{t(item.label)}</span>}
+                {!collapsed && !editing && <span>{t(item.label)}</span>}
                 {item.id === "transcript" &&
                   snap?.suggestions.some((s) => s.status === "pending") &&
-                  !collapsed && <i className="nav-notification" />}
+                  !collapsed &&
+                  !editing && <i className="nav-notification" />}
               </button>
             ))}
           </nav>
-          {!collapsed && (
+          {!collapsed && !editing && (
             <div className="sidebar-projects">
               <div className="recent-sidebar-heading">
                 <span className="eyebrow">{t("RECENT")}</span>
@@ -562,19 +594,20 @@ export default function App() {
           <div className="sidebar-bottom">
             <button
               className={view === "settings" ? "nav-item selected" : "nav-item"}
+              aria-label={t("Settings")}
               onClick={() => set({ view: "settings" })}
             >
               <SettingsIcon size={17} />
-              {!collapsed && <span>{t("Settings")}</span>}
+              {!collapsed && !editing && <span>{t("Settings")}</span>}
             </button>
-            {!collapsed && (
+            {!collapsed && !editing && (
               <div className="sidebar-local">
                 <ShieldCheck size={14} />
                 <span>{t("Local. By design.")}</span>
               </div>
             )}
             <div className="sidebar-version">
-              {!collapsed && (
+              {!collapsed && !editing && (
                 <span>
                   <strong>Made by t2etech</strong>
                   <small>Precut {appVersion}</small>
@@ -593,7 +626,9 @@ export default function App() {
         <div className="app-main">
           <header className="topbar">
             <div className="topbar-project">
-              <span className="breadcrumb">{t("Projects")}</span>
+              <span className="breadcrumb">
+                {editing ? "precut" : t("Projects")}
+              </span>
               {snap && view !== "projects" && (
                 <>
                   <ChevronRight size={13} />
@@ -616,6 +651,15 @@ export default function App() {
             <div className="topbar-actions">
               {snap && view !== "projects" && view !== "settings" && (
                 <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Toggle inspector"
+                    aria-pressed={inspectorOpen}
+                    onClick={() => set({ inspectorOpen: !inspectorOpen })}
+                  >
+                    <PanelLeftClose size={16} />
+                  </Button>
                   <Tooltip text={`${t("Undo")} · ⌘Z`}>
                     <Button
                       variant="ghost"
@@ -667,7 +711,10 @@ export default function App() {
                         : "Auto Edit",
                     )}
                   </Button>
-                  <Button size="sm" onClick={() => set({ view: "export" })}>
+                  <Button
+                    size="sm"
+                    onClick={() => set({ view: "export", inspectorOpen: true })}
+                  >
                     <Download size={14} />
                     {t("Export")}
                     <ChevronDown size={11} />
@@ -899,29 +946,47 @@ export default function App() {
             </main>
           ) : (
             <div
-              className="workspace"
+              className={`workspace editor-workspace ${inspectorOpen ? "inspector-is-open" : ""}`}
               key={id}
               style={
                 {
-                  "--inspector-width": `${view === "transcript" ? Math.max(340, inspectorWidth) : inspectorWidth}px`,
-                  "--transcript-height": `${transcriptHeight}px`,
+                  "--inspector-width": `${inspectorWidth}px`,
+                  "--transcript-width": `${transcriptHeight}px`,
+                  "--timeline-height": `${timelineHeight}px`,
                 } as React.CSSProperties
               }
             >
+              <div className="editor-transcript">
+                <Transcript />
+              </div>
+              <div className="editor-transcript-resizer">
+                <Resizer
+                  orientation="vertical"
+                  label={t("Resize transcript")}
+                  value={transcriptHeight}
+                  min={260}
+                  max={480}
+                  onChange={setTranscriptHeight}
+                />
+              </div>
               <div className="workspace-main">
                 {analysisJob && analysisJob.state !== "cancelled" && (
                   <AutoEditProgress
                     job={analysisJob}
                     onOpen={() => {
                       if (analysisJob.state === "completed") {
-                        set({ view: "transcript", transcriptTool: "cleanup" });
+                        set({
+                          view: "transcript",
+                          transcriptTool: "cleanup",
+                          editorTool: "review",
+                        });
                         setTrackedAnalysisId(undefined);
                       } else showAnalysisProgress();
                     }}
                     onDismiss={() => setTrackedAnalysisId(undefined)}
                   />
                 )}
-                {snap.assets[0].missing ? (
+                {snap.assets[0]?.missing && (
                   <div className="missing-banner">
                     <strong>{t("Media not found")}</strong>
                     <span>{snap.assets[0].name}</span>
@@ -940,49 +1005,50 @@ export default function App() {
                       {t("Locate file")}
                     </Button>
                   </div>
-                ) : null}
+                )}
                 {snap.project.status === "recovered" && (
                   <div className="recovery-banner">
                     <ShieldCheck size={14} />
-                    {t(
-                      "Recovered project \u00b7 Your saved edits are available.",
-                    )}
+                    {t("Recovered project · Your saved edits are available.")}
                   </div>
                 )}
                 <Player />
-                <Timeline />
                 {job && job.type !== "analyze" && <JobProgress job={job} />}
+              </div>
+              <div className="editor-inspector-resizer">
+                <Resizer
+                  orientation="vertical"
+                  label={t("Resize inspector")}
+                  value={inspectorWidth}
+                  min={260}
+                  max={440}
+                  invert
+                  onChange={setInspectorWidth}
+                />
+              </div>
+              <div className="editor-inspector-shell">
+                {view === "export" ? (
+                  <ExportPanel />
+                ) : view === "media" ? (
+                  <MediaInspector />
+                ) : (
+                  <EditorInspector />
+                )}
+              </div>
+              <div className="editor-timeline-resizer">
                 <Resizer
                   orientation="horizontal"
-                  label={t("Resize transcript")}
-                  value={transcriptHeight}
-                  min={160}
-                  max={460}
+                  label={t("Resize timeline")}
+                  value={timelineHeight}
+                  min={274}
+                  max={400}
                   invert
-                  onChange={setTranscriptHeight}
+                  onChange={setTimelineHeight}
                 />
-                <Transcript />
               </div>
-              <Resizer
-                orientation="vertical"
-                label={t("Resize inspector")}
-                value={
-                  view === "transcript"
-                    ? Math.max(340, inspectorWidth)
-                    : inspectorWidth
-                }
-                min={view === "transcript" ? 340 : 260}
-                max={440}
-                invert
-                onChange={setInspectorWidth}
-              />
-              {view === "export" ? (
-                <ExportPanel />
-              ) : view === "media" ? (
-                <MediaInspector />
-              ) : (
-                <TranscriptInspector />
-              )}
+              <div className="editor-timeline">
+                <Timeline />
+              </div>
             </div>
           )}
           <footer className="app-statusbar">

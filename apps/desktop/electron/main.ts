@@ -3,7 +3,14 @@ import {
   captionLanguageStyle,
   bundledFonts,
 } from "../../../packages/shared/src/fonts";
-import { missingCaptionTranslations } from "../../../packages/core/src/captions";
+import {
+  sourceSnapshot,
+  applyTimelineCommand,
+  timelineFor,
+  sourceAssets,
+  sequenceCaptionScenes,
+  sequenceEntries,
+} from "../../../packages/core/src/sequence";
 import {
   app,
   BrowserWindow,
@@ -107,6 +114,7 @@ const licensing = new Licensing(dataRoot, projectsRoot, (status) => {
   emit({ type: "license", status, source: "signin" });
 });
 const assets = new Map<string, MediaAsset>();
+const previewTokens: string[] = [];
 const jobs = new Map<string, Job>();
 const active = new Map<
   string,
@@ -340,7 +348,12 @@ function processing(projectId: string) {
       j.type !== "proxy",
   );
 }
-async function importFile(projectId: string, path: string, external = false) {
+async function importFile(
+  projectId: string,
+  path: string,
+  external = false,
+  ownerAssetId?: string,
+) {
   if (processing(projectId))
     throw new Error("Wait for the current operation or cancel it first.");
   if (
@@ -359,7 +372,11 @@ async function importFile(projectId: string, path: string, external = false) {
   const info = await stat(path);
   if (!info.isFile()) throw new Error("Choose a media file.");
   const job = newJob(projectId, "import");
-  const task = await taskFor(job, { path: resolve(path), external });
+  const task = await taskFor(job, {
+    path: resolve(path),
+    external,
+    ownerAssetId,
+  });
   void launch(job, task)
     .then(async () => {
       const snap = await snapshot(projectId);
@@ -385,6 +402,41 @@ async function handle(
   input: Record<string, unknown>,
 ): Promise<unknown> {
   switch (method) {
+    case "timeline.preview": {
+      const original = await snapshot(input.projectId as string),
+        command =
+          input.command as import("../../../packages/core/src/sequence").TimelineCommand;
+      if (command.type !== "transition.set" || !command.kind)
+        throw new Error("Choose a transition to preview");
+      const timeline = applyTimelineCommand(original, command, randomUUID),
+        transition = timeline.transitions.find(
+          (v) => v.leftId === command.leftId && v.rightId === command.rightId,
+        )!;
+      const job = newJob(original.project.id, "proxy");
+      const result = await launch(
+        job,
+        await taskFor(job, {
+          type: "preview",
+          snapshot: { ...original, timeline },
+          transition,
+        }),
+      );
+      const token = randomUUID();
+      assets.set(token, {
+        ...original.assets[0],
+        id: token,
+        path: result.path as string,
+        width: result.width as number,
+        height: result.height as number,
+        hasAudio: false,
+        hasVideo: true,
+        codec: "h264",
+        durationUs: transition.durationUs,
+      });
+      previewTokens.push(token);
+      while (previewTokens.length > 96) assets.delete(previewTokens.shift()!);
+      return { url: `precut-media://asset/${token}` };
+    }
     case "projects.open":
       return snapshot(input.id as string);
     case "projects.create":
@@ -445,6 +497,7 @@ async function handle(
             input.projectId as string,
             result.filePaths[0],
             input.external as boolean,
+            input.ownerAssetId as string | undefined,
           );
     }
     case "media.import":
@@ -452,6 +505,7 @@ async function handle(
         input.projectId as string,
         input.path as string,
         input.external as boolean,
+        input.ownerAssetId as string | undefined,
       );
     case "media.relink": {
       const snap = await snapshot(input.projectId as string),
@@ -485,6 +539,9 @@ async function handle(
       emit({ type: "project", projectId: snap.project.id });
       return snapshot(snap.project.id);
     }
+    case "timeline.command":
+    case "sources.command":
+    case "captions.projectStyle":
     case "media.offset":
     case "projects.speech":
     case "edits.decide":
@@ -498,7 +555,45 @@ async function handle(
     case "captions.style":
     case "captions.correct":
     case "captions.correctMany": {
-      if (method === "captions.style" && input.style)
+      const project = await snapshot(input.projectId as string);
+      if (method === "sources.command") {
+        const nested = schemas[input.method as Method].parse({
+          ...(input.input as object),
+          projectId: input.projectId,
+        }) as Record<string, unknown>;
+        if (input.method === "captions.style" && nested.style)
+          validateCaptionFonts(
+            nested.style as Snapshot["captionStyle"],
+            project,
+          );
+      }
+      if (method === "timeline.command") {
+        const command =
+          input.command as import("../../../packages/core/src/sequence").TimelineCommand;
+        if (command.type === "text.upsert")
+          validateCaptionFonts(
+            {
+              ...project.captionStyle,
+              font: command.layer.font,
+              weight: command.layer.weight,
+              englishFont: command.layer.font,
+              englishWeight: command.layer.weight,
+              languageMode: /\p{Script=Thai}/u.test(command.layer.text)
+                ? "th"
+                : "en",
+            },
+            project,
+          );
+        if (
+          (command.type === "clip.style" || command.type === "cue.style") &&
+          command.style
+        )
+          validateCaptionFonts(command.style, project);
+      }
+      if (
+        (method === "captions.style" || method === "captions.projectStyle") &&
+        input.style
+      )
         validateCaptionFonts(
           input.style as Snapshot["captionStyle"],
           await snapshot(input.projectId as string),
@@ -546,17 +641,32 @@ async function handle(
         );
       speechRequest = true;
       try {
+        const original = await snapshot(id),
+          clip = input.clipId
+            ? timelineFor(original).clips.find(
+                (c) => c.id === input.clipId && c.assetId === input.assetId,
+              )
+            : undefined;
+        if (input.clipId && !clip)
+          throw new Error("Select a clip before translating.");
         await db.call("captions.glossary", {
           projectId: id,
+          assetId: input.assetId,
           glossary: input.glossary,
         });
-        const snap = await snapshot(id);
+        let snap = await snapshot(id);
+        if (input.assetId) snap = sourceSnapshot(snap, input.assetId as string);
+        if (clip?.captionStyle) snap.captionStyle = clip.captionStyle;
         if (!snap.captionStyle.languageMode)
           throw new Error("Choose a caption language first.");
         const job = newJob(id, "translate");
-        void launch(job, await taskFor(job, { snapshot: snap })).catch(
-          () => {},
-        );
+        void launch(
+          job,
+          await taskFor(job, {
+            snapshot: snap,
+            assetId: input.assetId as string | undefined,
+          }),
+        ).catch(() => {});
         return job;
       } finally {
         speechRequest = false;
@@ -579,6 +689,7 @@ async function handle(
       speechRequest = true;
       try {
         let snap = await snapshot(id);
+        if (input.assetId) snap = sourceSnapshot(snap, input.assetId as string);
         const captionLanguage =
           input.captionLanguage as EngineTask["captionLanguage"];
         const style = {
@@ -593,8 +704,14 @@ async function handle(
         };
         if (JSON.stringify(style) !== JSON.stringify(snap.captionStyle)) {
           validateCaptionFonts(style, snap);
-          await db.call("captions.style", { projectId: id, style });
+          await db.call("captions.style", {
+            projectId: id,
+            style,
+            assetId: input.assetId,
+          });
           snap = await snapshot(id);
+          if (input.assetId)
+            snap = sourceSnapshot(snap, input.assetId as string);
           emit({ type: "project", projectId: id });
         }
         const job = newJob(id, "analyze");
@@ -602,6 +719,7 @@ async function handle(
           job,
           await taskFor(job, {
             snapshot: snap,
+            assetId: input.assetId as string | undefined,
             options: input.options as CleanupOptions,
             speech: input.speech as EngineTask["speech"],
             force: input.force as boolean,
@@ -639,15 +757,40 @@ async function handle(
       try {
         await licensing.ensureExportAccess();
         const snap = await snapshot(options.projectId);
-        if (!snap.assets.length || snap.assets[0].missing)
-          throw new Error("Locate the original source before exporting.");
-        if (options.format === "srt" && !snap.words.length)
+        const entries = sequenceEntries(snap),
+          document = timelineFor(snap);
+        if (!entries.length)
+          throw new Error("Restore a clip before exporting.");
+        if (
+          entries.some(
+            (e) => snap.assets.find((a) => a.id === e.assetId)?.missing,
+          )
+        )
+          throw new Error(
+            "Locate every source used on the timeline before exporting.",
+          );
+        if (
+          !["mp4", "srt"].includes(options.format) &&
+          (new Set(entries.map((e) => e.assetId)).size > 1 ||
+            document.textLayers.length ||
+            document.transitions.length)
+        )
+          throw new Error(
+            "This timeline contains multiple sources or graphics that XML cannot represent. Export MP4 to preserve the complete edit.",
+          );
+        if (
+          options.format === "srt" &&
+          !snap.words.length &&
+          !snap.sourceDocuments?.some((d) => d.words.length)
+        )
           throw new Error("Analyze speech before exporting subtitles.");
         if (
           (options.format === "srt" ||
             (options.format === "mp4" &&
               (options.captions || options.sidecar))) &&
-          missingCaptionTranslations(snap).length
+          sequenceCaptionScenes(snap).some((scene) =>
+            scene.lines?.some((line) => line.missing),
+          )
         )
           throw new Error(
             "Translate the selected caption language before exporting.",
@@ -985,11 +1128,13 @@ if (primary) {
               ? asset.proxyPath
               : kind === "thumbnail"
                 ? asset.thumbnailPath
-                : asset.path;
+                : kind === "storyboard"
+                  ? asset.storyboardPath
+                  : asset.path;
           if (!path) return new Response("Not found", { status: 404 });
           const info = await stat(path);
           const mime =
-            kind === "thumbnail"
+            kind === "thumbnail" || kind === "storyboard"
               ? "image/jpeg"
               : ((
                   {

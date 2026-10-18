@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./editor.css";
 
 .dialog-content.account-signin-dialog {
   width: min(480px, calc(100vw - 40px));
@@ -206,8 +207,12 @@ button {
 button:focus-visible,
 input:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 3px;
+  outline: 1.5px solid var(--primary);
+  outline-offset: 2px;
+}
+html[data-input-modality="pointer"]
+  :is(button, input, textarea, select, [tabindex]):focus-visible {
+  outline: none;
 }
 h1,
 h2,
@@ -1914,6 +1919,7 @@ svg {
 }
 .transcript-labels {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   margin-top: 5px;

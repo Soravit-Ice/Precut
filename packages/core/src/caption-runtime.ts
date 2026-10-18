@@ -1,4 +1,5 @@
 import { gsap } from "gsap";
+import "./editor-runtime";
 import { originalTemplates } from "./caption-originals.generated";
 import { sceneText, type CaptionBounds } from "./captions";
 import type { CaptionComposition } from "./caption-composition";

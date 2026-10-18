@@ -26,3 +26,5 @@ The supplied installer is an internal unsigned test candidate. Before public dis
 Development speech fixtures are excluded from installers. The Thai test recording comes from Google FLEURS (CC BY 4.0), https://huggingface.co/datasets/google/fleurs. The JFK sample is a United States federal recording distributed with whisper.cpp. Fixture transformations are recorded in `scripts/prepare-fixtures.mjs`.
 
 Original caption designs are compiled from the pinned HyperFrames registry sources in `vendor/hyperframes/sources`; their CSS, typography, and GSAP choreography are retained. Additional Gabarito, Instrument Serif, Playfair Display italic, and Space Grotesk font faces are distributed under the bundled SIL Open Font Licenses in `licenses/caption-fonts`.
+
+The sequence editor bundles six additional HyperFrames registry text designs, independently pinned in `vendor/hyperframes-editor/manifest.json` at commit `95a686c23d794ebd6af9eef713472f1cf3f6821a`. Their Apache 2.0 license is retained in `vendor/hyperframes-editor/LICENSE`; the existing caption catalog revision is unchanged.

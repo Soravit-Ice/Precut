@@ -106,6 +106,14 @@ test("dropdowns stay in the window, scroll to every font and support keyboard se
         options: defaultCleanup,
       }),
     );
+    if (
+      (await page
+        .getByRole("button", { name: "Toggle inspector", exact: true })
+        .getAttribute("aria-pressed")) === "true"
+    )
+      await page
+        .getByRole("button", { name: "Toggle inspector", exact: true })
+        .click();
     await page
       .getByRole("combobox", { name: "Playback speed", exact: true })
       .click();

@@ -66,7 +66,17 @@ test("word correction, atomic replacement, caption preview, colours and reversib
     projectId: id,
     options: defaultCleanup,
   });
-  await page.locator(".recent-project-remove").click();
+  await page
+    .locator(".main-navigation")
+    .getByRole("button", { name: "Projects", exact: true })
+    .click();
+  await page
+    .locator(".project-row-actions")
+    .getByRole("button", {
+      name: "Remove from recent: Caption & transcript QA",
+      exact: true,
+    })
+    .click();
   await expect(
     page
       .getByRole("dialog")
@@ -97,6 +107,9 @@ test("word correction, atomic replacement, caption preview, colours and reversib
       { timeout: 180000 },
     )
     .toBe("completed");
+  await page
+    .getByRole("button", { name: "Caption & transcript QA", exact: true })
+    .click();
   let snap = await call<Snapshot>("projects.open", { id });
   const words = snap.words.slice(0, 2);
   await call("captions.correctMany", {
@@ -108,14 +121,14 @@ test("word correction, atomic replacement, caption preview, colours and reversib
     .getByRole("button", { name: "Edit word: สะบวก", exact: true })
     .first()
     .click();
-  await expect(page.getByLabel("Word", { exact: true })).toBeFocused();
-  await page.getByLabel("Word", { exact: true }).fill("สบู่");
+  await expect(page.getByLabel("Correct word", { exact: true })).toBeFocused();
+  await page.getByLabel("Correct word", { exact: true }).fill("สบู่");
   await mkdir("docs/screenshots", { recursive: true });
   await page.screenshot({
     path: "docs/screenshots/editor-word-correction.png",
     animations: "disabled",
   });
-  await page.getByLabel("Word", { exact: true }).press("Enter");
+  await page.getByLabel("Correct word", { exact: true }).press("Enter");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   snap = await call<Snapshot>("projects.open", { id });
   expect(snap.words[0]).toMatchObject({
@@ -232,7 +245,10 @@ test("word correction, atomic replacement, caption preview, colours and reversib
     .click();
   await expect
     .poll(() =>
-      page.locator("video").evaluate((v: HTMLVideoElement) => v.currentTime),
+      page
+        .locator("video.sequence-media-source")
+        .first()
+        .evaluate((v: HTMLVideoElement) => v.currentTime),
     )
     .toBeGreaterThan(0);
   await page.screenshot({ path: "docs/screenshots/editor-caption-studio.png" });
@@ -246,7 +262,17 @@ test("word correction, atomic replacement, caption preview, colours and reversib
   await expect(
     page.getByRole("button", { name: "Edit text", exact: true }),
   ).toBeInViewport();
-  await page.locator(".recent-project-remove").click();
+  await page
+    .locator(".main-navigation")
+    .getByRole("button", { name: "Projects", exact: true })
+    .click();
+  await page
+    .locator(".project-row-actions")
+    .getByRole("button", {
+      name: "Remove from recent: Caption & transcript QA",
+      exact: true,
+    })
+    .click();
   await page
     .getByRole("dialog")
     .getByRole("button", { name: "Remove from recent", exact: true })

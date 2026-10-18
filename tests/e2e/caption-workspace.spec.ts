@@ -1,4 +1,9 @@
 import {
+  displayedProject,
+  seekTimeline,
+  chooseCaptionScope,
+} from "./editor-helpers";
+import {
   test,
   expect,
   _electron,
@@ -20,10 +25,16 @@ import {
 let app: ElectronApplication, page: Page, root: string, id: string;
 const errors: string[] = [];
 const call = <T>(method: Method, input: unknown = {}) =>
-  page.evaluate(({ method, input }) => window.precut.call(method, input), {
-    method,
-    input,
-  }) as Promise<T>;
+  page
+    .evaluate(({ method, input }) => window.precut.call(method, input), {
+      method,
+      input,
+    })
+    .then((result) =>
+      method === "projects.open"
+        ? displayedProject(result as Snapshot)
+        : result,
+    ) as Promise<T>;
 async function finished(job: Job) {
   await expect
     .poll(
@@ -39,10 +50,7 @@ async function finished(job: Job) {
     .toBe("completed");
 }
 async function seek(us: number) {
-  await page.locator("video").evaluate((video: HTMLVideoElement, us) => {
-    video.pause();
-    video.currentTime = us / 1e6;
-  }, us);
+  await seekTimeline(page, us);
   await expect(
     page.getByRole("button", { name: "Move caption", exact: true }),
   ).toBeVisible();
@@ -121,8 +129,7 @@ test("direct positioning, per-cue overrides, bilingual export and project font p
   );
   await expect(page.getByLabel("English caption text")).not.toHaveValue("");
   const before = (await call<Snapshot>("projects.open", { id })).captionStyle;
-  // Caption dragging is available while reviewing edits in Transcript too.
-  await page.getByRole("tab", { name: "Review edits", exact: true }).click();
+  // Selecting Captions exposes direct positioning without obscuring the Review workspace.
   await drag(55, -50);
   await expect
     .poll(
@@ -243,10 +250,7 @@ test("direct positioning, per-cue overrides, bilingual export and project font p
       filePaths: [path],
     });
   }, resolve("apps/desktop/public/fonts/inter/Inter[opsz,wght].ttf"));
-  await page
-    .locator(".caption-style-scope")
-    .getByRole("button", { name: "Whole clip", exact: true })
-    .click();
+  await chooseCaptionScope(page, "Whole project");
   await page
     .locator(".caption-studio-tabs")
     .getByRole("button", { name: "Layout", exact: true })

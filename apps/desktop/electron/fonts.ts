@@ -60,6 +60,19 @@ export async function registerCaptionFonts(
     names.add(override.style.font);
     names.add(override.style.englishFont ?? override.style.font);
   }
+  for (const style of [
+    ...(snap.timeline?.clips.flatMap((c) => [
+      ...(c.captionStyle ? [c.captionStyle] : []),
+      ...(c.cueStyles ?? []).map((o) => o.style),
+    ]) ?? []),
+    ...(snap.sourceDocuments ?? []).flatMap((d) => [
+      ...(d.captionStyle ? [d.captionStyle] : []),
+      ...(d.captionStyleOverrides ?? []).map((o) => o.style),
+    ]),
+  ]) {
+    names.add(style.font);
+    names.add(style.englishFont ?? style.font);
+  }
   for (const font of projectFonts(snap).filter((f) => names.has(f.id))) {
     const paths = font.files.map((f) =>
       join(font.custom ? join(projectRoot, "fonts") : fontsRoot, f.file),

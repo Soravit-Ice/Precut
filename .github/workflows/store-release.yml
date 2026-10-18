@@ -98,8 +98,12 @@ jobs:
         run: |
           pnpm fixtures:prepare
           node scripts/native-speech-smoke.mjs
+      - name: Prepare media fixtures for sequence editor acceptance
+        run: pnpm fixtures:prepare
       - run: pnpm release:build
       - run: pnpm fixtures:prepare
+      - name: Test sequence editor and transcript interactions in Electron
+        run: pnpm exec playwright test
       - name: Test the actual packaged application
         run: node scripts/release-smoke.mjs
       - name: Test offline packaged caption preview, MP4, SRT and cancellation
@@ -122,6 +126,10 @@ jobs:
             docs/screenshots/release-*.png
             docs/caption-acceptance-*.json
             docs/screenshots/caption-gallery-*.png
+            docs/screenshots/sequence-editor-*.png
+            docs/screenshots/transcript-*.png
+            playwright-report/
+            test-results/
             .tools/native-speech-smoke/results.json
   upload:
     needs: build

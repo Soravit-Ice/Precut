@@ -1,3 +1,10 @@
+import { clock } from "../lib/source-clock";
+import {
+  sequenceEntries,
+  toSequence,
+  timelineFor,
+  wordSelectionRange,
+} from "../../../../packages/core/src/sequence";
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
@@ -18,8 +25,9 @@ import {
   Dialog,
   Tooltip,
 } from "../components/ui/primitives";
-import { clock, useStore, mutate, safe } from "../lib/store";
+import { useStore, mutate, safe } from "../lib/store";
 import { useT } from "../lib/i18n";
+import { clock as sequenceClock } from "../lib/store";
 import { formatTime } from "../../../../packages/core/src/timeline";
 import { wordReplacements } from "../../../../packages/core/src/transcript";
 import type { Word } from "../../../../packages/shared/src/contracts";
@@ -44,7 +52,52 @@ export function Transcript() {
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState("");
   const textInput = useRef<HTMLInputElement>(null);
+  const [timingDialog, setTimingDialog] = useState(false);
+  const composing = useRef(false),
+    savingWord = useRef(false),
+    cancelledWord = useRef(false),
+    listenTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const wordDrag = useRef<{ first: Word; moved: boolean } | undefined>(
+    undefined,
+  );
+  const full = useStore((s) => s.projectSnapshot),
+    activeClipId = useStore((s) => s.activeClipId),
+    sharedSelection = useStore((s) => s.selection);
+  useEffect(() => {
+    setSelected([]);
+    setCorrecting(undefined);
+    setTime(clock.currentUs);
+    return () => clearTimeout(listenTimer.current);
+  }, [activeClipId]);
+  useEffect(() => {
+    if (!full || !activeClipId || sharedSelection?.kind !== "range") {
+      clearTimeout(listenTimer.current);
+      setSelected([]);
+      return;
+    }
+    const entries = sequenceEntries(full);
+    if (sharedSelection.clipId && sharedSelection.clipId !== activeClipId) {
+      setSelected([]);
+      return;
+    }
+    if (sharedSelection.wordIds) {
+      const ids = new Set(sharedSelection.wordIds);
+      setSelected(snap.words.filter((w) => ids.has(w.id)));
+      return;
+    }
+    setSelected(
+      snap.words.filter((w) => {
+        const start = toSequence(entries, activeClipId, w.startUs),
+          end = toSequence(entries, activeClipId, w.endUs);
+        return end > sharedSelection.startUs && start < sharedSelection.endUs;
+      }),
+    );
+  }, [sharedSelection, full, activeClipId]);
   const beginCorrection = (word: Word) => {
+    cancelledWord.current = false;
+    clearTimeout(listenTimer.current);
+    clock.pause();
+    setTimingDialog(false);
     word =
       useStore.getState().snapshot?.words.find((w) => w.id === word.id) ?? word;
     setCorrecting(word);
@@ -59,11 +112,41 @@ export function Transcript() {
       textInput.current?.select();
     }
   }, [correcting?.id]);
+  const cutWords = async (words: Word[]) => {
+    if (busy || savingWord.current || !words.length || !full || !activeClipId)
+      return;
+    const range = wordSelectionRange(
+      full,
+      activeClipId,
+      words.map((w) => w.id),
+    );
+    if (!range || range.endUs <= range.startUs) return;
+    clearTimeout(listenTimer.current);
+    clock.pause();
+    cancelledWord.current = true;
+    savingWord.current = true;
+    setBusy(true);
+    try {
+      await mutate("timeline.command", {
+        projectId: snap.project.id,
+        command: { type: "range.remove", ...range },
+      });
+      setCorrecting(undefined);
+      setSelected([]);
+      useStore.getState().set({ selection: undefined });
+      setNotice(t("Word cut · Undo available"));
+      return true;
+    } finally {
+      savingWord.current = false;
+      setBusy(false);
+    }
+  };
   const saveCorrection = async (close = true) => {
     if (
       !correcting ||
-      !correctText.trim() ||
       busy ||
+      savingWord.current ||
+      cancelledWord.current ||
       (timingOpen &&
         (!Number.isFinite(startMs) ||
           !Number.isFinite(endMs) ||
@@ -72,7 +155,9 @@ export function Transcript() {
           endMs * 1000 > snap.project.durationUs))
     )
       return;
+    if (!correctText.trim()) return cutWords([correcting]);
     setBusy(true);
+    savingWord.current = true;
     try {
       const timingChanged =
         timingOpen &&
@@ -93,10 +178,12 @@ export function Transcript() {
       if (close) {
         setCorrecting(undefined);
         setSelected([]);
+        useStore.getState().set({ selection: undefined });
         setNotice(t("Word updated · Undo available"));
       }
       return true;
     } finally {
+      savingWord.current = false;
       setBusy(false);
     }
   };
@@ -110,6 +197,11 @@ export function Transcript() {
   );
   const scroll = useRef<HTMLDivElement>(null);
   const removed = (w: Word) =>
+    (full &&
+      activeClipId &&
+      timelineFor(full)
+        .clips.find((c) => c.id === activeClipId)
+        ?.removed.some((r) => w.startUs < r.endUs && w.endUs > r.startUs)) ||
     snap.suggestions.some(
       (s) =>
         s.status === "accepted" && w.startUs < s.endUs && w.endUs > s.startUs,
@@ -144,6 +236,7 @@ export function Transcript() {
     snap.segments,
     snap.words,
     snap.suggestions,
+    full?.timeline,
     query,
     showRemoved,
     reviewOnly,
@@ -171,7 +264,7 @@ export function Transcript() {
           e.target.isContentEditable)
       )
         return;
-      if (e.key === "F2" && selected.length) {
+      if ((e.key === "F2" || e.key === "Enter") && selected.length) {
         e.preventDefault();
         beginCorrection(selected[0]);
       }
@@ -186,13 +279,25 @@ export function Transcript() {
   }, [selected, query]);
   const select = (w: Word, shift: boolean) => {
     clock.seek?.(w.startUs);
+    let next: Word[];
     if (shift && selected[0]) {
       const first = Math.min(selected[0].index, w.index),
         last = Math.max(selected[0].index, w.index);
-      setSelected(
-        snap.words.filter((w) => w.index >= first && w.index <= last),
-      );
-    } else setSelected([w]);
+      next = snap.words.filter((w) => w.index >= first && w.index <= last);
+    } else next = [w];
+    setSelected(next);
+    if (full && activeClipId) {
+      const entries = sequenceEntries(full);
+      useStore.getState().set({
+        selection: {
+          kind: "range",
+          clipId: activeClipId,
+          wordIds: next.map((w) => w.id),
+          startUs: toSequence(entries, activeClipId, next[0].startUs),
+          endUs: toSequence(entries, activeClipId, next.at(-1)!.endUs),
+        },
+      });
+    }
     const suggestion = snap.suggestions.find(
       (s) => w.startUs < s.endUs && w.endUs > s.startUs,
     );
@@ -203,6 +308,30 @@ export function Transcript() {
   };
   return (
     <section className="transcript-section">
+      {full && timelineFor(full).clips.length > 1 && (
+        <label className="transcript-source-picker">
+          <span>{t("Clip")}</span>
+          <select
+            aria-label={t("Transcript clip")}
+            value={activeClipId}
+            onChange={(event) => {
+              const id = event.target.value;
+              useStore.getState().set({
+                activeClipId: id,
+                selection: { kind: "clip", clipId: id },
+              });
+              const first = sequenceEntries(full).find((e) => e.clipId === id);
+              if (first) sequenceClock.seek?.(first.startUs);
+            }}
+          >
+            {timelineFor(full).clips.map((clip, i) => (
+              <option key={clip.id} value={clip.id}>
+                {i + 1}. {full.assets.find((a) => a.id === clip.assetId)?.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <div className="transcript-toolbar">
         <div className="transcript-tabs">
           <span className="selected">{t("Transcript")}</span>
@@ -239,35 +368,6 @@ export function Transcript() {
               {t("Needs review")} · {snap.analysisSummary.reviewWords}
             </Button>
           ) : null}
-          {selected.length > 0 && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => beginCorrection(selected[0])}
-            >
-              <Pencil size={13} />
-              {t("Correct word")}
-            </Button>
-          )}
-          {selected.length > 0 && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() =>
-                safe(async () => {
-                  await mutate("edits.manual", {
-                    projectId: snap.project.id,
-                    startUs: selected[0].startUs,
-                    endUs: selected.at(-1)!.endUs,
-                  });
-                  setSelected([]);
-                })
-              }
-            >
-              <Trash2 size={13} />
-              {t("Remove selection")}
-            </Button>
-          )}
           <Checkbox
             checked={showRemoved}
             onCheckedChange={setShowRemoved}
@@ -363,26 +463,160 @@ export function Transcript() {
                   </button>
                   <div className="transcript-line">
                     <p>
-                      {row.words.map((w) => (
-                        <button
-                          key={w.id}
-                          title={
-                            w.reviewReason ??
-                            `${w.timingQuality === "estimated" ? t("Estimated timing · Review before precise word animations") : t("Word timing · Review against the audio")} · ${w.timingSource ?? "token"}`
-                          }
-                          className={`transcript-word ${w.reviewReason || (!w.corrected && w.confidence < 0.55) || w.timingQuality === "estimated" ? "uncertain" : ""} ${removed(w) ? "removed" : ""} ${time >= w.startUs && time < w.endUs ? "spoken" : ""} ${selected.some((s) => s.id === w.id) ? "word-selected" : ""} ${snap.suggestions.some((s) => s.status === "pending" && s.category === "filler" && s.wordIds.includes(w.id)) ? "filler-word" : ""}`}
-                          onClick={(e) => {
-                            select(w, e.shiftKey);
-                            if (editMode && !e.shiftKey) beginCorrection(w);
-                          }}
-                          onDoubleClick={() => beginCorrection(w)}
-                          aria-label={`${editMode ? t("Edit word") : t("Select word")}: ${w.text}`}
-                          aria-pressed={selected.some((s) => s.id === w.id)}
-                        >
-                          {w.joiner}
-                          {w.text}
-                        </button>
-                      ))}
+                      {row.words
+                        .filter((w) => showRemoved || !removed(w))
+                        .map((w) =>
+                          correcting?.id === w.id && !timingDialog ? (
+                            <span key={w.id} className="inline-word-editor">
+                              {w.joiner}
+                              <input
+                                ref={textInput}
+                                aria-label={t("Correct word")}
+                                aria-description={t(
+                                  "Clear the word and press Enter to cut it. Escape cancels.",
+                                )}
+                                value={correctText}
+                                maxLength={200}
+                                disabled={busy}
+                                onChange={(event) =>
+                                  setCorrectText(event.target.value)
+                                }
+                                onCompositionStart={() => {
+                                  composing.current = true;
+                                }}
+                                onCompositionEnd={() => {
+                                  composing.current = false;
+                                }}
+                                onBlur={() => {
+                                  if (
+                                    !composing.current &&
+                                    correctText.trim() &&
+                                    !busy
+                                  )
+                                    safe(saveCorrection);
+                                }}
+                                onKeyDown={(event) => {
+                                  event.stopPropagation();
+                                  if (event.key === "Escape") {
+                                    event.preventDefault();
+                                    cancelledWord.current = true;
+                                    setCorrecting(undefined);
+                                  }
+                                  if (
+                                    event.key === "Enter" &&
+                                    !event.nativeEvent.isComposing &&
+                                    !composing.current
+                                  ) {
+                                    event.preventDefault();
+                                    safe(saveCorrection);
+                                  }
+                                }}
+                              />
+                              <button
+                                aria-label={t("Cut word")}
+                                title={t("Cut word")}
+                                disabled={busy}
+                                onMouseDown={(event) => event.preventDefault()}
+                                onClick={() => safe(() => cutWords([w]))}
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                              <button
+                                aria-label={t("Adjust word timing")}
+                                disabled={busy}
+                                onMouseDown={(event) => event.preventDefault()}
+                                onClick={() => {
+                                  setTimingDialog(true);
+                                  setTimingOpen(true);
+                                }}
+                              >
+                                ⋯
+                              </button>
+                            </span>
+                          ) : (
+                            <button
+                              key={w.id}
+                              title={
+                                w.reviewReason ??
+                                `${w.timingQuality === "estimated" ? t("Estimated timing · Review before precise word animations") : t("Word timing · Review against the audio")} · ${w.timingSource ?? "token"}`
+                              }
+                              className={`transcript-word ${w.reviewReason || (!w.corrected && w.confidence < 0.55) || w.timingQuality === "estimated" ? "uncertain" : ""} ${removed(w) ? "removed" : ""} ${time >= w.startUs && time < w.endUs ? "spoken" : ""} ${selected.some((s) => s.id === w.id) ? "word-selected" : ""} ${snap.suggestions.some((s) => s.status === "pending" && s.category === "filler" && s.wordIds.includes(w.id)) ? "filler-word" : ""}`}
+                              onClick={(e) => {
+                                if (wordDrag.current?.moved) return;
+                                select(w, e.shiftKey);
+                                if (editMode && !e.shiftKey) beginCorrection(w);
+                                else if (!e.shiftKey && e.detail === 1) {
+                                  clearTimeout(listenTimer.current);
+                                  listenTimer.current = setTimeout(
+                                    () =>
+                                      clock.preview(
+                                        w.startUs,
+                                        Math.min(
+                                          snap.project.durationUs,
+                                          w.endUs + 450000,
+                                        ),
+                                        removed(w),
+                                      ),
+                                    250,
+                                  );
+                                }
+                              }}
+                              onPointerDown={(event) => {
+                                if (event.button === 0) {
+                                  clearTimeout(listenTimer.current);
+                                  wordDrag.current = { first: w, moved: false };
+                                }
+                              }}
+                              onPointerEnter={(event) => {
+                                const drag = wordDrag.current;
+                                if (
+                                  drag &&
+                                  event.buttons & 1 &&
+                                  drag.first.id !== w.id
+                                ) {
+                                  drag.moved = true;
+                                  const low = Math.min(
+                                      w.index,
+                                      drag.first.index,
+                                    ),
+                                    high = Math.max(w.index, drag.first.index),
+                                    next = snap.words.filter(
+                                      (word) =>
+                                        word.index >= low && word.index <= high,
+                                    );
+                                  setSelected(next);
+                                  clearTimeout(listenTimer.current);
+                                  if (full && activeClipId) {
+                                    const entries = sequenceEntries(full);
+                                    useStore.getState().set({
+                                      selection: {
+                                        kind: "range",
+                                        clipId: activeClipId,
+                                        wordIds: next.map((w) => w.id),
+                                        startUs: toSequence(
+                                          entries,
+                                          activeClipId,
+                                          next[0].startUs,
+                                        ),
+                                        endUs: toSequence(
+                                          entries,
+                                          activeClipId,
+                                          next.at(-1)!.endUs,
+                                        ),
+                                      },
+                                    });
+                                  }
+                                }
+                              }}
+                              onDoubleClick={() => beginCorrection(w)}
+                              aria-label={`${editMode ? t("Edit word") : t("Select word")}: ${w.text}`}
+                              aria-pressed={selected.some((s) => s.id === w.id)}
+                            >
+                              {w.joiner}
+                              {w.text}
+                            </button>
+                          ),
+                        )}
                     </p>
                     {labels.length > 0 && (
                       <div className="transcript-labels">
@@ -422,6 +656,90 @@ export function Transcript() {
           </div>
         )}
       </div>
+      {selected.length > 0 && (
+        <div
+          className="word-selection-toolbar"
+          aria-label={t("Selected words")}
+        >
+          <span>
+            {selected.length} {t("words")}
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() =>
+              clock.preview(selected[0].startUs, selected.at(-1)!.endUs, false)
+            }
+          >
+            <Play size={13} />
+            {t("Listen")}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={
+              busy ||
+              !full ||
+              !activeClipId ||
+              !wordSelectionRange(
+                full,
+                activeClipId,
+                selected.map((w) => w.id),
+              )
+            }
+            title={t("Cut selected words · Delete / Backspace")}
+            onClick={() => safe(() => cutWords(selected))}
+          >
+            <Trash2 size={13} />
+            {t("Cut")}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() =>
+              activeClipId &&
+              safe(() =>
+                mutate("timeline.command", {
+                  projectId: snap.project.id,
+                  command: {
+                    type: "range.restore",
+                    clipId: activeClipId,
+                    startUs: selected[0].startUs,
+                    endUs: selected.at(-1)!.endUs,
+                  },
+                }),
+              )
+            }
+          >
+            {t("Keep")}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => beginCorrection(selected[0])}
+          >
+            <Pencil size={13} />
+            {t("Edit")}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label={t("Find & replace selected words")}
+            onClick={() => {
+              setFindText(
+                selected
+                  .map((w) => w.joiner + w.text)
+                  .join("")
+                  .trim(),
+              );
+              setReplaceOpen(true);
+            }}
+          >
+            <Replace size={13} />
+            {t("Replace")}
+          </Button>
+        </div>
+      )}
       <div className="transcript-footer">
         <span>
           <span className="status-dot" />
@@ -432,7 +750,7 @@ export function Transcript() {
         </span>
       </div>
       <Dialog
-        open={Boolean(correcting)}
+        open={Boolean(correcting) && timingDialog}
         onOpenChange={(open) => {
           if (!open && !busy) setCorrecting(undefined);
         }}
@@ -453,7 +771,6 @@ export function Transcript() {
             <Button
               disabled={
                 busy ||
-                !correctText.trim() ||
                 (timingOpen &&
                   (!Number.isFinite(startMs) ||
                     !Number.isFinite(endMs) ||
@@ -464,7 +781,7 @@ export function Transcript() {
               onClick={() => safe(saveCorrection)}
             >
               <Check size={14} />
-              {t("Save word")}
+              {t(correctText.trim() ? "Save word" : "Cut word")}
             </Button>
           </>
         }
@@ -573,7 +890,7 @@ export function Transcript() {
         }}
         title={t("Find & replace")}
         description={t(
-          "Replace text within words throughout this project. All changes share one Undo step.",
+          "Replace text throughout this source. All changes share one Undo step.",
         )}
         className="replace-dialog"
         footer={

@@ -1,4 +1,5 @@
 import type { CaptionScene, CaptionStyle } from "../../shared/src/contracts";
+import type { TextLayer } from "../../shared/src/editor";
 import type { CaptionAnimationId } from "../../shared/src/caption-animations";
 export type CompositionFont = {
   family: string;
@@ -16,6 +17,7 @@ export type CaptionComposition = {
   runtimeBase: string;
   fps?: { numerator: number; denominator: number };
   catalogDemo?: CaptionAnimationId;
+  textLayers?: TextLayer[];
 };
 const escapeAttribute = (value: string) =>
   value
@@ -57,7 +59,7 @@ export function buildCaptionComposition(input: CaptionComposition) {
     duration +
     '" data-fps="' +
     (input.fps?.numerator ?? 30) / (input.fps?.denominator ?? 1) +
-    '"><div id="caption-stage"></div></div>' +
+    '"><div id="caption-stage"></div><div id="text-stage" style="position:absolute;inset:0;pointer-events:none"></div></div>' +
     '<script type="application/json" id="caption-data">' +
     payload +
     "</script>" +

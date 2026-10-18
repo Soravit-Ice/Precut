@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { resolve, dirname } from "node:path";
 import "./build-caption-originals.mjs";
+import "./build-editor-originals.mjs";
 const output = resolve("apps/desktop/public/hyperframes");
 await mkdir(output, { recursive: true });
 const manifest = JSON.parse(

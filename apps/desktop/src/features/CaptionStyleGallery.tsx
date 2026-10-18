@@ -1,5 +1,14 @@
+import { clock } from "../lib/source-clock";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Play, Pause, RotateCcw, Check, Search, Sparkles } from "lucide-react";
+import {
+  Play,
+  Pause,
+  RotateCcw,
+  Check,
+  Search,
+  Sparkles,
+  Star,
+} from "lucide-react";
 import { Button, Dialog, Input } from "../components/ui/primitives";
 import { CaptionPreview } from "./CaptionPreview";
 import { HyperframeCaptionSurface } from "./HyperframeCaptionSurface";
@@ -20,7 +29,7 @@ import type {
   Snapshot,
 } from "../../../../packages/shared/src/contracts";
 import { loadCaptionFonts } from "../lib/caption-fonts";
-import { clock, useStore } from "../lib/store";
+import { useStore } from "../lib/store";
 import { useT } from "../lib/i18n";
 export function galleryStyle(style: CaptionStyle, id: string): CaptionStyle {
   const animation = captionAnimations.find((a) => a.id === id);
@@ -191,6 +200,23 @@ export function CaptionStyleGallery({
     [playing, setPlaying] = useState(false),
     [replay, setReplay] = useState(0),
     [applying, setApplying] = useState(false);
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try {
+      return JSON.parse(
+        localStorage.getItem("precut.editor.favorites") ?? "[]",
+      );
+    } catch {
+      return [];
+    }
+  });
+  const favorite = (id: string) =>
+    setFavorites((current) => {
+      const next = current.includes(id)
+        ? current.filter((v) => v !== id)
+        : [...current, id];
+      localStorage.setItem("precut.editor.favorites", JSON.stringify(next));
+      return next;
+    });
   const [previewMode, setPreviewMode] = useState<"original" | "video">(
     "original",
   );
@@ -299,6 +325,7 @@ export function CaptionStyleGallery({
               { id: "emphasis", label: "Emphasis" },
               { id: "motion", label: "Motion" },
               { id: "effects", label: "Effects" },
+              { id: "favorites", label: "Favorites" },
             ].map((c) => (
               <button
                 key={c.id}
@@ -313,7 +340,10 @@ export function CaptionStyleGallery({
             {items
               .filter(
                 (item) =>
-                  (category === "all" || item.category === category) &&
+                  (category === "all" ||
+                    item.category === category ||
+                    (category === "favorites" &&
+                      favorites.includes(item.id))) &&
                   (item.name + " " + item.description)
                     .toLowerCase()
                     .includes(search.toLowerCase()),
@@ -321,91 +351,125 @@ export function CaptionStyleGallery({
               .map((item) => {
                 const hf = captionAnimations.some((a) => a.id === item.id);
                 return (
-                  <button
-                    key={item.id}
-                    className={
-                      "gallery-style-card " +
-                      (selected === item.id ? "selected" : "")
-                    }
-                    aria-label={
-                      "Caption preset " +
-                      item.name +
-                      (hf && item.id === "caption-highlight"
-                        ? " animation"
-                        : "")
-                    }
-                    aria-pressed={selected === item.id}
-                    onClick={() => {
-                      setSelected(item.id);
-                      setReplay((n) => n + 1);
-                    }}
-                    onMouseEnter={() => setHovered(item.id)}
-                    onMouseLeave={() => setHovered(undefined)}
-                    onFocus={() => setHovered(item.id)}
-                    onBlur={() => setHovered(undefined)}
-                  >
-                    <div
-                      data-paper={
-                        item.id === "mk-callout-highlight" || undefined
+                  <div key={item.id} className="gallery-style-wrapper">
+                    <button
+                      key={item.id}
+                      className={
+                        "gallery-style-card " +
+                        (selected === item.id ? "selected" : "")
                       }
-                      className={"gallery-card-art art-" + item.category}
+                      aria-label={
+                        "Caption preset " +
+                        item.name +
+                        (hf && item.id === "caption-highlight"
+                          ? " animation"
+                          : "")
+                      }
+                      aria-pressed={selected === item.id}
+                      onClick={() => {
+                        setSelected(item.id);
+                        setReplay((n) => n + 1);
+                      }}
+                      onMouseEnter={() => setHovered(item.id)}
+                      onMouseLeave={(event) => {
+                        if (
+                          !event.currentTarget.contains(document.activeElement)
+                        )
+                          setHovered(undefined);
+                      }}
+                      onFocus={() => setHovered(item.id)}
+                      onBlur={(event) => {
+                        if (!event.currentTarget.matches(":hover"))
+                          setHovered(undefined);
+                      }}
                     >
-                      {hf ? (
-                        <div
-                          className={
-                            "caption-original-demo framing-" +
-                            (item.id === "mk-callout-highlight"
-                              ? "callout"
-                              : item.id === "caption-editorial-emphasis"
-                                ? "editorial"
-                                : [
-                                      "caption-camera-follow",
-                                      "caption-parallax-layers",
-                                      "caption-kinetic-slam",
-                                      "caption-texture",
-                                    ].includes(item.id)
-                                  ? "full"
-                                  : "lower")
-                          }
-                        >
-                          <img
-                            src={
-                              import.meta.env.BASE_URL +
-                              "hyperframes/previews/" +
-                              item.id +
-                              (language === "en" ? "-en" : "") +
-                              ".png"
+                      <div
+                        data-paper={
+                          item.id === "mk-callout-highlight" || undefined
+                        }
+                        className={"gallery-card-art art-" + item.category}
+                      >
+                        {hf ? (
+                          <div
+                            className={
+                              "caption-original-demo framing-" +
+                              (item.id === "mk-callout-highlight"
+                                ? "callout"
+                                : item.id === "caption-editorial-emphasis"
+                                  ? "editorial"
+                                  : [
+                                        "caption-camera-follow",
+                                        "caption-parallax-layers",
+                                        "caption-kinetic-slam",
+                                        "caption-texture",
+                                      ].includes(item.id)
+                                    ? "full"
+                                    : "lower")
                             }
-                            alt=""
-                            loading="lazy"
-                          />
-                          {hovered === item.id && (
-                            <CaptionPreview
-                              style={galleryStyle(style, item.id)}
-                              text={t("Make it count.")}
-                              compact
-                              animated
-                              original
+                          >
+                            <img
+                              src={
+                                import.meta.env.BASE_URL +
+                                "hyperframes/previews/" +
+                                item.id +
+                                (language === "en" ? "-en" : "") +
+                                ".png"
+                              }
+                              alt=""
+                              loading="lazy"
                             />
-                          )}
-                        </div>
-                      ) : (
-                        <CaptionPreview
-                          style={galleryStyle(style, item.id)}
-                          text={t("Make it count.")}
-                          compact
-                          animated={hovered === item.id}
-                        />
-                      )}
-                      {selected === item.id && (
-                        <span className="gallery-card-check">
-                          <Check size={13} />
-                        </span>
-                      )}
-                    </div>
-                    <strong>{item.name}</strong>
-                    <small>{item.description}</small>
-                  </button>
+                            {hovered === item.id && (
+                              <CaptionPreview
+                                style={galleryStyle(style, item.id)}
+                                text={t("Make it count.")}
+                                compact
+                                animated
+                                original
+                              />
+                            )}
+                          </div>
+                        ) : (
+                          <CaptionPreview
+                            style={galleryStyle(style, item.id)}
+                            text={t("Make it count.")}
+                            compact
+                            animated={hovered === item.id}
+                          />
+                        )}
+                        {selected === item.id && (
+                          <span className="gallery-card-check">
+                            <Check size={13} />
+                          </span>
+                        )}
+                      </div>
+                      <strong>{item.name}</strong>
+                      <small>{item.description}</small>
+                    </button>
+                    <button
+                      type="button"
+                      className="gallery-favorite"
+                      aria-label={`Favorite ${item.name}`}
+                      aria-pressed={favorites.includes(item.id)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        favorite(item.id);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          favorite(item.id);
+                        }
+                      }}
+                    >
+                      <Star
+                        size={13}
+                        fill={
+                          favorites.includes(item.id) ? "currentColor" : "none"
+                        }
+                      />
+                    </button>
+                  </div>
                 );
               })}
           </div>

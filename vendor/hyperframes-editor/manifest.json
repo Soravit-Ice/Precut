@@ -1,0 +1,77 @@
+{
+  "revision": "95a686c23d794ebd6af9eef713472f1cf3f6821a",
+  "records": [
+    {
+      "id": "lt-clean-bar",
+      "file": "lt-clean-bar/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/95a686c23d794ebd6af9eef713472f1cf3f6821a/registry/blocks/lt-clean-bar/registry-item.json",
+      "sha256": "8ee55069c2f348c65c963fa8911daad5200a3c39c4df8986fbb2ba29d94d233c"
+    },
+    {
+      "id": "lt-clean-bar",
+      "file": "lt-clean-bar/lt-clean-bar.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/95a686c23d794ebd6af9eef713472f1cf3f6821a/registry/blocks/lt-clean-bar/lt-clean-bar.html",
+      "sha256": "6648b428ea74128368545a5cdf8d83a82e75dc468e9d3bbbac933e1463df5a67"
+    },
+    {
+      "id": "lt-soft-pill",
+      "file": "lt-soft-pill/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/95a686c23d794ebd6af9eef713472f1cf3f6821a/registry/blocks/lt-soft-pill/registry-item.json",
+      "sha256": "8854ecbb4e19edbc63a49199bd8fa82329605d93bbfa877a84f62e403c542fca"
+    },
+    {
+      "id": "lt-soft-pill",
+      "file": "lt-soft-pill/lt-soft-pill.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/95a686c23d794ebd6af9eef713472f1cf3f6821a/registry/blocks/lt-soft-pill/lt-soft-pill.html",
+      "sha256": "e1f14e3b482622e6005beec80678bc70ad661e15f3db3e3461fae414a81d5c83"
+    },
+    {
+      "id": "lt-side-rule",
+      "file": "lt-side-rule/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/95a686c23d794ebd6af9eef713472f1cf3f6821a/registry/blocks/lt-side-rule/registry-item.json",
+      "sha256": "91edaf3b127c13260837516429d7ce67810244bc2df0218116c0fe87d2d2256c"
+    },
+    {
+      "id": "lt-side-rule",
+      "file": "lt-side-rule/lt-side-rule.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/95a686c23d794ebd6af9eef713472f1cf3f6821a/registry/blocks/lt-side-rule/lt-side-rule.html",
+      "sha256": "faa20504273f478a470bb1fa99fc5ea81fb5709b279a9acee8b15b4996917527"
+    },
+    {
+      "id": "titlecard-calm",
+      "file": "titlecard-calm/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/95a686c23d794ebd6af9eef713472f1cf3f6821a/registry/components/titlecard-calm/registry-item.json",
+      "sha256": "7cd701b01de71fc46d813ebc228b766e3ceacb0bf47219784de6616b4067a23e"
+    },
+    {
+      "id": "titlecard-calm",
+      "file": "titlecard-calm/titlecard-calm.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/95a686c23d794ebd6af9eef713472f1cf3f6821a/registry/components/titlecard-calm/titlecard-calm.html",
+      "sha256": "5d6833d8bf512352e67d39a7b1f4133fe1bd84a9d0c76f528c6f40eea9e950ae"
+    },
+    {
+      "id": "line-by-line-slide",
+      "file": "line-by-line-slide/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/95a686c23d794ebd6af9eef713472f1cf3f6821a/registry/components/line-by-line-slide/registry-item.json",
+      "sha256": "f186a9bed00d53f340a05dfee7f325049906b5c2ec64317cd959253cc568880e"
+    },
+    {
+      "id": "line-by-line-slide",
+      "file": "line-by-line-slide/line-by-line-slide.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/95a686c23d794ebd6af9eef713472f1cf3f6821a/registry/components/line-by-line-slide/line-by-line-slide.html",
+      "sha256": "4d6ce6381540c89e971dcebff09a48be031177455ceddacac41886113afe3f44"
+    },
+    {
+      "id": "headline-slam",
+      "file": "headline-slam/registry-item.json",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/95a686c23d794ebd6af9eef713472f1cf3f6821a/registry/components/headline-slam/registry-item.json",
+      "sha256": "4effd43c7db989e27014ee2a1f609fade0068e9a5eba6f54bf14282d95585f09"
+    },
+    {
+      "id": "headline-slam",
+      "file": "headline-slam/headline-slam.html",
+      "url": "https://raw.githubusercontent.com/heygen-com/hyperframes/95a686c23d794ebd6af9eef713472f1cf3f6821a/registry/components/headline-slam/headline-slam.html",
+      "sha256": "b16ac28b01bf7f352d6a3f267838253de85794cd9bedd8065b48d7675e9295cd"
+    }
+  ]
+}
