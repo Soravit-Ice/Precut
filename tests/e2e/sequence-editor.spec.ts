@@ -123,9 +123,11 @@ test("multi-source transcript, inline Thai correction, scoped editing, graphics 
     await page
       .getByLabel("Transcript clip")
       .selectOption(snap.timeline!.clips[0].id);
+    await expect(page.locator(".transcript-empty")).toBeVisible();
     await page
       .getByLabel("Transcript clip")
       .selectOption(snap.timeline!.clips[1].id);
+    await expect(page.locator(".transcript-word").first()).toBeVisible();
     await page.locator(".transcript-word").first().dblclick();
     try {
       await expect(input).toBeFocused();

@@ -320,6 +320,10 @@ export function Transcript() {
             value={activeClipId}
             onChange={(event) => {
               const id = event.target.value;
+              cancelledWord.current = true;
+              clearTimeout(listenTimer.current);
+              setCorrecting(undefined);
+              setSelected([]);
               const fullSnap = useStore.getState().projectSnapshot ?? full;
               useStore.getState().set({
                 activeClipId: id,
