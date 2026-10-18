@@ -106,9 +106,9 @@ export function Transcript() {
     setEndMs(Math.round(word.endUs / 1000));
     setTimingOpen(false);
   };
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (correcting) {
-      textInput.current?.focus();
+      textInput.current?.focus({ preventScroll: true });
       textInput.current?.select();
     }
   }, [correcting?.id]);
@@ -608,7 +608,10 @@ export function Transcript() {
                                   }
                                 }
                               }}
-                              onDoubleClick={() => beginCorrection(w)}
+                              onDoubleClick={(event) => {
+                                event.preventDefault();
+                                beginCorrection(w);
+                              }}
                               aria-label={`${editMode ? t("Edit word") : t("Select word")}: ${w.text}`}
                               aria-pressed={selected.some((s) => s.id === w.id)}
                             >

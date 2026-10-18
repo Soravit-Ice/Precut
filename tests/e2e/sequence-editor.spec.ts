@@ -93,6 +93,27 @@ test("multi-source transcript, inline Thai correction, scoped editing, graphics 
     .selectOption(snap.timeline!.clips[1].id);
   const word = source.words[0];
   const input = page.locator(".inline-word-editor input");
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+  await page.evaluate(() => {
+    const events: unknown[] = [];
+    Object.assign(window, { transcriptInteractionEvents: events });
+    for (const name of ["click", "dblclick", "focusin", "focusout"])
+      document.addEventListener(
+        name,
+        (event) => {
+          const target = event.target as HTMLElement;
+          if (!target.closest(".transcript-section")) return;
+          events.push({
+            event: name,
+            target: target.outerHTML.slice(0, 300),
+            detail: (event as MouseEvent).detail,
+            at: performance.now(),
+          });
+        },
+        true,
+      );
+  });
   // Changing sources must finish resetting the draft before the next interaction.
   for (let attempt = 0; attempt < 3; attempt++) {
     await page
@@ -102,9 +123,27 @@ test("multi-source transcript, inline Thai correction, scoped editing, graphics 
       .getByLabel("Transcript clip")
       .selectOption(snap.timeline!.clips[1].id);
     await page.locator(".transcript-word").first().dblclick();
+    try {
+      await expect(input).toBeFocused();
+    } catch (error) {
+      await test.info().attach("transcript-interactions", {
+        body: JSON.stringify(
+          await page.evaluate(
+            () =>
+              (window as unknown as { transcriptInteractionEvents: unknown[] })
+                .transcriptInteractionEvents,
+          ),
+        ),
+        contentType: "application/json",
+      });
+      throw error;
+    }
+    await expect(page.locator(".player-preparing")).toHaveCount(0);
     await expect(input).toBeFocused();
     await input.press("Escape");
   }
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
+  await cdp.detach();
   await page.locator(".transcript-word").first().dblclick();
   await input.fill("สวัสดี");
   await input.dispatchEvent("compositionstart");

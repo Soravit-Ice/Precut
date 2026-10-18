@@ -50,6 +50,7 @@ async function seekMedia(
   media: HTMLMediaElement,
   url: string,
   seconds: number,
+  isCurrent = () => true,
 ) {
   const wait = (name: string, ready: () => boolean) =>
     new Promise<void>((resolve, reject) => {
@@ -91,6 +92,7 @@ async function seekMedia(
     media.load();
   }
   await wait("loadedmetadata", () => media.readyState >= 1);
+  if (!isCurrent()) return;
   if (Math.abs(media.currentTime - seconds) > 0.0001)
     media.currentTime = Math.max(0, seconds);
   await wait(
@@ -402,15 +404,26 @@ export function Player() {
       return;
     }
     current.current = e;
+    // Commit the editing intent before decoding. A slow seek must never reset a
+    // newer word selection or close its input when the media finally arrives.
+    if (!rawSource) {
+      if (useStore.getState().activeClipId !== e.clipId)
+        set({ activeClipId: e.clipId, selection: undefined });
+      clock.set(Math.max(0, Math.min(duration, us)));
+      setTime(us);
+    }
     try {
       const raw = sourcePreview.current,
         assetId = raw?.assetId ?? e.assetId,
         sourceUs = raw ? raw.startUs : toSource(e, us),
         media = main.current!;
-      await seekMedia(media, imageURL(assetId), sourceUs / 1e6);
+      await seekMedia(
+        media,
+        imageURL(assetId),
+        sourceUs / 1e6,
+        () => generation === request.current,
+      );
       if (generation !== request.current) return;
-      if (!raw && useStore.getState().activeClipId !== e.clipId)
-        set({ activeClipId: e.clipId, selection: undefined });
       const source = sourceViews.get(assetId)!,
         track = source.tracks.find((t) => t.assetId === assetId);
       media.muted =
