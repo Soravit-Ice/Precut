@@ -64,15 +64,11 @@ export function Transcript() {
     activeClipId = useStore((s) => s.activeClipId),
     sharedSelection = useStore((s) => s.selection);
   useLayoutEffect(() => {
-    setSelected((prev) =>
-      prev.filter((w) => snap.words.some((sw) => sw.id === w.id)),
-    );
-    setCorrecting((prev) =>
-      prev && snap.words.some((sw) => sw.id === prev.id) ? prev : undefined,
-    );
+    setSelected([]);
+    setCorrecting(undefined);
     setTime(clock.currentUs);
     return () => clearTimeout(listenTimer.current);
-  }, [activeClipId, snap.words]);
+  }, [activeClipId]);
   useEffect(() => {
     if (!full || !activeClipId || sharedSelection?.kind !== "range") {
       clearTimeout(listenTimer.current);
@@ -482,6 +478,7 @@ export function Transcript() {
                               {w.joiner}
                               <input
                                 ref={textInput}
+                                autoFocus
                                 aria-label={t("Correct word")}
                                 aria-description={t(
                                   "Clear the word and press Enter to cut it. Escape cancels.",
@@ -498,8 +495,9 @@ export function Transcript() {
                                 onCompositionEnd={() => {
                                   composing.current = false;
                                 }}
-                                onBlur={() => {
+                                onBlur={(event) => {
                                   if (
+                                    event.relatedTarget !== null &&
                                     !composing.current &&
                                     correctText.trim() &&
                                     !busy

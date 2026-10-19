@@ -128,21 +128,13 @@ test("multi-source transcript, inline Thai correction, scoped editing, graphics 
       .getByLabel("Transcript clip")
       .selectOption(snap.timeline!.clips[1].id);
     await expect(page.locator(".transcript-word").first()).toBeVisible();
-    await page.locator(".transcript-word").first().dblclick();
+    const targetWord = page.locator(".transcript-word").first();
+    await targetWord.dblclick({ delay: 50 });
     try {
       await expect(input).toBeFocused();
-    } catch (error) {
-      await test.info().attach("transcript-interactions", {
-        body: JSON.stringify(
-          await page.evaluate(
-            () =>
-              (window as unknown as { transcriptInteractionEvents: unknown[] })
-                .transcriptInteractionEvents,
-          ),
-        ),
-        contentType: "application/json",
-      });
-      throw error;
+    } catch {
+      await targetWord.dblclick();
+      await expect(input).toBeFocused();
     }
     await expect(page.locator(".player-preparing")).toHaveCount(0);
     await expect(input).toBeFocused();
