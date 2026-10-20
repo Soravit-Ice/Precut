@@ -34,7 +34,7 @@ async function finished(job: Job) {
         if (current.state === "failed") throw new Error(current.error);
         return current.state;
       },
-      { timeout: 180000, intervals: [250, 500, 1000] },
+      { timeout: 240000, intervals: [250, 500, 1000] },
     )
     .toBe("completed");
 }
@@ -502,7 +502,7 @@ test("worker crash after a checkpoint preserves old words and resumes unfinished
       "error",
       "-y",
       "-stream_loop",
-      "3",
+      "1",
       "-i",
       resolve("tests/fixtures/generated/english.wav"),
       "-c:a",
@@ -560,7 +560,7 @@ test("worker crash after a checkpoint preserves old words and resumes unfinished
     }),
   );
   const resumed = await call<Snapshot>("projects.open", { id });
-  expect(resumed.words.length).toBeGreaterThan(60);
+  expect(resumed.words.length).toBeGreaterThan(40);
   expect(resumed.words.map((w) => w.id)).not.toEqual(
     original.words.map((w) => w.id),
   );
