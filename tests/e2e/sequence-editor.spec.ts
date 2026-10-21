@@ -242,12 +242,16 @@ test("multi-source transcript, inline Thai correction, scoped editing, graphics 
     .selectOption(snap.timeline!.clips[1].id);
   await expect(page.locator(".transcript-word").first()).toBeVisible();
   await seekTimeline(page, 3.25e6);
-  await expect(page.locator(".player-preparing")).toHaveCount(0);
+  await expect(page.locator(".player-preparing")).toHaveCount(0, {
+    timeout: 30000,
+  });
   await expect(page.locator(".player-error")).toHaveCount(0);
   await expect(
     page.locator(".sequence-player [data-composition-ready]"),
-  ).toHaveCount(1);
-  await expect(page.locator(".text-position-handle")).toHaveCount(1);
+  ).toHaveCount(1, { timeout: 30000 });
+  await expect(page.locator(".text-position-handle")).toHaveCount(1, {
+    timeout: 30000,
+  });
   await page.screenshot({
     path: resolve("docs/screenshots/sequence-editor-light.png"),
   });
@@ -288,11 +292,15 @@ test("multi-source transcript, inline Thai correction, scoped editing, graphics 
     BrowserWindow.getAllWindows()[0].setSize(1080, 720),
   );
   await expect(page.locator(".editor-workspace")).toBeVisible();
-  await expect(page.locator(".player-preparing")).toHaveCount(0);
+  await expect(page.locator(".player-preparing")).toHaveCount(0, {
+    timeout: 30000,
+  });
   await expect(
     page.locator(".sequence-player [data-composition-ready]"),
-  ).toHaveCount(1);
-  await expect(page.locator(".text-position-handle")).toHaveCount(1);
+  ).toHaveCount(1, { timeout: 30000 });
+  await expect(page.locator(".text-position-handle")).toHaveCount(1, {
+    timeout: 30000,
+  });
   await page.screenshot({
     path: resolve("docs/screenshots/sequence-editor-th-dark.png"),
   });

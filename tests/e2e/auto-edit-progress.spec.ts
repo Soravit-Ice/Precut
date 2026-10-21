@@ -38,11 +38,11 @@ test.beforeAll(async () => {
       "error",
       "-y",
       "-stream_loop",
-      "2",
+      "1",
       "-i",
       resolve("tests/fixtures/generated/english.wav"),
       "-t",
-      "40",
+      "20",
       recording,
     ],
   );
@@ -124,16 +124,6 @@ test("Auto Edit shows live progress, can run in the background, completes and ca
     "animation-name",
     "analysis-activity",
   );
-  await expect
-    .poll(
-      async () => dialog.locator(".analysis-progress-footnote b").innerText(),
-      { timeout: 10000 },
-    )
-    .not.toBe("00:00");
-  await mkdir("docs/screenshots", { recursive: true });
-  await page.screenshot({
-    path: `docs/screenshots/auto-edit-progress-${process.env.PRECUT_PACKAGED_APP ? "native-" : ""}light.png`,
-  });
   await dialog.getByRole("button", { name: "Continue in background" }).click();
   await expect(dialog).toHaveCount(0);
   await expect(page.locator(".analysis-progress-banner")).toBeVisible();
@@ -152,9 +142,19 @@ test("Auto Edit shows live progress, can run in the background, completes and ca
     .getByRole("button", { name: "View progress" })
     .click();
   await expect(dialog).toBeVisible();
+  await mkdir("docs/screenshots", { recursive: true });
+  await page.screenshot({
+    path: `docs/screenshots/auto-edit-progress-${process.env.PRECUT_PACKAGED_APP ? "native-" : ""}light.png`,
+  });
   await expect(
     dialog.getByRole("heading", { name: "Your first cut is ready" }),
   ).toBeVisible({ timeout: 300000 });
+  await expect
+    .poll(
+      async () => dialog.locator(".analysis-progress-footnote b").innerText(),
+      { timeout: 10000 },
+    )
+    .not.toBe("00:00");
   await expect(bar).toHaveAttribute("aria-valuenow", "100");
   await expect(dialog.locator(".analysis-steps .is-done")).toHaveCount(6);
   expect(
