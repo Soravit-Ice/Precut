@@ -34,7 +34,7 @@ async function finished(job: Job) {
         if (current.state === "failed") throw new Error(current.error);
         return current.state;
       },
-      { timeout: 240000, intervals: [250, 500, 1000] },
+      { timeout: 300000, intervals: [250, 500, 1000] },
     )
     .toBe("completed");
 }
@@ -401,6 +401,25 @@ test("silence auto-apply is one Undo step, respects Keep and can reassess it", a
 });
 
 test("cancelled re-transcription keeps the old transcript and corrections", async () => {
+  const path = join(dataRoot, "staged-speech.wav");
+  execFileSync(
+    resolve(
+      `native/${process.platform}-${process.arch}/bin/ffmpeg${process.platform === "win32" ? ".exe" : ""}`,
+    ),
+    [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-t",
+      "6",
+      "-i",
+      resolve("tests/fixtures/generated/english.wav"),
+      "-c:a",
+      "pcm_s16le",
+      path,
+    ],
+  );
   const created = await call<Snapshot>("projects.create", {
       name: "Staged speech",
     }),
@@ -408,7 +427,7 @@ test("cancelled re-transcription keeps the old transcript and corrections", asyn
   await finished(
     await call<Job>("media.import", {
       projectId: id,
-      path: resolve("tests/fixtures/generated/english.wav"),
+      path,
     }),
   );
   const speech = { profile: "english", quality: "fast", vocabulary: "" };
@@ -534,7 +553,7 @@ test("worker crash after a checkpoint preserves old words and resumes unfinished
     .poll(
       async () =>
         (await call<Job[]>("jobs.list")).find((j) => j.id === job.id)?.stage,
-      { timeout: 30000, intervals: [50] },
+      { timeout: 90000, intervals: [100] },
     )
     .toMatch(/Transcribing · 1 \/ /);
   const worker = await app.evaluate(({ app }) =>

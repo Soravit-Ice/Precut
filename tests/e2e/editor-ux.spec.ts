@@ -302,6 +302,10 @@ test("word correction, atomic replacement, caption preview, colours and reversib
     .getByRole("dialog")
     .getByRole("button", { name: "Remove from recent", exact: true })
     .click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect
+    .poll(async () => call<Project[]>("projects.list"))
+    .toHaveLength(0);
   await app.close();
   await launch();
   expect(await call<Project[]>("projects.list")).toHaveLength(0);

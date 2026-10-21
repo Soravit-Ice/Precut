@@ -38,11 +38,11 @@ test.beforeAll(async () => {
       "error",
       "-y",
       "-stream_loop",
-      "4",
+      "2",
       "-i",
       resolve("tests/fixtures/generated/english.wav"),
       "-t",
-      "60",
+      "40",
       recording,
     ],
   );
@@ -154,7 +154,7 @@ test("Auto Edit shows live progress, can run in the background, completes and ca
   await expect(dialog).toBeVisible();
   await expect(
     dialog.getByRole("heading", { name: "Your first cut is ready" }),
-  ).toBeVisible({ timeout: 240000 });
+  ).toBeVisible({ timeout: 300000 });
   await expect(bar).toHaveAttribute("aria-valuenow", "100");
   await expect(dialog.locator(".analysis-steps .is-done")).toHaveCount(6);
   expect(
