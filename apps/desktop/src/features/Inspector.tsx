@@ -442,6 +442,8 @@ export function CaptionInspector() {
       : {}),
   };
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
   useEffect(
     () => () => {
       void flushCaptionSave(snap.project.id).catch(() => {});
@@ -449,11 +451,13 @@ export function CaptionInspector() {
     [snap.project.id, scope, selectedCue?.id],
   );
   useEffect(() => {
-    setDraft(
+    if (pendingCaptionSaves.has(snap.project.id)) return;
+    const next =
       scope === "cue"
         ? (selectedCue?.style ?? snap.captionStyle)
-        : snap.captionStyle,
-    );
+        : snap.captionStyle;
+    draftRef.current = next;
+    setDraft(next);
   }, [snap.captionStyle, snap.captionStyleOverrides, scope, selectedCue?.id]);
   const nativeOriginal = (field: string) =>
     Boolean(
@@ -481,7 +485,9 @@ export function CaptionInspector() {
   const update = (patch: Partial<CaptionStyle>, project = false) => {
     const target = project ? "project" : scope;
     if (target === "cue" && !selectedCue) return;
-    const style = { ...(project ? snap.captionStyle : draft), ...patch };
+    const base = project ? snap.captionStyle : draftRef.current;
+    const style = { ...base, ...patch };
+    draftRef.current = style;
     if (style.animation && !patch.animation) {
       const fields = [
         "font",

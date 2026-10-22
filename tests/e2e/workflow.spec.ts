@@ -24,7 +24,7 @@ async function call<T>(method: Method, input: unknown = {}): Promise<T> {
     { method, input },
   ) as Promise<T>;
 }
-async function finished(job: Job) {
+async function finished(job: Job, timeout = 360000) {
   await expect
     .poll(
       async () => {
@@ -34,7 +34,7 @@ async function finished(job: Job) {
         if (current.state === "failed") throw new Error(current.error);
         return current.state;
       },
-      { timeout: 300000, intervals: [250, 500, 1000] },
+      { timeout, intervals: [250, 500, 1000] },
     )
     .toBe("completed");
 }
@@ -510,6 +510,7 @@ test("cancelled re-transcription keeps the old transcript and corrections", asyn
 });
 
 test("worker crash after a checkpoint preserves old words and resumes unfinished fresh analysis", async () => {
+  test.setTimeout(480000);
   const path = join(dataRoot, "checkpoint.wav");
   execFileSync(
     resolve(

@@ -229,6 +229,16 @@ test("word correction, atomic replacement, caption preview, colours and reversib
     .locator(".recent-project-open")
     .filter({ hasText: "Caption & transcript QA" })
     .click();
+  await expect
+    .poll(
+      async () => (await call<Snapshot>("projects.open", { id })).captionStyle,
+      { timeout: 15000 },
+    )
+    .toMatchObject({
+      preset: "karaoke",
+      color: "#FFE066",
+      activeColor: "#FB7185",
+    });
   snap = await call<Snapshot>("projects.open", { id });
   expect(snap.captionStyle).toMatchObject({
     preset: "karaoke",
